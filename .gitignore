@@ -31,3 +31,7 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Ignore RSA keys
+resources/jwt/app.key
+resources/jwt/pub.key
