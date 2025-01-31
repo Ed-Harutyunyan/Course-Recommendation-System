@@ -17,15 +17,12 @@ public class UserRegistrationService {
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
-    public User registerUser(RegistrationRequestDto request) {
-        if (userRepository.existsByUsername(request.username()) || userRepository.existsByEmail(request.email())) {
+    public User registerUser(User user) {
+        if (userRepository.existsByUsername(user.getUsername()) || userRepository.existsByEmail(user.getEmail())) {
             throw new ValidationException("Username or Email already in use");
         }
 
-        User user = new User();
-        user.setUsername(request.username());
-        user.setEmail(request.email());
-        user.setPassword(passwordEncoder.encode(request.password()));
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
 
         return userRepository.save(user);
     }

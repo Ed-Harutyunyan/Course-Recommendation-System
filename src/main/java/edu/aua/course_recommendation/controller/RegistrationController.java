@@ -26,7 +26,7 @@ public class RegistrationController {
             @Valid @RequestBody final RegistrationRequestDto registrationRequestDto) {
 
         final var registeredUser = userRegistrationService
-                .registerUser(registrationRequestDto);
+                .registerUser(userRegistrationMapper.toEntity(registrationRequestDto));
 
         return ResponseEntity.ok(
                 userRegistrationMapper.toRegistrationResponseDto(registeredUser)
