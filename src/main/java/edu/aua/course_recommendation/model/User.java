@@ -1,10 +1,11 @@
 package edu.aua.course_recommendation.model;
 
-
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
@@ -30,8 +31,10 @@ public class User {
     private String password;
 
     @Column(name = "created_at", nullable = false, updatable = false)
+    @CreatedDate
     private Instant createdAt;
 
     @Column(name = "updated_at")
+    @LastModifiedDate
     private Instant updatedAt;
 }
