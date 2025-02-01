@@ -10,3 +10,14 @@ services:
       MYSQL_PASSWORD: password
       MYSQL_DATABASE: course_recommendation
       MYSQL_ROOT_PASSWORD: root
+
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
+
+  mailhog:
+    image: mailhog/mailhog
+    ports:
+      - '1025:1025'
+      - '8025:8025'
