@@ -37,4 +37,7 @@ public class User {
     @Column(name = "updated_at")
     @LastModifiedDate
     private Instant updatedAt;
+
+    @Column(nullable = false)
+    private boolean emailVerified;
 }
