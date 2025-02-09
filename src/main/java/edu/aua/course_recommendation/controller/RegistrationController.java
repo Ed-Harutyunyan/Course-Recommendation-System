@@ -1,7 +1,7 @@
 package edu.aua.course_recommendation.controller;
 
-import edu.aua.course_recommendation.dto.RegistrationRequestDto;
-import edu.aua.course_recommendation.dto.RegistrationResponseDto;
+import edu.aua.course_recommendation.dto.request.RegistrationRequestDto;
+import edu.aua.course_recommendation.dto.response.RegistrationResponseDto;
 import edu.aua.course_recommendation.dto.UserProfileDto;
 import edu.aua.course_recommendation.mapper.UserMapper;
 import edu.aua.course_recommendation.mapper.UserRegistrationMapper;

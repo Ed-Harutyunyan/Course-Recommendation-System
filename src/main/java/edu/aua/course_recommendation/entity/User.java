@@ -1,4 +1,4 @@
-package edu.aua.course_recommendation.model;
+package edu.aua.course_recommendation.entity;
 
 import jakarta.persistence.*;
 import lombok.Getter;
@@ -9,6 +9,8 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -40,4 +42,7 @@ public class User {
 
     @Column(nullable = false)
     private boolean emailVerified;
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<RefreshToken> refreshTokens = new ArrayList<>();
 }
