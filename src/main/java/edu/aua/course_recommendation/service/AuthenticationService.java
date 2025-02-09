@@ -1,25 +1,19 @@
 package edu.aua.course_recommendation.service;
 
-import edu.aua.course_recommendation.dto.request.AuthenticationRequestDto;
-import edu.aua.course_recommendation.dto.response.AuthenticationResponseDto;
 import edu.aua.course_recommendation.entity.RefreshToken;
 import edu.aua.course_recommendation.entity.User;
-import edu.aua.course_recommendation.exception.ValidationException;
 import edu.aua.course_recommendation.model.AuthTokens;
 import edu.aua.course_recommendation.repository.RefreshTokenRepository;
 import edu.aua.course_recommendation.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Map;
 import java.util.UUID;
 
 import static java.time.Duration.between;
@@ -45,11 +39,11 @@ public class AuthenticationService {
     }
 
     public AuthTokens authenticate(final User user) {
-        final var accessToken = jwtService.generateToken(user.getUsername());
+        final var accessToken = jwtService.generateToken(user.getUsername(), user.getRole().name());
 
         final var refreshTokenEntity = new RefreshToken();
         refreshTokenEntity.setUser(user);
-        refreshTokenEntity.setExpiresAt(Instant.now().plus(Duration.ofDays(7))); // TODO: Update hardcoded value
+        refreshTokenEntity.setExpiresAt(Instant.now().plus(Duration.ofMinutes(15))); // TODO: Update hardcoded value, 15 minutes
         refreshTokenRepository.save(refreshTokenEntity);
 
         return new AuthTokens(accessToken, refreshTokenEntity.getId().toString(), between(Instant.now(), refreshTokenEntity.getExpiresAt()));
@@ -59,7 +53,7 @@ public class AuthenticationService {
         final var refreshTokenEntity = refreshTokenRepository.findByIdAndExpiresAtAfter(validateRefreshTokenFormat(refreshToken), Instant.now())
                 .orElseThrow(() -> new BadCredentialsException("Invalid or expired refresh token"));
 
-        final var newAccessToken = jwtService.generateToken(refreshTokenEntity.getUser().getUsername());
+        final var newAccessToken = jwtService.generateToken(refreshTokenEntity.getUser().getUsername(), refreshTokenEntity.getUser().getRole().name());
 
         return new AuthTokens(newAccessToken, refreshToken, between(Instant.now(), refreshTokenEntity.getExpiresAt()));
     }
