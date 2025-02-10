@@ -1,7 +1,7 @@
 package edu.aua.course_recommendation.mapper;
 
 import edu.aua.course_recommendation.dto.UserProfileDto;
-import edu.aua.course_recommendation.model.User;
+import edu.aua.course_recommendation.entity.User;
 import org.springframework.stereotype.Component;
 
 @Component

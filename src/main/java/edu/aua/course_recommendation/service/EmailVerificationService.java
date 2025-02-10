@@ -1,6 +1,6 @@
 package edu.aua.course_recommendation.service;
 
-import edu.aua.course_recommendation.model.User;
+import edu.aua.course_recommendation.entity.User;
 import edu.aua.course_recommendation.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
