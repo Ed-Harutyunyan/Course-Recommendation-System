@@ -1,8 +1,12 @@
 package edu.aua.course_recommendation.service;
 
+import edu.aua.course_recommendation.entity.InstructorProfile;
+import edu.aua.course_recommendation.entity.StudentProfile;
 import edu.aua.course_recommendation.exception.ValidationException;
 import edu.aua.course_recommendation.entity.User;
 import edu.aua.course_recommendation.model.Role;
+import edu.aua.course_recommendation.repository.InstructorProfileRepository;
+import edu.aua.course_recommendation.repository.StudentProfileRepository;
 import edu.aua.course_recommendation.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +22,8 @@ public class UserRegistrationService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final StudentProfileRepository studentProfileRepository;
+    private final InstructorProfileRepository instructorProfileRepository;
 
     @Transactional
     public User registerUser(User user) {
@@ -44,7 +50,19 @@ public class UserRegistrationService {
 
         user.setPassword(passwordEncoder.encode(user.getPassword()));
 
-        return userRepository.save(user);
+        User savedUser = userRepository.save(user);
+        Role userRole = savedUser.getRole();
+        if (userRole == Role.ROLE_STUDENT || userRole == Role.ROLE_ALUMNI) {
+            StudentProfile studentProfile = new StudentProfile();
+            studentProfile.setUser(savedUser);
+            studentProfileRepository.save(studentProfile);
+        } else if (userRole == Role.ROLE_INSTRUCTOR) {
+            InstructorProfile instructorProfile = new InstructorProfile();
+            instructorProfile.setUser(savedUser);
+            instructorProfileRepository.save(instructorProfile);
+        }
+
+        return savedUser;
     }
 
     /**
