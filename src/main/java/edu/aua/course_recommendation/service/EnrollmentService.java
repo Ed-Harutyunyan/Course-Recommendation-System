@@ -9,7 +9,9 @@ import edu.aua.course_recommendation.repository.CourseRepository;
 import edu.aua.course_recommendation.repository.EnrollmentRepository;
 import edu.aua.course_recommendation.repository.StudentRepository;
 import jakarta.transaction.Transactional;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -25,27 +27,9 @@ public class EnrollmentService {
 
     @Transactional
     public void enroll(final UUID studentId, final UUID courseId) {
-        User authenticatedUser = userService.getUser();
-
-        if (authenticatedUser == null) {
-            throw new IllegalArgumentException("You are not authenticated");
-        }
-
-        // This checks if the person sends the request is indeed the authenticated user
-        // Maybe there is a better way to do this check though?
-        if (!authenticatedUser.getId().equals(studentId)) {
-            throw new IllegalArgumentException("You can only enroll yourself");
-        }
-
-        if (authenticatedUser.getRole() != Role.ROLE_STUDENT) {
-            throw new IllegalArgumentException("Only students can enroll in courses");
-        }
-
-        Student student = studentRepository.findStudentById(studentId)
-                .orElseThrow(() -> new IllegalArgumentException("Student not found"));
-
-        Course course = courseRepository.findCourseById(courseId)
-                .orElseThrow(() -> new IllegalArgumentException("Course not found"));
+        StudentAndCourse studentAndCourse = validateAndFetch(studentId, courseId);
+        Student student = studentAndCourse.getStudent();
+        Course course = studentAndCourse.getCourse();
 
         if (enrollmentRepository.existsByStudentAndCourse(student, course)) {
             throw new IllegalArgumentException("You are already enrolled in this course");
@@ -60,5 +44,40 @@ public class EnrollmentService {
 
     @Transactional
     public void drop(UUID studentId, UUID courseId) {
+        StudentAndCourse studentAndCourse = validateAndFetch(studentId, courseId);
+        Student student = studentAndCourse.getStudent();
+        Course course = studentAndCourse.getCourse();
+
+        if (enrollmentRepository.existsByStudentAndCourse(student, course)) {
+            throw new IllegalArgumentException("You are not enrolled in this course");
+        }
+
+        enrollmentRepository.deleteByStudentAndCourse(student, course);
+    }
+
+    // This method is used to validate the student and course and fetch them from the database
+    private StudentAndCourse validateAndFetch(UUID studentId, UUID courseId) {
+        User authenticatedUser = userService.getUser();
+        if (authenticatedUser == null) {
+            throw new IllegalArgumentException("You are not authenticated");
+        }
+        if (!authenticatedUser.getId().equals(studentId)) {
+            throw new IllegalArgumentException("You can only enroll yourself");
+        }
+        if (authenticatedUser.getRole() != Role.ROLE_STUDENT) {
+            throw new IllegalArgumentException("Only students can enroll in courses");
+        }
+        Student student = studentRepository.findStudentById(studentId)
+                .orElseThrow(() -> new IllegalArgumentException("Student not found"));
+        Course course = courseRepository.findCourseById(courseId)
+                .orElseThrow(() -> new IllegalArgumentException("Course not found"));
+        return new StudentAndCourse(student, course);
+    }
+
+    @RequiredArgsConstructor
+    @Getter @Setter
+    private static class StudentAndCourse {
+        private final Student student;
+        private final Course course;
     }
 }
