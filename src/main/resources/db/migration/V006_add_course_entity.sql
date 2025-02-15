@@ -1,5 +1,3 @@
--- V005_add_course_entity.sql
-
 CREATE TABLE courses (
      id BINARY(36) NOT NULL,
      title VARCHAR(255) NOT NULL,
@@ -12,5 +10,5 @@ CREATE TABLE courses (
      times VARCHAR(255) NOT NULL,
      location VARCHAR(255) NOT NULL,
      PRIMARY KEY (id),
-     CONSTRAINT fk_instructor FOREIGN KEY (instructor_id) REFERENCES users(id)
+     CONSTRAINT fk_instructor FOREIGN KEY (instructor_id) REFERENCES instructors(id)
 );

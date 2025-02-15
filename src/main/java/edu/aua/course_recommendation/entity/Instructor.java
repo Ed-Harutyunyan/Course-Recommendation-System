@@ -10,19 +10,19 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "student_profiles")
+@Table(name = "instructors")
 @Getter @Setter
 @NoArgsConstructor
-public class StudentProfile {
+public class Instructor {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
     @OneToOne
-    @JoinColumn(name = "user_id", nullable = false, unique = true)
+    @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false, unique = true)
     private User user;
 
-    @OneToMany(mappedBy = "studentProfile", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Enrollment> enrollments = new ArrayList<>();
+    @OneToMany(mappedBy = "instructor", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<Course> coursesTaught = new ArrayList<>();
 }

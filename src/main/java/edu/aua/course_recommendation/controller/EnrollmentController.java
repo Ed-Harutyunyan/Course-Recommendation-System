@@ -26,6 +26,6 @@ public class EnrollmentController {
     @PostMapping("/{studentId}/drop/{courseId}")
     public ResponseEntity<String> drop(@PathVariable final UUID studentId, @PathVariable final UUID courseId) {
         enrollmentService.drop(studentId, courseId);
-        return ResponseEntity.ok("Unenrolled successfully");
+        return ResponseEntity.ok("Course dropped successfully");
     }
 }

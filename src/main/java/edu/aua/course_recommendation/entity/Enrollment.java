@@ -11,12 +11,12 @@ import lombok.Setter;
 public class Enrollment {
 
     @EmbeddedId
-    private EntrollmentId id;
+    private EnrollmentId id;
 
     @ManyToOne
-    @MapsId("studentProfileId")
-    @JoinColumn(name = "student_profile_id", columnDefinition = "BINARY(16)")
-    private StudentProfile studentProfile;
+    @MapsId("studentId")
+    @JoinColumn(name = "student_id", columnDefinition = "BINARY(16)")
+    private Student student;
 
     @ManyToOne
     @MapsId("courseId")

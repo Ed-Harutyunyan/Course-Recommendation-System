@@ -41,7 +41,7 @@ public class Course {
 
     @ManyToOne
     @JoinColumn(name = "instructor_profile_id", nullable = false)
-    private InstructorProfile instructor;
+    private Instructor instructor;
 
     @Column(nullable = false)
     private String times;
