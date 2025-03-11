@@ -1,6 +1,7 @@
 package edu.aua.course_recommendation.config;
 
 import edu.aua.course_recommendation.entity.User;
+import edu.aua.course_recommendation.model.Department;
 import edu.aua.course_recommendation.model.Role;
 import edu.aua.course_recommendation.repository.UserRepository;
 import org.springframework.boot.CommandLineRunner;
@@ -25,6 +26,7 @@ public class StartupAdminInitializer {
                 adminUser.setUsername(adminUsername);
                 adminUser.setEmail(adminEmail);
                 adminUser.setPassword(passwordEncoder.encode("admin"));
+                adminUser.setDepartment(Department.CS);
                 adminUser.setRole(Role.ROLE_ADMIN);
                 adminUser.setEmailVerified(true);
 

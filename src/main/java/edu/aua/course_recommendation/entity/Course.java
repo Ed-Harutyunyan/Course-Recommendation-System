@@ -1,18 +1,16 @@
 package edu.aua.course_recommendation.entity;
 
-import edu.aua.course_recommendation.model.Campus;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Entity
 @Table(name = "courses")
-@Getter @Setter
+@Getter
+@Setter
 @NoArgsConstructor
 public class Course {
 
@@ -20,35 +18,31 @@ public class Course {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @Column(nullable = false, unique = true)
+    private String code;
+
     @Column(nullable = false)
     private String title;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
-
-    @Column(nullable = false)
-    private String section;
-
-    @Column(nullable = false)
-    private String duration;
 
     @Column(nullable = false)
     private Integer credits;
 
-    @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private Campus campus;
+    @ManyToMany
+    @JoinTable(
+            name = "course_prerequisites",
+            joinColumns = @JoinColumn(name = "course_code"),
+            inverseJoinColumns = @JoinColumn(name = "prerequisite_code")
+    )
+    private Set<Course> prerequisites = new HashSet<>();
 
-    @ManyToOne
-    @JoinColumn(name = "instructor_profile_id", nullable = false)
-    private Instructor instructor;
+    @ElementCollection
+    @CollectionTable(name = "course_clusters", joinColumns = @JoinColumn(name = "course_id"))
+    @Column(name = "cluster")
+    private List<Integer> clusters = new ArrayList<>();
 
-    @Column(nullable = false)
-    private String times;
-
-    @Column(nullable = false)
-    private String location;
-
-    @OneToMany(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Enrollment> enrollments = new ArrayList<>();
+    @OneToMany(mappedBy = "baseCourse", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CourseOffering> offerings = new ArrayList<>();
 }
