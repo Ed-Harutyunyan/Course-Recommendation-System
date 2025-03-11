@@ -18,11 +18,10 @@ public class EnrollmentId implements Serializable {
     @Serial
     private static final long serialVersionUID = 1L;
 
-    @Column(name = "student_id", columnDefinition = "BINARY(16)")
-    private UUID studentId;
+    @Column(name = "user_id", columnDefinition = "BINARY(16)")
+    private UUID userId;
 
     @Column(name = "course_id", columnDefinition = "BINARY(16)")
     private UUID courseId;
-
 
 }

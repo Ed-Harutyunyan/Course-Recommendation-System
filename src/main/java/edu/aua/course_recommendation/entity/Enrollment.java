@@ -14,9 +14,9 @@ public class Enrollment {
     private EnrollmentId id;
 
     @ManyToOne
-    @MapsId("studentId")
-    @JoinColumn(name = "student_id", columnDefinition = "BINARY(16)")
-    private Student student;
+    @MapsId("userId")
+    @JoinColumn(name = "user_id", columnDefinition = "BINARY(16)")
+    private User user;
 
     @ManyToOne
     @MapsId("courseId")
