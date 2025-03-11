@@ -20,7 +20,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class RegistrationController {
 
-    @Value("${email-verification.required}")
+    @Value("${email-verification.required}") // TODO: Change to true for prod
     private boolean emailVerificationRequired;
 
     private final UserRegistrationService userRegistrationService;

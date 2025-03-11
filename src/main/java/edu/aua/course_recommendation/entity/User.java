@@ -38,7 +38,7 @@ public class User {
     @Enumerated(EnumType.STRING)
     private Role role;
 
-    @Column(nullable = false)
+    @Column
     @Enumerated(EnumType.STRING)
     private Department department;
 
