@@ -1,9 +1,7 @@
 package edu.aua.course_recommendation.entity;
 
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.*;
 
@@ -11,7 +9,8 @@ import java.util.*;
 @Table(name = "courses")
 @Getter
 @Setter
-@NoArgsConstructor
+@NoArgsConstructor @AllArgsConstructor
+@Builder
 public class Course {
 
     @Id
@@ -30,13 +29,12 @@ public class Course {
     @Column(nullable = false)
     private Integer credits;
 
-    @ManyToMany
-    @JoinTable(
-            name = "course_prerequisites",
-            joinColumns = @JoinColumn(name = "course_code"),
-            inverseJoinColumns = @JoinColumn(name = "prerequisite_code")
-    )
-    private Set<Course> prerequisites = new HashSet<>();
+    @ElementCollection
+    @CollectionTable(name = "course_prerequisites",
+            joinColumns = @JoinColumn(name = "course_code", referencedColumnName = "code"))
+    @Column(name = "prerequisite_code")
+    @Builder.Default
+    private Set<String> prerequisites = new HashSet<>();
 
     @ElementCollection
     @CollectionTable(name = "course_clusters", joinColumns = @JoinColumn(name = "course_id"))

@@ -1,6 +1,6 @@
 package edu.aua.course_recommendation.service;
 
-import edu.aua.course_recommendation.exception.ValidationException;
+import edu.aua.course_recommendation.exceptions.ValidationException;
 import edu.aua.course_recommendation.entity.User;
 import edu.aua.course_recommendation.model.Role;
 import edu.aua.course_recommendation.repository.UserRepository;

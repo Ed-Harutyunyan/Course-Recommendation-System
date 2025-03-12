@@ -10,11 +10,11 @@ CREATE TABLE courses (
 );
 
 CREATE TABLE course_prerequisites (
-    course_id BINARY(16) NOT NULL,
-    prerequisite_id BINARY(16) NOT NULL,
-    PRIMARY KEY (course_id, prerequisite_id),
-    CONSTRAINT fk_course FOREIGN KEY (course_id) REFERENCES courses(id),
-    CONSTRAINT fk_prerequisite FOREIGN KEY (prerequisite_id) REFERENCES courses(id)
+    course_code VARCHAR(255) NOT NULL,
+    prerequisite_code VARCHAR(255) NOT NULL,
+    PRIMARY KEY (course_code, prerequisite_code),
+    CONSTRAINT fk_course_prereq FOREIGN KEY (course_code) REFERENCES courses(code),
+    CONSTRAINT fk_prereq_code FOREIGN KEY (prerequisite_code) REFERENCES courses(code)
 );
 
 CREATE TABLE course_clusters (

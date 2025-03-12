@@ -10,4 +10,7 @@ import java.util.UUID;
 @Repository
 public interface  CourseRepository extends JpaRepository<Course, UUID> {
     Optional<Course> findCourseById(UUID courseId);
+    Optional<Course> findCourseByCode(String courseCode);
+
+    boolean existsByCode(String code);
 }
