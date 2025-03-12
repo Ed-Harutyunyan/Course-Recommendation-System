@@ -9,7 +9,6 @@ CREATE TABLE courses (
     UNIQUE KEY uk_course_code (code)
 );
 
--- Create join table for prerequisites (ManyToMany relationship)
 CREATE TABLE course_prerequisites (
     course_code VARCHAR(255) NOT NULL,
     prerequisite_code VARCHAR(255) NOT NULL,
@@ -18,7 +17,6 @@ CREATE TABLE course_prerequisites (
     CONSTRAINT fk_prereq_code FOREIGN KEY (prerequisite_code) REFERENCES courses(code)
 );
 
--- Create collection table for course clusters
 CREATE TABLE course_clusters (
     course_id BINARY(16) NOT NULL,
     cluster INT NOT NULL,
