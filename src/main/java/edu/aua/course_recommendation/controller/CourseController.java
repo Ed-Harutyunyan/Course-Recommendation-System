@@ -1,5 +1,10 @@
 package edu.aua.course_recommendation.controller;
 
+import edu.aua.course_recommendation.dto.CourseDto;
+import edu.aua.course_recommendation.entity.Course;
+import edu.aua.course_recommendation.service.CourseService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -11,10 +16,12 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/course")
 public class CourseController {
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
+    private final CourseService courseService;
 
     @GetMapping("/details")
     public ResponseEntity<Map<String, Object>> getCourseDetails() {
@@ -44,5 +51,20 @@ public class CourseController {
         }
 
         return ResponseEntity.ok("JSON received and saved successfully");
+    }
+
+    @PostMapping("/create")
+    public ResponseEntity<String> createCourse(@RequestBody Map<String, Object> payload) {
+        try {
+            CourseDto courseDto = objectMapper.convertValue(payload, CourseDto.class);
+
+            Course createdCourse = courseService.createCourse(courseDto);
+
+            return ResponseEntity.status(HttpStatus.CREATED)
+                    .body("Course created successfully with code: " + createdCourse.getCode());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Error creating course: " + e.getMessage());
+        }
     }
 }

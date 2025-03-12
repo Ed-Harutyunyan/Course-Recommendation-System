@@ -1,6 +1,6 @@
 package edu.aua.course_recommendation.service;
 
-import edu.aua.course_recommendation.exception.EmailVerificationException;
+import edu.aua.course_recommendation.exceptions.EmailVerificationException;
 import edu.aua.course_recommendation.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;

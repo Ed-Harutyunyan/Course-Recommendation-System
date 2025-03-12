@@ -1,4 +1,4 @@
-package edu.aua.course_recommendation.exception;
+package edu.aua.course_recommendation.exceptions;
 
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
