@@ -1,25 +1,22 @@
 package edu.aua.course_recommendation.entity;
 
-import edu.aua.course_recommendation.model.Campus;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.util.UUID;
 
 @Entity
 @Table(name = "course_offerings")
-@Getter
-@Setter
-@NoArgsConstructor
+@Getter @Setter
+@NoArgsConstructor @AllArgsConstructor
+@Builder
 public class CourseOffering {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    // Reference to the immutable Course information
+    // Reference to the base Course
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "course_id", nullable = false)
     private Course baseCourse;
@@ -31,8 +28,7 @@ public class CourseOffering {
     private String session;  // e.g., "15w" for a 15-week course
 
     @Column(nullable = false)
-    @Enumerated(EnumType.STRING)
-    private Campus campus;
+    private String campus;
 
     // Association to the Instructor
     @ManyToOne
