@@ -1,4 +1,4 @@
-package edu.aua.course_recommendation.mapper;
+package edu.aua.course_recommendation.mappers;
 
 import edu.aua.course_recommendation.dto.UserProfileDto;
 import edu.aua.course_recommendation.entity.User;

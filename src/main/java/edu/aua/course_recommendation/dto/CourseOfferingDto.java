@@ -1,25 +1,27 @@
 package edu.aua.course_recommendation.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.List;
 
 public record CourseOfferingDto(
-        String courseTitle,
-        String courseCode,
-        String prerequisites,
-        String section,
-        String session,
-        Integer credits,
-        String campus,
-        String instructor,
-        String times,
-        String takenSeats,
-        String spacesWaiting,
-        String deliveryMethod,
-        String distLearning,
-        String location,
-        String year,
-        String semester,
-        String courseDescription,
-        List<Integer> clusters
+        @JsonProperty("course_title") String courseTitle,
+        @JsonProperty("course_code") String courseCode,
+        @JsonProperty("prerequisites") String prerequisites,
+        @JsonProperty("section") String section,
+        @JsonProperty("session") String session,
+        @JsonProperty("credits") Integer credits,
+        @JsonProperty("campus") String campus,
+        @JsonProperty("instructor") String instructor,
+        @JsonProperty("times") String times,
+        @JsonProperty("taken_seats") String takenSeats,
+        @JsonProperty("spaces_waiting") String spacesWaiting,
+        @JsonProperty("delivery_method") String deliveryMethod,
+        @JsonProperty("dist_learning") String distLearning,
+        @JsonProperty("location") String location,
+        @JsonProperty("year") String year,
+        @JsonProperty("semester") String semester,
+        @JsonProperty("course_description") String courseDescription,
+        @JsonProperty("clusters") List<Integer> clusters
 ) {}
 

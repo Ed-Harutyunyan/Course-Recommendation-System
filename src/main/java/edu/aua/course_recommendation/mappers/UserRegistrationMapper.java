@@ -1,4 +1,4 @@
-package edu.aua.course_recommendation.mapper;
+package edu.aua.course_recommendation.mappers;
 
 import edu.aua.course_recommendation.dto.request.RegistrationRequestDto;
 import edu.aua.course_recommendation.dto.response.RegistrationResponseDto;

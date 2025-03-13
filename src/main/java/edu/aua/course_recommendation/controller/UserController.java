@@ -1,7 +1,7 @@
 package edu.aua.course_recommendation.controller;
 
 import edu.aua.course_recommendation.dto.UserProfileDto;
-import edu.aua.course_recommendation.mapper.UserMapper;
+import edu.aua.course_recommendation.mappers.UserMapper;
 import edu.aua.course_recommendation.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
