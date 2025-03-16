@@ -28,5 +28,10 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
     }
 
+    @ExceptionHandler(EnrollmentException.class)
+    public ResponseEntity<String> handleEnrollmentException(EnrollmentException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+    }
+
     // TODO: Add other exceptions here as well.
 }
