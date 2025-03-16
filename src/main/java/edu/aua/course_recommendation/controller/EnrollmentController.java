@@ -17,15 +17,15 @@ public class EnrollmentController {
 
     private final EnrollmentService enrollmentService;
 
-    @PostMapping("/{studentId}/enroll/{courseId}")
-    public ResponseEntity<String> enroll(@PathVariable final UUID studentId, @PathVariable final UUID courseId) {
-        enrollmentService.enroll(studentId, courseId);
+    @PostMapping("/{studentId}/enroll/{courseOfferingId}")
+    public ResponseEntity<String> enroll(@PathVariable final UUID studentId, @PathVariable final UUID courseOfferingId) {
+        enrollmentService.enroll(studentId, courseOfferingId);
         return ResponseEntity.ok("Enrolled successfully");
     }
     
-    @PostMapping("/{studentId}/drop/{courseId}")
-    public ResponseEntity<String> drop(@PathVariable final UUID studentId, @PathVariable final UUID courseId) {
-        enrollmentService.drop(studentId, courseId);
+    @PostMapping("/{studentId}/drop/{courseOfferingId}")
+    public ResponseEntity<String> drop(@PathVariable final UUID studentId, @PathVariable final UUID courseOfferingId) {
+        enrollmentService.drop(studentId, courseOfferingId);
         return ResponseEntity.ok("Course dropped successfully");
     }
 }

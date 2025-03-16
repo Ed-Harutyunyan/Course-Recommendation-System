@@ -6,6 +6,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
+@Table(name = "enrollments")
 @Getter @Setter
 @NoArgsConstructor
 public class Enrollment {
@@ -19,13 +20,10 @@ public class Enrollment {
     private User user;
 
     @ManyToOne
-    @MapsId("courseId")
-    @JoinColumn(name = "course_id", columnDefinition = "BINARY(16)")
-    private Course course;
+    @MapsId("courseOfferingId")
+    @JoinColumn(name = "course_offering_id", columnDefinition = "BINARY(16)")
+    private CourseOffering courseOffering;
 
     @Column(name = "grade", nullable = false)
     private String grade;
-
-    @Column(name = "semester", nullable = false)
-    private String semester;
 }
