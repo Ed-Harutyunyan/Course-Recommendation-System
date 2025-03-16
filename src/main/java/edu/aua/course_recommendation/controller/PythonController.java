@@ -6,7 +6,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("api/python")
@@ -15,10 +14,11 @@ public class PythonController {
 
     private final PythonService pythonService;
 
-    @PostMapping("/send")
-    public String sendPython(@RequestBody Map<String, Object> data) {
-        return pythonService.sendTest(data);
-    }
+//    Testing only
+//    @PostMapping("/send")
+//    public String sendPython(@RequestBody Map<String, Object> data) {
+//        return pythonService.sendTest(data);
+//    }
 
     @PostMapping("/newCourses")
     public String newCourses(@RequestBody List<CourseDto> data) {
