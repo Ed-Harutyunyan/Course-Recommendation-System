@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -58,6 +59,10 @@ public class CourseController {
         return ResponseEntity.ok("JSON received and saved successfully");
     }
 
+    //
+    // COURSES
+    //
+
     @GetMapping
     public ResponseEntity<Course> getCourseByCode(@RequestParam String code) {
         return ResponseEntity.ok(courseService.getCourseByCode(code));
@@ -73,26 +78,56 @@ public class CourseController {
     // Other data in the JSON will be stored along with a reference to this course
     // in course offering
     @PostMapping("/create")
-    @Transactional
     public ResponseEntity<String> createCourse(@RequestBody CourseDto courseDto) {
         Course createdCourse = courseService.createCourse(courseDto);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body("Course created successfully with code: " + createdCourse.getCode());
     }
 
-    @PostMapping("/create-offering")
-    @Transactional
+    @DeleteMapping("/delete")
+    public ResponseEntity<String> deleteCourse(@RequestParam String code) {
+        courseService.deleteCourse(code);
+        return ResponseEntity.ok("Course deleted successfully");
+    }
+
+    /*
+     * OFFERINGS RELATED ENDPOINTS
+     */
+
+    @GetMapping("/offering/all")
+    public ResponseEntity<List<CourseOffering>> getAllCourseOfferings() {
+        return ResponseEntity.ok(courseOfferingService.getAllCourseOfferings());
+    }
+
+    @GetMapping("/offering")
+    public ResponseEntity<CourseOffering> getCourseOfferingById(@RequestParam UUID id) {
+        return ResponseEntity.ok(courseOfferingService.getCourseOfferingById(id));
+    }
+
+    @PostMapping("/offering/create")
     public ResponseEntity<String> createCourseOffering(@RequestBody CourseOfferingDto offeringDto) {
         CourseOffering offering = courseOfferingService.createCourseOffering(offeringDto);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body("Course offering created for Course with code: " + offering.getBaseCourse().getCode());
     }
 
-    @DeleteMapping("/delete")
-    @Transactional
-    public ResponseEntity<String> deleteCourse(@RequestParam String code) {
-        courseService.deleteCourse(code);
-        return ResponseEntity.ok("Course deleted successfully");
+    @PostMapping("/offering/create/all")
+    public ResponseEntity<String> createCourseOfferings(@RequestBody List<CourseOfferingDto> courseOfferingDtos) {
+        List<CourseOffering> createdOfferings = courseOfferingService.createCourseOfferings(courseOfferingDtos);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body("Course offerings created successfully: " + createdOfferings.size());
+    }
+
+    @DeleteMapping("/offering/delete/all")
+    public ResponseEntity<String> deleteAllCourseOfferings() {
+        courseOfferingService.deleteAllCourseOfferings();
+        return ResponseEntity.ok("All course offerings deleted successfully");
+    }
+
+    @DeleteMapping("/offering/delete")
+    public ResponseEntity<String> deleteCourseOffering(@RequestParam UUID id) {
+        courseOfferingService.deleteCourseOfferingById(id);
+        return ResponseEntity.ok("Course offering deleted successfully");
     }
 
 }
