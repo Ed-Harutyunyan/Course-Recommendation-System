@@ -16,7 +16,7 @@ public class PythonController {
 
 //    Testing only
 //    @PostMapping("/send")
-//    public String sendPython(@RequestBody Map<String, Object> data) {
+//    public String sendPython(@RequestBody List<CourseDto> data) {
 //        return pythonService.sendTest(data);
 //    }
 
