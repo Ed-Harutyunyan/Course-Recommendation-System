@@ -1,4 +1,4 @@
-package edu.aua.course_recommendation.service;
+package edu.aua.course_recommendation.service.auth;
 
 import edu.aua.course_recommendation.exceptions.EmailVerificationException;
 import edu.aua.course_recommendation.repository.UserRepository;

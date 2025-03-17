@@ -3,7 +3,7 @@ package edu.aua.course_recommendation.config;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
-import edu.aua.course_recommendation.service.JwtService;
+import edu.aua.course_recommendation.service.auth.JwtService;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.beans.factory.annotation.Value;

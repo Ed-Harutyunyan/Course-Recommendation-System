@@ -21,7 +21,7 @@ public class EnrollmentId implements Serializable {
     @Column(name = "user_id", columnDefinition = "BINARY(16)")
     private UUID userId;
 
-    @Column(name = "course_offering_id", columnDefinition = "BINARY(16)")
-    private UUID courseOfferingId;
+    @Column(name = "course_id", columnDefinition = "BINARY(16)")
+    private UUID courseId;
 
 }

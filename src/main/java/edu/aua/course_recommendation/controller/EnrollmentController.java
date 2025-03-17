@@ -1,6 +1,6 @@
 package edu.aua.course_recommendation.controller;
 
-import edu.aua.course_recommendation.service.EnrollmentService;
+import edu.aua.course_recommendation.service.course.EnrollmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -14,15 +14,15 @@ public class EnrollmentController {
 
     private final EnrollmentService enrollmentService;
 
-    @PostMapping("/{studentId}/enroll/{courseOfferingId}")
-    public ResponseEntity<String> enroll(@PathVariable final UUID studentId, @PathVariable final UUID courseOfferingId) {
-        enrollmentService.enroll(studentId, courseOfferingId);
+    @PostMapping("/{studentId}/enroll/{courseId}")
+    public ResponseEntity<String> enroll(@PathVariable final UUID studentId, @PathVariable final UUID courseId) {
+        enrollmentService.enroll(studentId, courseId);
         return ResponseEntity.ok("Enrolled successfully");
     }
     
-    @DeleteMapping("/{studentId}/drop/{courseOfferingId}")
-    public ResponseEntity<String> drop(@PathVariable final UUID studentId, @PathVariable final UUID courseOfferingId) {
-        enrollmentService.drop(studentId, courseOfferingId);
+    @DeleteMapping("/{studentId}/drop/{courseId}")
+    public ResponseEntity<String> drop(@PathVariable final UUID studentId, @PathVariable final UUID courseId) {
+        enrollmentService.drop(studentId, courseId);
         return ResponseEntity.ok("Course dropped successfully");
     }
 }

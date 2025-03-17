@@ -4,9 +4,8 @@ import edu.aua.course_recommendation.dto.CourseDto;
 import edu.aua.course_recommendation.dto.CourseOfferingDto;
 import edu.aua.course_recommendation.entity.Course;
 import edu.aua.course_recommendation.entity.CourseOffering;
-import edu.aua.course_recommendation.service.CourseOfferingService;
-import edu.aua.course_recommendation.service.CourseService;
-import jakarta.transaction.Transactional;
+import edu.aua.course_recommendation.service.course.CourseOfferingService;
+import edu.aua.course_recommendation.service.course.CourseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -59,9 +58,9 @@ public class CourseController {
         return ResponseEntity.ok("JSON received and saved successfully");
     }
 
-    //
-    // COURSES
-    //
+    /*
+     * BASE COURSE RELATED ENDPOINTS
+     */
 
     @GetMapping
     public ResponseEntity<Course> getCourseByCode(@RequestParam String code) {

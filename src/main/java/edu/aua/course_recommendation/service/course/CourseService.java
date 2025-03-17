@@ -1,4 +1,4 @@
-package edu.aua.course_recommendation.service;
+package edu.aua.course_recommendation.service.course;
 
 import edu.aua.course_recommendation.dto.CourseDto;
 import edu.aua.course_recommendation.entity.Course;
