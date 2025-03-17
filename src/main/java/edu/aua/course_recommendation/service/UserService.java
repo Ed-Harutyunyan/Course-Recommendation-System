@@ -3,7 +3,9 @@ package edu.aua.course_recommendation.service;
 import edu.aua.course_recommendation.entity.User;
 import edu.aua.course_recommendation.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -22,9 +24,21 @@ public class UserService {
     }
 
     // Returns the currently authenticated user
-    public User getUser() {
-        return SecurityContextHolder.getContext().getAuthentication().getPrincipal() instanceof User user
-                ? user
-                : null;
+    public User getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null) {
+            return null;
+        }
+
+        // By default, principal is a Jwt when using the Spring Security OAuth2 Resource Server
+        Object principal = authentication.getPrincipal();
+        if (principal instanceof Jwt jwt) {
+            // Typically, 'sub' is the username or unique identifier
+            String username = jwt.getClaimAsString("sub");
+            // Fetch the user from the database using the username
+            return userRepository.findByUsername(username).orElse(null);
+        }
+
+        return null;
     }
 }

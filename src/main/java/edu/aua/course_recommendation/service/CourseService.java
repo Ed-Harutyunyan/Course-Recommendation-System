@@ -17,7 +17,6 @@ public class CourseService {
     
     private final CourseRepository courseRepository;
 
-
     // Create a BASE Course
     // Separate from CourseOffering
     public Course createCourse(CourseDto courseDto) {

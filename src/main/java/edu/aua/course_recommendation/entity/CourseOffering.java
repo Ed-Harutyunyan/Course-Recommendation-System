@@ -1,5 +1,6 @@
 package edu.aua.course_recommendation.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -19,6 +20,7 @@ public class CourseOffering {
     // Reference to the base Course
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "course_id", nullable = false)
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler", "offerings"})
     private Course baseCourse;
 
     @Column(nullable = false)
@@ -33,6 +35,7 @@ public class CourseOffering {
     // Association to the Instructor
     @ManyToOne
     @JoinColumn(name = "instructor_id", nullable = false)
+    @JsonIgnoreProperties("courseOfferings")
     private Instructor instructor;
 
     @Column(nullable = false)
