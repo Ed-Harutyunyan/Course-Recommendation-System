@@ -62,6 +62,11 @@ public abstract class BaseDegreeAuditService {
         return Math.max(0, 4 - (int) completedCount);
     }
 
+    /*
+     * Check for general education requirements
+     * Since this requirement can be completed in different ways
+     * Not sure if this should return one possible way or all possible ways (probably all)
+     */
     protected List<String> checkGeneralEducationRequirements(UUID studentId) {
         return null;
     }

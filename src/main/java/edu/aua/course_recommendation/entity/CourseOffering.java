@@ -11,6 +11,11 @@ import java.util.UUID;
 @Getter @Setter
 @NoArgsConstructor @AllArgsConstructor
 @Builder
+/*
+    * The CourseOffering entity represents a specific offering of a Course.
+    * This class should ONLY be used for
+    *   Adding new semester data
+ */
 public class CourseOffering {
 
     @Id
