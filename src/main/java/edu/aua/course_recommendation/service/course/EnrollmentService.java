@@ -1,4 +1,4 @@
-package edu.aua.course_recommendation.service;
+package edu.aua.course_recommendation.service.course;
 
 import edu.aua.course_recommendation.entity.*;
 import edu.aua.course_recommendation.exceptions.AuthenticationException;
@@ -7,12 +7,14 @@ import edu.aua.course_recommendation.exceptions.EnrollmentException;
 import edu.aua.course_recommendation.model.Role;
 import edu.aua.course_recommendation.repository.CourseOfferingRepository;
 import edu.aua.course_recommendation.repository.EnrollmentRepository;
+import edu.aua.course_recommendation.service.auth.UserService;
 import jakarta.transaction.Transactional;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -24,7 +26,7 @@ public class EnrollmentService {
     private final EnrollmentRepository enrollmentRepository;
 
     @Transactional
-    public void enroll(final UUID studentId, final UUID courseOfferingId) {
+    public void enroll(final UUID studentId, final UUID courseOfferingId, String grade) {
         StudentAndCourseOffering studentAndCourse = validateAndFetch(studentId, courseOfferingId);
         User student = studentAndCourse.getStudent();
         CourseOffering courseOffering = studentAndCourse.getCourseOffering();
@@ -44,11 +46,17 @@ public class EnrollmentService {
 
         Enrollment enrollment = new Enrollment();
         enrollment.setId(enrollmentId);
-        enrollment.setGrade("N/A");
+        enrollment.setGrade(grade);
         enrollment.setUser(student);
         enrollment.setCourseOffering(courseOffering);
 
         enrollmentRepository.save(enrollment);
+    }
+
+    // Not providing a grade sets it to N/A
+    @Transactional
+    public void enroll(final UUID studentId, final UUID courseOfferingId) {
+        enroll(studentId, courseOfferingId, "N/A");
     }
 
     @Transactional
@@ -63,6 +71,23 @@ public class EnrollmentService {
 
         enrollmentRepository.deleteByUserAndCourseOffering(student, courseOffering);
     }
+
+    // This returns all the course *codes* that the student didn't get a
+    // W or F grade in
+    public List<String> getCompletedCourseCodes(UUID studentId) {
+        return enrollmentRepository.findByUser_Id(studentId).stream()
+                .filter(e -> isPassingGrade(e.getGrade()))
+                .map(e -> e.getCourseOffering().getBaseCourse().getCode())
+                .toList();
+    }
+
+    // By default, each grade is set to "N/A"
+    // So the hardcoded logic of NOT "F" and NOT "W" is used to determine if a grade is passing
+    // Might be better to just assume each course selected by student is already passed
+    private boolean isPassingGrade(String grade) {
+        return !"F".equalsIgnoreCase(grade) && !"W".equalsIgnoreCase(grade);
+    }
+
 
     // Validates the authenticated user against the provided studentId and fetches the course.
     private StudentAndCourseOffering validateAndFetch(UUID studentId, UUID courseOfferingId) {

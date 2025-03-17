@@ -2,7 +2,7 @@ package edu.aua.course_recommendation.controller;
 
 import edu.aua.course_recommendation.dto.request.AuthenticationRequestDto;
 import edu.aua.course_recommendation.dto.response.AuthenticationResponseDto;
-import edu.aua.course_recommendation.service.AuthenticationService;
+import edu.aua.course_recommendation.service.auth.AuthenticationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
