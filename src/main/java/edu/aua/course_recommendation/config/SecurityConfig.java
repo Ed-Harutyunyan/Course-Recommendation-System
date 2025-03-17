@@ -31,6 +31,7 @@ public class SecurityConfig {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/api/python/**").permitAll()
                         .requestMatchers("/api/auth/**").permitAll() // Should be open
                         .requestMatchers("/api/course/**").permitAll() // Open for testing
                         .requestMatchers("/api/instructor/**").permitAll() // Open for testing
