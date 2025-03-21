@@ -2,6 +2,7 @@ package edu.aua.course_recommendation.controller;
 
 import edu.aua.course_recommendation.dto.CourseDto;
 import edu.aua.course_recommendation.dto.CourseOfferingDto;
+import edu.aua.course_recommendation.dto.RecommendationDto;
 import edu.aua.course_recommendation.entity.Course;
 import edu.aua.course_recommendation.entity.CourseOffering;
 import edu.aua.course_recommendation.service.course.CourseOfferingService;
@@ -40,7 +41,7 @@ public class CourseController {
     }
 
     @PostMapping("/recommendations")
-    public ResponseEntity<String> postRecommendedCourses(@RequestBody List<Map<String, Object>> payload) {
+    public ResponseEntity<String> postRecommendedCourses(@RequestBody RecommendationDto payload) {
         File file = new File("src/main/resources/data/received_payload.json");
 
         try {
