@@ -13,6 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -96,5 +98,11 @@ public class CourseService {
     @Transactional
     public void deleteAllCourses() {
         courseRepository.deleteAll();
+    }
+
+    // All courses that code's begin with "FND110"
+    @Transactional
+    public Set<Course> getAllPhysedCourses() {
+        return getAllCourses().stream().filter(course -> course.getCode().startsWith("FND110")).collect(Collectors.toSet());
     }
 }

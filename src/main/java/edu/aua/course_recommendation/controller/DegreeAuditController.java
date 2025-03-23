@@ -3,10 +3,8 @@ package edu.aua.course_recommendation.controller;
 import edu.aua.course_recommendation.model.DegreeAuditMultiScenarioResult;
 import edu.aua.course_recommendation.model.Department;
 import edu.aua.course_recommendation.model.NeededCluster;
-import edu.aua.course_recommendation.repository.UserRepository;
 import edu.aua.course_recommendation.service.audit.BaseDegreeAuditService;
 import edu.aua.course_recommendation.service.audit.CSDegreeAuditService;
-import edu.aua.course_recommendation.service.audit.GenedClusteringService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,8 +17,7 @@ public class DegreeAuditController {
     private final Map<Department, BaseDegreeAuditService> deptServices;
 
     public DegreeAuditController(
-            CSDegreeAuditService csService,
-            UserRepository userRepository) {
+            CSDegreeAuditService csService) {
         Map<Department, BaseDegreeAuditService> map = new HashMap<>();
         map.put(Department.CS, csService);
         // map.put(Department.BUSINESS, businessService);
@@ -28,6 +25,7 @@ public class DegreeAuditController {
         this.deptServices = Collections.unmodifiableMap(map);
     }
 
+    // Department must correspond to Enum
     @GetMapping("/{department}/{studentId}")
     public ResponseEntity<DegreeAuditMultiScenarioResult> auditDegree(
             @PathVariable("department") Department department,
@@ -63,14 +61,13 @@ public class DegreeAuditController {
             @PathVariable("department") Department department,
             @PathVariable UUID studentId
     ) {
-        // 1. Fetch the appropriate BaseDegreeAuditService for this department
         BaseDegreeAuditService service = deptServices.get(department);
         if (service == null) {
             return ResponseEntity.badRequest()
                     .body(Map.of("error", "No audit service for department: " + department));
         }
-        List<GenedClusteringService.ClusterSolution> result = service.checkGeneralEducationRequirements(studentId);
-        return ResponseEntity.ok(result);
+
+        return ResponseEntity.ok(service.checkGeneralEducationRequirementsDetailed(studentId));
     }
 
     @GetMapping("{department}/gened/missing/{studentId}")
@@ -78,7 +75,6 @@ public class DegreeAuditController {
             @PathVariable("department") Department department,
             @PathVariable UUID studentId
     ) {
-        // 1. Fetch the appropriate BaseDegreeAuditService for this department
         BaseDegreeAuditService service = deptServices.get(department);
         if (service == null) {
             return ResponseEntity.badRequest()

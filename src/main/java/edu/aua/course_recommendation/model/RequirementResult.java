@@ -12,7 +12,8 @@ public class RequirementResult {
 
     private String requirementName; // This should be changed to ENUM
     private boolean isSatisfied;
-    private Set<String> missingCourseCodes;
+    private Set<String> possibleCourseCodes;
+    private int howManyLeft;
 
 
 }

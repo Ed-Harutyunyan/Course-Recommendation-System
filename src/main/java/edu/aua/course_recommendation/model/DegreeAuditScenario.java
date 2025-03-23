@@ -4,17 +4,15 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @AllArgsConstructor
 @Getter @Setter
 public class DegreeAuditScenario {
 
-    // This should be changed to include all degrees
-    private DegreeScenarioType degreeScenarioType; // e.g MATH_MODELING, APPLIED_CS, GENERAL
+    private DegreeScenarioType degreeScenarioType;
 
-    private List<RequirementResult> scenarioRequirements = new ArrayList<>();
+    private List<RequirementResult> scenarioRequirements;
 
     private boolean isSatisfied;
 

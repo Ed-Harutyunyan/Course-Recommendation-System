@@ -47,31 +47,7 @@ public class CourseOfferingService {
                     courseOfferingDto.semester());
         }
 
-        System.out.println("DTO: " + courseOfferingDto);
-
-        Course baseCourse = courseService.getOrCreateCourse(courseMapper.toCourseDto(courseOfferingDto));
-        System.out.println("baseCourse: " + baseCourse);
-
-        Instructor instructor = instructorService.getOrCreateInstructor(courseOfferingDto.instructor());
-        System.out.println("instructor: " + instructor);
-
-        // Some of the fields that are saved here really serve 0 purpose and are probably best removed
-        // e.g takenSeats, spacesWaiting
-        CourseOffering courseOffering = CourseOffering.builder()
-                .baseCourse(baseCourse)
-                .section(courseOfferingDto.section())
-                .session(courseOfferingDto.session())
-                .campus(courseOfferingDto.campus())
-                .instructor(instructor)
-                .times(courseOfferingDto.times())
-                .takenSeats(courseOfferingDto.takenSeats())
-                .spacesWaiting(courseOfferingDto.spacesWaiting())
-                .deliveryMethod(courseOfferingDto.deliveryMethod())
-                .distLearning(courseOfferingDto.distLearning())
-                .location(courseOfferingDto.location())
-                .year(courseOfferingDto.year())
-                .semester(courseOfferingDto.semester())
-                .build();
+        CourseOffering courseOffering = createCourseOfferingWithBaseCourseAndInstructor(courseOfferingDto);
 
         return courseOfferingRepository.save(courseOffering);
     }
@@ -90,29 +66,33 @@ public class CourseOfferingService {
                 continue; // Skip if already exists
             }
 
-            Course baseCourse = courseService.getOrCreateCourse(courseMapper.toCourseDto(dto));
-            Instructor instructor = instructorService.getOrCreateInstructor(dto.instructor());
-
-            CourseOffering courseOffering = CourseOffering.builder()
-                    .baseCourse(baseCourse)
-                    .section(dto.section())
-                    .session(dto.session())
-                    .campus(dto.campus())
-                    .instructor(instructor)
-                    .times(dto.times())
-                    .takenSeats(dto.takenSeats())
-                    .spacesWaiting(dto.spacesWaiting())
-                    .deliveryMethod(dto.deliveryMethod())
-                    .distLearning(dto.distLearning())
-                    .location(dto.location())
-                    .year(dto.year())
-                    .semester(dto.semester())
-                    .build();
+            CourseOffering courseOffering = createCourseOfferingWithBaseCourseAndInstructor(dto);
 
             createdOfferings.add(courseOffering);
         }
 
         return courseOfferingRepository.saveAll(createdOfferings); // Saves all at once
+    }
+
+    private CourseOffering createCourseOfferingWithBaseCourseAndInstructor(CourseOfferingDto dto) {
+        Course baseCourse = courseService.getOrCreateCourse(courseMapper.toCourseDto(dto));
+        Instructor instructor = instructorService.getOrCreateInstructor(dto.instructor());
+
+        return CourseOffering.builder()
+                .baseCourse(baseCourse)
+                .section(dto.section())
+                .session(dto.session())
+                .campus(dto.campus())
+                .instructor(instructor)
+                .times(dto.times())
+                .takenSeats(dto.takenSeats())
+                .spacesWaiting(dto.spacesWaiting())
+                .deliveryMethod(dto.deliveryMethod())
+                .distLearning(dto.distLearning())
+                .location(dto.location())
+                .year(dto.year())
+                .semester(dto.semester())
+                .build();
     }
 
 
@@ -168,4 +148,8 @@ public class CourseOfferingService {
         courseOfferingRepository.deleteAll(allOfferings);
     }
 
+    @Transactional
+    public List<CourseOffering> getCourseOfferingsByYearAndSemester(String year, String semester) {
+        return courseOfferingRepository.findByYearAndSemester(year, semester);
+    }
 }
