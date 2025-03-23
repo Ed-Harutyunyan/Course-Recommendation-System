@@ -1,5 +1,7 @@
 package edu.aua.course_recommendation.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -28,6 +30,13 @@ public class Course {
 
     @Column(nullable = false)
     private Integer credits;
+
+    @OneToMany(mappedBy = "course",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<Enrollment> enrollments = new ArrayList<>();
 
     @ElementCollection
     @CollectionTable(name = "course_prerequisites",

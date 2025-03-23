@@ -2,10 +2,10 @@ package edu.aua.course_recommendation.service.course;
 
 import edu.aua.course_recommendation.entity.*;
 import edu.aua.course_recommendation.exceptions.AuthenticationException;
+import edu.aua.course_recommendation.exceptions.CourseNotFoundException;
 import edu.aua.course_recommendation.exceptions.CourseOfferingNotFoundException;
 import edu.aua.course_recommendation.exceptions.EnrollmentException;
 import edu.aua.course_recommendation.model.Role;
-import edu.aua.course_recommendation.repository.CourseOfferingRepository;
 import edu.aua.course_recommendation.repository.CourseRepository;
 import edu.aua.course_recommendation.repository.EnrollmentRepository;
 import edu.aua.course_recommendation.service.auth.UserService;
@@ -13,11 +13,13 @@ import jakarta.transaction.Transactional;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class EnrollmentService {
@@ -56,6 +58,34 @@ public class EnrollmentService {
     @Transactional
     public void enroll(final UUID studentId, final UUID courseId) {
         enroll(studentId, courseId, "N/A");
+    }
+
+    @Transactional
+    public void enrollAll(UUID studentId) {
+        List<Course> courses = courseRepository.findAll();
+        for (Course course : courses) {
+            StudentAndCourse studentAndCourse = validateAndFetch(studentId, course.getId());
+            User student = studentAndCourse.getStudent();
+            Course validCourse = studentAndCourse.getCourse();
+
+            if (enrollmentRepository.existsByUserAndCourse(student, validCourse)) {
+                log.info("Skipping: You are already enrolled in this course: {}", validCourse.getCode());
+            }
+
+            // Make the composite key
+            EnrollmentId enrollmentId = new EnrollmentId();
+            enrollmentId.setUserId(studentId);
+            enrollmentId.setCourseId(validCourse.getId());
+
+            // Create the enrollment
+            Enrollment enrollment = new Enrollment();
+            enrollment.setId(enrollmentId);
+            enrollment.setGrade("N/A");
+            enrollment.setUser(student);
+            enrollment.setCourse(course);
+
+            enrollmentRepository.save(enrollment);
+        }
     }
 
     @Transactional
@@ -106,9 +136,26 @@ public class EnrollmentService {
             throw new EnrollmentException("Only students can enroll in courses");
         }
         Course course = courseRepository.findCourseById(courseId)
-                .orElseThrow(() -> new CourseOfferingNotFoundException("Course offering not found"));
+                .orElseThrow(() -> new CourseNotFoundException("Course not found"));
 
         return new StudentAndCourse(authenticatedUser, course);
+    }
+
+    public List<Enrollment> getEnrollments(UUID studentId) {
+        return enrollmentRepository.findByUser_Id(studentId);
+    }
+
+    public List<Course> getCourses(UUID studentId) {
+        return enrollmentRepository.findByUser_Id(studentId).stream()
+                .map(Enrollment::getCourse)
+                .toList();
+    }
+
+    public List<Course> getCompletedCourses(UUID studentId) {
+        return enrollmentRepository.findByUser_Id(studentId).stream()
+                .filter(e -> isPassingGrade(e.getGrade()))
+                .map(Enrollment::getCourse)
+                .toList();
     }
 
     @RequiredArgsConstructor

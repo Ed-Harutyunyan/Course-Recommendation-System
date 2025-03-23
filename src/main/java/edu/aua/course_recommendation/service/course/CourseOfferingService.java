@@ -76,10 +76,10 @@ public class CourseOfferingService {
         return courseOfferingRepository.save(courseOffering);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional()
     public List<CourseOffering> createCourseOfferings(List<CourseOfferingDto> courseOfferingDtos) {
         List<CourseOffering> createdOfferings = new ArrayList<>();
-
+        System.out.println(courseOfferingDtos);
         for (CourseOfferingDto dto : courseOfferingDtos) {
             Optional<CourseOffering> existingOffering =
                     courseOfferingRepository.findByBaseCourse_CodeAndYearAndSemester(

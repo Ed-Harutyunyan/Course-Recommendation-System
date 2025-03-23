@@ -1,5 +1,7 @@
 package edu.aua.course_recommendation.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,16 +21,10 @@ public class Enrollment {
     @JoinColumn(name = "user_id", columnDefinition = "BINARY(16)")
     private User user;
 
-    // TODO: This should probably be changed to store base course instead of offering
-    // How would students choose previous offerings?
-    // They can only choose from base courses
-    // Let's then use CourseOfferings for just registration / base course creation logic
-    // and allow here to optionally set what grade, year and semester they took the course
-    // MAYBE even a boolean to check if completed and maybe separately instructor
-    // Also will allow creating a custom course (enrollment) and keep this all client side
     @ManyToOne
     @MapsId("courseId")
     @JoinColumn(name = "course_id", columnDefinition = "BINARY(16)")
+    @JsonIgnoreProperties
     private Course course;
 
     @Column(name = "grade")
