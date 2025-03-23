@@ -3,6 +3,7 @@ package edu.aua.course_recommendation.service.audit;
 import edu.aua.course_recommendation.entity.Course;
 import edu.aua.course_recommendation.model.DegreeAuditMultiScenarioResult;
 import edu.aua.course_recommendation.model.DegreeAuditScenario;
+import edu.aua.course_recommendation.model.NeededCluster;
 import edu.aua.course_recommendation.model.RequirementResult;
 import edu.aua.course_recommendation.service.course.EnrollmentService;
 import lombok.RequiredArgsConstructor;
@@ -24,8 +25,6 @@ public abstract class BaseDegreeAuditService {
     protected final EnrollmentService enrollmentService;
     private final GenedClusteringService genedClusteringService;
 
-    // This should be overridden by each of the specific degree audit services
-    // It will be used below in auditStudentDegree to determine if the student has met the requirements for the specific degree
     protected abstract List<DegreeAuditScenario> checkProgramScenarios(UUID studentId);
 
     /**
@@ -90,6 +89,7 @@ public abstract class BaseDegreeAuditService {
     }
 
     /*
+     * TODO: Not implemented yet.
      * Check for general education requirements
      * Since this requirement can be completed in different ways
      * Not sure if this should return one possible way or all possible ways (probably all)
@@ -144,15 +144,11 @@ public abstract class BaseDegreeAuditService {
         return genedClusteringService.findPossibleClusterCombinations(genEdCompletedCourses, 5);
     }
 
-    /*
-     * Check for free elective requirements
-     * Since this requirement can be completed in different ways
-     * Not sure if this should return one possible way or all possible ways (probably all)
-     *
-     *
-     */
     protected RequirementResult checkFreeElectiveRequirements(UUID studentId) {
         return null;
     }
 
+    public Set<NeededCluster> getGenedMissing(UUID studentId) {
+        return genedClusteringService.findNeededClusters(enrollmentService.getCompletedCourses(studentId));
+    }
 }

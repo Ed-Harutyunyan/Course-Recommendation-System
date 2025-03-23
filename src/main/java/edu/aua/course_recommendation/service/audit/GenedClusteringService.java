@@ -1,11 +1,13 @@
 package edu.aua.course_recommendation.service.audit;
 
 import edu.aua.course_recommendation.entity.Course;
+import edu.aua.course_recommendation.model.NeededCluster;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -16,6 +18,113 @@ public class GenedClusteringService {
     private static final Set<Integer> AH_THEMES = Set.of(1, 2, 3);
     private static final Set<Integer> SS_THEMES = Set.of(4, 5, 6);
     private static final Set<Integer> QS_THEMES = Set.of(7, 8, 9);
+
+    /**
+     * Returns a set of "NeededCluster" objects describing
+     * which themes the student is short on (like "need 1 upper for theme 7").
+     */
+    public Set<NeededCluster> findNeededClusters(List<Course> completedCourses) {
+        Set<NeededCluster> needed = new HashSet<>();
+
+        // We'll do a partial analysis for AH, SS, QS
+
+        // 1. Try to form an AH triple (themes 1,2,3)
+        boolean canFormAH = false;
+        for (int theme : AH_THEMES) {
+            if (canFormTriple(completedCourses, theme)) {
+                canFormAH = true;
+                break;
+            }
+        }
+        if (!canFormAH) {
+            // If we can't form a triple in ANY AH theme,
+            // let's see which theme is "closest" or which theme we might want to fill
+            needed.addAll(analyzeThemeShortage(completedCourses, AH_THEMES));
+        }
+
+        // 2. Try to form SS triple
+        boolean canFormSS = false;
+        for (int theme : SS_THEMES) {
+            if (canFormTriple(completedCourses, theme)) {
+                canFormSS = true;
+                break;
+            }
+        }
+        if (!canFormSS) {
+            needed.addAll(analyzeThemeShortage(completedCourses, SS_THEMES));
+        }
+
+        // 3. Try to form QS triple
+        boolean canFormQS = false;
+        for (int theme : QS_THEMES) {
+            if (canFormTriple(completedCourses, theme)) {
+                canFormQS = true;
+                break;
+            }
+        }
+        if (!canFormQS) {
+            needed.addAll(analyzeThemeShortage(completedCourses, QS_THEMES));
+        }
+
+        return needed;
+    }
+
+    private Set<NeededCluster> analyzeThemeShortage(List<Course> courses, Set<Integer> sectorThemes) {
+        Set<NeededCluster> needed = new HashSet<>();
+
+        for (int theme : sectorThemes) {
+            // If I can't form a triple with this theme,
+            // let's see how close we are.
+            if (canFormTriple(courses, theme)) {
+                // We can form a triple in this theme => not missing
+                continue;
+            }
+            // else let's do partial analysis
+            needed.add(analyzeSingleTheme(courses, theme));
+        }
+
+        return needed;
+    }
+
+    private NeededCluster analyzeSingleTheme(List<Course> courses, int theme) {
+        // 1. Filter courses that contain 'theme'
+        List<Course> filtered = courses.stream()
+                .filter(c -> c.getClusters().contains(theme))
+                .toList();
+
+        // 2. Count how many lower vs upper
+        int lowerCount = 0, upperCount = 0;
+        for (Course c : filtered) {
+            if (isLowerDivision(c)) lowerCount++;
+            else if (isUpperDivision(c)) upperCount++;
+        }
+
+        // 3. We want a triple => total 3 courses, at least 1 lower, 1 upper
+        // Cases:
+        //  - if lowerCount == 0 => definitely missing at least 1 lower
+        //  - if upperCount == 0 => missing at least 1 upper
+        //  - if lowerCount + upperCount < 3 => missing some total
+        // We'll store that info in a new "NeededCluster" object
+
+        // for simplicity:
+        NeededCluster needed = new NeededCluster();
+        needed.setTheme(theme);
+
+        if (lowerCount < 1) {
+            needed.setMissingLower(1 - lowerCount); // at least 1
+        }
+        if (upperCount < 1) {
+            needed.setMissingUpper(1 - upperCount);
+        }
+        int total = lowerCount + upperCount;
+        if (total < 3) {
+            needed.setMissingTotal(3 - total);
+        }
+
+        return needed;
+    }
+
+
 
     /**
      * Quickly checks if the GenEd requirement is met.
@@ -32,6 +141,7 @@ public class GenedClusteringService {
      * Finds up to 'maxSolutions' possible ways to form the 3 GenEd clusters
      * (AH, SS, QS). Each cluster must have exactly 3 courses sharing a single theme,
      * with at least 1 lower-division and 1 upper-division course.
+     * @return [] if no clusters
      */
     public List<ClusterSolution> findPossibleClusterCombinations(List<Course> completedCourses, int maxSolutions) {
         List<ClusterSolution> solutions = new ArrayList<>();
@@ -145,6 +255,12 @@ public class GenedClusteringService {
             }
         }
         return valid;
+    }
+
+    // Can a valid cluster be formed for courses
+    private boolean canFormTriple(List<Course> courses, int theme) {
+        List<List<Course>> valid = findValidTriples(courses, theme);
+        return !valid.isEmpty();
     }
 
     /**

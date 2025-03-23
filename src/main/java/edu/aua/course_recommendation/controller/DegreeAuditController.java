@@ -2,6 +2,7 @@ package edu.aua.course_recommendation.controller;
 
 import edu.aua.course_recommendation.model.DegreeAuditMultiScenarioResult;
 import edu.aua.course_recommendation.model.Department;
+import edu.aua.course_recommendation.model.NeededCluster;
 import edu.aua.course_recommendation.repository.UserRepository;
 import edu.aua.course_recommendation.service.audit.BaseDegreeAuditService;
 import edu.aua.course_recommendation.service.audit.CSDegreeAuditService;
@@ -16,19 +17,15 @@ import java.util.*;
 public class DegreeAuditController {
 
     private final Map<Department, BaseDegreeAuditService> deptServices;
-    private final GenedClusteringService genedClusteringService;
 
     public DegreeAuditController(
             CSDegreeAuditService csService,
-            UserRepository userRepository,
-            // etc.
-            GenedClusteringService genedClusteringService) {
+            UserRepository userRepository) {
         Map<Department, BaseDegreeAuditService> map = new HashMap<>();
         map.put(Department.CS, csService);
         // map.put(Department.BUSINESS, businessService);
         // ...
         this.deptServices = Collections.unmodifiableMap(map);
-        this.genedClusteringService = genedClusteringService;
     }
 
     @GetMapping("/{department}/{studentId}")
@@ -75,4 +72,20 @@ public class DegreeAuditController {
         List<GenedClusteringService.ClusterSolution> result = service.checkGeneralEducationRequirements(studentId);
         return ResponseEntity.ok(result);
     }
+
+    @GetMapping("{department}/gened/missing/{studentId}")
+    public ResponseEntity<?> getGenedMissing(
+            @PathVariable("department") Department department,
+            @PathVariable UUID studentId
+    ) {
+        // 1. Fetch the appropriate BaseDegreeAuditService for this department
+        BaseDegreeAuditService service = deptServices.get(department);
+        if (service == null) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "No audit service for department: " + department));
+        }
+        Set<NeededCluster> result = service.getGenedMissing(studentId);
+        return ResponseEntity.ok(result);
+    }
+
 }
