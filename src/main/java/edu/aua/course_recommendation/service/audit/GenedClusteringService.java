@@ -2,7 +2,9 @@ package edu.aua.course_recommendation.service.audit;
 
 import edu.aua.course_recommendation.entity.Course;
 import edu.aua.course_recommendation.model.NeededCluster;
+import edu.aua.course_recommendation.service.course.CourseService;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.springframework.stereotype.Service;
 
@@ -10,10 +12,14 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 
 @Service
+@RequiredArgsConstructor
 public class GenedClusteringService {
+
+    private final CourseService courseService;
 
     private static final Set<Integer> AH_THEMES = Set.of(1, 2, 3);
     private static final Set<Integer> SS_THEMES = Set.of(4, 5, 6);
@@ -69,11 +75,81 @@ public class GenedClusteringService {
         return needed;
     }
 
+    public Set<String> buildMissingGenEdCodes(
+            Set<NeededCluster> neededClusters,
+            Set<String> genEdEligibleCodes,
+            List<Course> genEdCompleted
+    ) {
+        Set<String> missing = new HashSet<>();
+
+        // 1. Convert completed to a set of codes for quick membership
+        Set<String> completedCodes = genEdCompleted.stream()
+                .map(Course::getCode)
+                .collect(Collectors.toSet());
+
+        // 2. For each cluster we’re short on, find possible courses that fill that gap
+        for (NeededCluster needed : neededClusters) {
+            int theme = needed.getTheme();
+            int needLower = needed.getMissingLower();
+            int needUpper = needed.getMissingUpper();
+            int needTotal = needed.getMissingTotal();
+
+            // find all genEd-eligible codes that have cluster=theme
+            // (requires a way to know which cluster a code belongs to => we might query courseService or a map)
+            Set<String> themeCodes = findCodesForTheme(theme, genEdEligibleCodes);
+
+            // a) pick lower if needLower>0
+            if (needLower > 0) {
+                // add all codes from themeCodes that are lower and not completed
+                Set<String> potentialLower = themeCodes.stream()
+                        .filter(this::isLowerDivision)
+                        .filter(code -> !completedCodes.contains(code))
+                        .collect(Collectors.toSet());
+                missing.addAll(potentialLower);
+            }
+
+            // b) pick upper if needUpper>0
+            if (needUpper > 0) {
+                Set<String> potentialUpper = themeCodes.stream()
+                        .filter(this::isUpperDivision)
+                        .filter(code -> !completedCodes.contains(code))
+                        .collect(Collectors.toSet());
+                missing.addAll(potentialUpper);
+            }
+
+            // c) If needTotal > 0 beyond that, we can add any from themeCodes
+            //    (lower or upper) that the student hasn't done
+            //    Typically, needTotal might be the total needed minus
+            //    what we already allocated for lower/upper.
+            //    Or if you want to keep it simple, just add the entire theme set
+            //    that’s not completed
+            if (needTotal > 0) {
+                Set<String> anyRemaining = themeCodes.stream()
+                        .filter(code -> !completedCodes.contains(code))
+                        .collect(Collectors.toSet());
+                missing.addAll(anyRemaining);
+            }
+        }
+
+        return missing;
+    }
+
+    private Set<String> findCodesForTheme(int theme, Set<String> genEdEligibleCodes) {
+        // fetch all courses from courseService,
+        // filter where c.getClusters().contains(theme)
+        // and code is in genEdEligibleCodes
+        return courseService.getAllCourses().stream()
+                .filter(c -> c.getClusters().contains(theme))
+                .map(Course::getCode)
+                .filter(genEdEligibleCodes::contains)
+                .collect(Collectors.toSet());
+    }
+
     private Set<NeededCluster> analyzeThemeShortage(List<Course> courses, Set<Integer> sectorThemes) {
         Set<NeededCluster> needed = new HashSet<>();
 
         for (int theme : sectorThemes) {
-            // If I can't form a triple with this theme,
+            // can't form a triple with this theme,
             // let's see how close we are.
             if (canFormTriple(courses, theme)) {
                 // We can form a triple in this theme => not missing
@@ -95,8 +171,8 @@ public class GenedClusteringService {
         // 2. Count how many lower vs upper
         int lowerCount = 0, upperCount = 0;
         for (Course c : filtered) {
-            if (isLowerDivision(c)) lowerCount++;
-            else if (isUpperDivision(c)) upperCount++;
+            if (isLowerDivision(c.getCode())) lowerCount++;
+            else if (isUpperDivision(c.getCode())) upperCount++;
         }
 
         // 3. We want a triple => total 3 courses, at least 1 lower, 1 upper
@@ -279,19 +355,19 @@ public class GenedClusteringService {
     }
 
     private boolean hasAtLeastOneLower(List<Course> triple) {
-        return triple.stream().anyMatch(this::isLowerDivision);
+        return triple.stream().map(Course::getCode).anyMatch(this::isLowerDivision);
     }
 
     private boolean hasAtLeastOneUpper(List<Course> triple) {
-        return triple.stream().anyMatch(this::isUpperDivision);
+        return triple.stream().map(Course::getCode).anyMatch(this::isUpperDivision);
     }
 
     /**
      * If the code starts with '1', then its lower-division.
      * Otherwise upper-division.
      */
-    private boolean isLowerDivision(Course c) {
-        String code = c.getCode().replaceAll("[^0-9]", "");
+    private boolean isLowerDivision(String courseCode) {
+        String code = courseCode.replaceAll("[^0-9]", "");
         if (code.isEmpty()) return false;
 
         try {
@@ -303,8 +379,8 @@ public class GenedClusteringService {
     }
 
 
-    private boolean isUpperDivision(Course c) {
-        return !isLowerDivision(c);
+    private boolean isUpperDivision(String courseCode) {
+        return !isLowerDivision(courseCode);
     }
 
     // =============== HELPER CLASSES ===============

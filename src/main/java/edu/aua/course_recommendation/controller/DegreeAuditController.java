@@ -5,6 +5,7 @@ import edu.aua.course_recommendation.model.Department;
 import edu.aua.course_recommendation.model.NeededCluster;
 import edu.aua.course_recommendation.service.audit.BaseDegreeAuditService;
 import edu.aua.course_recommendation.service.audit.CSDegreeAuditService;
+import edu.aua.course_recommendation.service.audit.GenedClusteringService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -40,22 +41,6 @@ public class DegreeAuditController {
         return ResponseEntity.ok(result);
     }
 
-    @GetMapping("{department}/gened/check/{studentId}")
-    public ResponseEntity<?> checkGenedDegree(
-            @PathVariable("department") Department department,
-            @PathVariable UUID studentId
-    ) {
-        // 1. Fetch the appropriate BaseDegreeAuditService for this department
-        BaseDegreeAuditService service = deptServices.get(department);
-        if (service == null) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", "No audit service for department: " + department));
-        }
-
-        boolean result = service.checkGened(studentId);
-        return ResponseEntity.ok(result);
-    }
-
     @GetMapping("{department}/gened/{studentId}")
     public ResponseEntity<?> getGenedOptions(
             @PathVariable("department") Department department,
@@ -80,7 +65,21 @@ public class DegreeAuditController {
             return ResponseEntity.badRequest()
                     .body(Map.of("error", "No audit service for department: " + department));
         }
-        Set<NeededCluster> result = service.getGenedMissing(studentId);
+        Set<NeededCluster> result = service.getNeededClusters(studentId);
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping("{department}/gened/clusters/{studentId}")
+    public ResponseEntity<?> getGenedClusters(
+            @PathVariable("department") Department department,
+            @PathVariable UUID studentId
+    ) {
+        BaseDegreeAuditService service = deptServices.get(department);
+        if (service == null) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "No audit service for department: " + department));
+        }
+        List<GenedClusteringService.ClusterSolution> result = service.getClusters(studentId);
         return ResponseEntity.ok(result);
     }
 
