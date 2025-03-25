@@ -84,10 +84,23 @@ public class CourseController {
                 .body("Course created successfully with code: " + createdCourse.getCode());
     }
 
+    @PostMapping("/create/all")
+    public ResponseEntity<String> createCourses(@RequestBody List<CourseDto> courseDtos) {
+        List<Course> createdCourses = courseService.createCourses(courseDtos);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body("Base courses created successfully: " + createdCourses.size());
+    }
+
     @DeleteMapping("/delete")
     public ResponseEntity<String> deleteCourse(@RequestParam String code) {
         courseService.deleteCourse(code);
         return ResponseEntity.ok("Course deleted successfully");
+    }
+
+    @DeleteMapping("/delete/all")
+    public ResponseEntity<String> deleteAllCourses() {
+        courseService.deleteAllCourses();
+        return ResponseEntity.ok("All Base Course deleted successfully");
     }
 
     /*
