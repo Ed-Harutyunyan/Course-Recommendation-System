@@ -5,6 +5,7 @@ import edu.aua.course_recommendation.entity.Course;
 import edu.aua.course_recommendation.entity.CourseOffering;
 import edu.aua.course_recommendation.entity.Instructor;
 import edu.aua.course_recommendation.exceptions.CourseOfferingAlreadyExistsException;
+import edu.aua.course_recommendation.exceptions.CourseOfferingNotFoundException;
 import edu.aua.course_recommendation.mappers.CourseMapper;
 import edu.aua.course_recommendation.repository.CourseOfferingRepository;
 import lombok.RequiredArgsConstructor;
@@ -75,6 +76,7 @@ public class CourseOfferingService {
     }
 
     private CourseOffering createCourseOfferingWithBaseCourseAndInstructor(CourseOfferingDto dto) {
+
         Course baseCourse = courseService.getOrCreateCourse(courseMapper.toCourseDto(dto));
         Instructor instructor = instructorService.getOrCreateInstructor(dto.instructor());
 
@@ -103,8 +105,9 @@ public class CourseOfferingService {
 
     @Transactional(readOnly = true)
     public CourseOffering getCourseOfferingById(UUID id) {
-        return courseOfferingRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Course offering not found with id: " + id));
+        return courseOfferingRepository.findById(id).orElseThrow(
+                () -> new CourseOfferingNotFoundException("Course offering not found with id: " + id)
+        );
     }
 
     @Transactional
@@ -152,4 +155,10 @@ public class CourseOfferingService {
     public List<CourseOffering> getCourseOfferingsByYearAndSemester(String year, String semester) {
         return courseOfferingRepository.findByYearAndSemester(year, semester);
     }
+
+    @Transactional(readOnly = true)
+    public Optional<CourseOffering> findOfferingByBaseCourseCode(String courseCode) {
+        return courseOfferingRepository.findByBaseCourse_Code(courseCode);
+    }
+
 }

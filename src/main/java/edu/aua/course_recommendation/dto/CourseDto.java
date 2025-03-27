@@ -8,5 +8,5 @@ public record CourseDto(
         String courseDescription,
         String prerequisites,
         String credits,
-        List<Integer> clusters
+        List<Integer> themes
 ) {}

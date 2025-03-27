@@ -14,7 +14,7 @@ public class CourseMapper {
                 courseOfferingDto.courseDescription(),
                 courseOfferingDto.prerequisites(),
                 String.valueOf(courseOfferingDto.credits()),
-                courseOfferingDto.clusters()
+                courseOfferingDto.themes()
         );
     }
 }

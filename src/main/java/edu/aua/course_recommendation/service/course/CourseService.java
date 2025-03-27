@@ -10,10 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -23,8 +20,47 @@ public class CourseService {
     
     private final CourseRepository courseRepository;
 
-    // Create a BASE Course
-    // Separate from CourseOffering
+    // ============================
+    // READ operations
+    // ============================
+    @Transactional(readOnly = true)
+    public Course getCourseByCode(String code) {
+        return courseRepository.findByCode(code)
+                .orElseThrow(() -> new CourseNotFoundException("Course not found with code: " + code));
+    }
+
+    @Transactional(readOnly = true)
+    public List<Course> getAllCourses() {
+        return courseRepository.findAll();
+    }
+
+    @Transactional(readOnly = true)
+    public List<Course> getCoursesByThemes(List<Integer> themes) {
+        return courseRepository.findByThemes(themes);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Course> getCoursesByTheme(Integer theme) {
+        return courseRepository.findByTheme(theme);
+    }
+
+    @Transactional(readOnly = true)
+    public List<Course> getLowerDivisionCourses() {
+        return courseRepository.findAll().stream()
+                .filter(course -> this.isLowerDivision(course.getCode()))
+                .collect(Collectors.toList());
+    }
+
+    @Transactional(readOnly = true)
+    public List<Course> getUpperDivisionCourses() {
+        return courseRepository.findAll().stream()
+                .filter(course -> this.isUpperDivision(course.getCode()))
+                .collect(Collectors.toList());
+    }
+
+    // ============================
+    // CREATE operations
+    // ============================
     @Transactional
     public Course createCourse(CourseDto courseDto) {
 
@@ -37,11 +73,10 @@ public class CourseService {
                 .title(courseDto.courseTitle())
                 .description(courseDto.courseDescription())
                 .credits(Integer.valueOf(courseDto.credits())) // 0 if no credits
-                .clusters(courseDto.clusters())
+                .themes(courseDto.themes())
                 .build();
 
         String prerequisites = courseDto.prerequisites();
-        System.out.println("prerequisites: " + prerequisites);
         if (prerequisites != null && !prerequisites.isEmpty()) {
             String[] prerequisiteCodes = prerequisites.split(",");
             course.getPrerequisites().addAll(Arrays.asList(prerequisiteCodes));
@@ -54,25 +89,6 @@ public class CourseService {
     public Course getOrCreateCourse(CourseDto courseDto) {
         return courseRepository.findByCode(courseDto.courseCode())
                 .orElseGet(() -> courseRepository.save(createCourse(courseDto)));
-    }
-
-    @Transactional
-    public void deleteCourse(String code) {
-        if (!courseRepository.existsByCode(code)) {
-            throw new CourseNotFoundException("Course not found with code: " + code);
-        }
-        courseRepository.deleteByCode(code);
-    }
-
-    @Transactional(readOnly = true)
-    public Course getCourseByCode(String code) {
-        return courseRepository.findByCode(code)
-                .orElseThrow(() -> new CourseNotFoundException("Course not found with code: " + code));
-    }
-
-    @Transactional(readOnly = true)
-    public List<Course> getAllCourses() {
-        return courseRepository.findAll();
     }
 
     @Transactional
@@ -95,6 +111,17 @@ public class CourseService {
         return courseRepository.saveAll(createdCourses); // Saves all at once
     }
 
+    // ============================
+    // DELETE operations
+    // ============================
+    @Transactional
+    public void deleteCourse(String code) {
+        if (!courseRepository.existsByCode(code)) {
+            throw new CourseNotFoundException("Course not found with code: " + code);
+        }
+        courseRepository.deleteByCode(code);
+    }
+
     @Transactional
     public void deleteAllCourses() {
         courseRepository.deleteAll();
@@ -105,4 +132,31 @@ public class CourseService {
     public Set<Course> getAllPhysedCourses() {
         return getAllCourses().stream().filter(course -> course.getCode().startsWith("FND110")).collect(Collectors.toSet());
     }
+
+    @Transactional
+    public List<Course> getAllCoursesWithThemes() {
+        return getAllCourses().stream().filter(course -> !course.getThemes().isEmpty()).collect(Collectors.toList());
+    }
+
+    /**
+     * If the code starts with '1', then its lower-division.
+     * Otherwise upper-division.
+     */
+    public boolean isLowerDivision(String courseCode) {
+        String code = courseCode.replaceAll("[^0-9]", "");
+        if (code.isEmpty()) return false;
+
+        try {
+            int number = Integer.parseInt(code);
+            return number < 200; // Lower division courses are numbered < 200
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+
+    public boolean isUpperDivision(String courseCode) {
+        return !isLowerDivision(courseCode);
+    }
+
 }
