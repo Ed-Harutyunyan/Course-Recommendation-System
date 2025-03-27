@@ -5,9 +5,11 @@ import edu.aua.course_recommendation.exceptions.AuthenticationException;
 import edu.aua.course_recommendation.exceptions.CourseNotFoundException;
 import edu.aua.course_recommendation.exceptions.CourseOfferingNotFoundException;
 import edu.aua.course_recommendation.exceptions.EnrollmentException;
+import edu.aua.course_recommendation.model.AcademicStanding;
 import edu.aua.course_recommendation.model.Role;
 import edu.aua.course_recommendation.repository.CourseRepository;
 import edu.aua.course_recommendation.repository.EnrollmentRepository;
+import edu.aua.course_recommendation.repository.UserRepository;
 import edu.aua.course_recommendation.service.auth.UserService;
 import jakarta.transaction.Transactional;
 import lombok.Getter;
@@ -27,6 +29,7 @@ public class EnrollmentService {
     private final UserService userService;
     private final EnrollmentRepository enrollmentRepository;
     private final CourseRepository courseRepository;
+    private final UserRepository userRepository;
 
     @Transactional
     public void enroll(final UUID studentId, final UUID courseId, String grade) {
@@ -51,6 +54,7 @@ public class EnrollmentService {
         enrollment.setCourse(course);
 
         enrollmentRepository.save(enrollment);
+        calculateAcademicStanding(studentId);
     }
 
     // Overloaded method for enrolling without providing a grade
@@ -86,6 +90,7 @@ public class EnrollmentService {
 
             enrollmentRepository.save(enrollment);
         }
+        calculateAcademicStanding(studentId);
     }
 
     @Transactional
@@ -99,6 +104,7 @@ public class EnrollmentService {
         }
 
         enrollmentRepository.deleteByUserAndCourse(student, course);
+        calculateAcademicStanding(studentId);
     }
 
     // This returns all the course *codes* that the student didn't get a
@@ -156,6 +162,21 @@ public class EnrollmentService {
                 .filter(e -> isPassingGrade(e.getGrade()))
                 .map(Enrollment::getCourse)
                 .toList();
+    }
+
+    public AcademicStanding calculateAcademicStanding(UUID studentId) {
+        int totalCredits = getCompletedCourses(studentId).stream()
+                .mapToInt(Course::getCredits)
+                .sum();
+
+        AcademicStanding standing = AcademicStanding.getStandingFromCredits(totalCredits);
+
+        // Update the user's academic standing
+        User student = userService.getCurrentUser();
+        student.setAcademicStanding(standing);
+        userRepository.save(student);
+
+        return standing;
     }
 
     @RequiredArgsConstructor

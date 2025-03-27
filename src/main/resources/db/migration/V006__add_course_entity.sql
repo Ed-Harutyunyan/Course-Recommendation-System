@@ -17,9 +17,10 @@ CREATE TABLE course_prerequisites (
     CONSTRAINT fk_prereq_code FOREIGN KEY (prerequisite_code) REFERENCES courses(code)
 );
 
-CREATE TABLE course_clusters (
+CREATE TABLE course_themes (
     course_id BINARY(16) NOT NULL,
-    cluster INT NOT NULL,
-    PRIMARY KEY (course_id, cluster),
-    CONSTRAINT fk_course_cluster FOREIGN KEY (course_id) REFERENCES courses(id)
+    theme INT NOT NULL,
+    PRIMARY KEY (course_id, theme),
+    CONSTRAINT fk_course_themes FOREIGN KEY (course_id) REFERENCES courses(id)
+       ON DELETE CASCADE
 );

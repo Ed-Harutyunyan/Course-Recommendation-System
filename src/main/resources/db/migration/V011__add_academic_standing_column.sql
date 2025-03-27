@@ -1,0 +1,2 @@
+ALTER TABLE users
+    ADD COLUMN academic_standing VARCHAR(255) NOT NULL DEFAULT 'FRESHMAN';

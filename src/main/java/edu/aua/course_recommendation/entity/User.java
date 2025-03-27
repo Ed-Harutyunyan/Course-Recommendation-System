@@ -1,5 +1,6 @@
 package edu.aua.course_recommendation.entity;
 
+import edu.aua.course_recommendation.model.AcademicStanding;
 import edu.aua.course_recommendation.model.Department;
 import edu.aua.course_recommendation.model.Role;
 import jakarta.persistence.*;
@@ -59,4 +60,8 @@ public class User {
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Enrollment> enrollments;
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    private AcademicStanding academicStanding = AcademicStanding.FRESHMAN;
 }

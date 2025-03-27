@@ -3,6 +3,7 @@ package edu.aua.course_recommendation.service.audit;
 import edu.aua.course_recommendation.model.DegreeAuditScenario;
 import edu.aua.course_recommendation.model.DegreeScenarioType;
 import edu.aua.course_recommendation.model.RequirementResult;
+import edu.aua.course_recommendation.service.auth.UserService;
 import edu.aua.course_recommendation.service.course.CourseService;
 import edu.aua.course_recommendation.service.course.EnrollmentService;
 import org.springframework.stereotype.Service;
@@ -14,8 +15,9 @@ public class CSDegreeAuditService extends BaseDegreeAuditService{
 
     public CSDegreeAuditService(EnrollmentService enrollmentService,
                                 GenedClusteringService genedClusteringService,
-                                CourseService courseService) {
-        super(enrollmentService, genedClusteringService, courseService);
+                                CourseService courseService,
+                                UserService userService) {
+        super(enrollmentService, genedClusteringService, courseService, userService);
     }
 
     // TODO: Remove these hard-coded values eventually
@@ -24,23 +26,24 @@ public class CSDegreeAuditService extends BaseDegreeAuditService{
     // The core logic should be the same
     private static final int TRACK_REQUIREMENT_COUNT = 5;
     private static final int FREE_ELECTIVE_REQUIREMENT_COUNT = 3;
+    private static final String CAPSTONE_REQUIREMENT = "CS296";
 
     // Static for now, will change it so it is saved in db and update-able
     private static final List<String> CS_CORE = List.of(
             "CS100", "CS101", "CS102", "CS103", "CS104",
             "CS111", "CS107", "CS108", "CS110", "CS120",
             "CS121", "CS211", "CS112", "CS213", "CS130",
-            "ENGS121", "CS296"
+            "ENGS121"
     );
 
-    private final static Set<String> MATH_MODELING = Set.of(
+    private final static List<String> MATH_MODELING = List.of(
             "CS105", "CS205", "CS226", "CS221",
             "CS215", "CS217", "CS246", "CS251",
             "CS260", "CS231", "CS261", "CS262",
             "CS310", "DS231", "DS233", "DS330"
     );
 
-    private final static Set<String> APPLIED_CS = Set.of(
+    private final static List<String> APPLIED_CS = List.of(
             "CS215", "CS217", "CS246", "CS251",
             "CS260", "CS231", "CS261", "CS262",
             "CS310", "DS231", "DS233", "DS330",
@@ -49,7 +52,7 @@ public class CSDegreeAuditService extends BaseDegreeAuditService{
     );
 
     // This can just be computed using the above, instead of hardcoding.
-    private final static Set<String> GENERAL_CS_TRACK = Set.of(
+    private final static List<String> GENERAL_CS_TRACK = List.of(
             // Any combination of 5 courses from applied and math modeling
             "CS105", "CS205", "CS226", "CS221",
             "CS215", "CS217", "CS246", "CS251",
@@ -60,7 +63,7 @@ public class CSDegreeAuditService extends BaseDegreeAuditService{
     );
 
     @Override
-    protected RequirementResult checkProgramCore(UUID studentId) {
+    public RequirementResult checkProgramCore(UUID studentId) {
         List<String> completed = enrollmentService.getCompletedCourseCodes(studentId);
 
         // Which of the CS core are missing?
@@ -72,7 +75,7 @@ public class CSDegreeAuditService extends BaseDegreeAuditService{
         return new RequirementResult(
                 "CS Core Requirements",
                 isSatisfied,
-                Set.copyOf(missing),
+                List.copyOf(missing),
                 missing.size()
         );
     }
@@ -82,7 +85,7 @@ public class CSDegreeAuditService extends BaseDegreeAuditService{
      * scenario-based checks for the CS degree (tracks).
      */
     @Override
-    protected List<DegreeAuditScenario> checkProgramScenarios(UUID studentId) {
+    public List<DegreeAuditScenario> checkProgramScenarios(UUID studentId) {
         // Suppose we have multiple tracks: MATH_MODELING, APPLIED_CS, GENERAL
         // We'll create one scenario object per track
         List<DegreeAuditScenario> scenarios = new ArrayList<>();
@@ -127,7 +130,7 @@ public class CSDegreeAuditService extends BaseDegreeAuditService{
         return new RequirementResult(
                 "Math Modeling Track",
                 completedCount >= 5,
-                Set.copyOf(missingCodes),
+                List.copyOf(missingCodes),
                 (int) (TRACK_REQUIREMENT_COUNT - completedCount)
         );
     }
@@ -150,7 +153,7 @@ public class CSDegreeAuditService extends BaseDegreeAuditService{
         return new RequirementResult(
                 "Applied CS Track",
                 completedCount >= 5,
-                Set.copyOf(missingCodes),
+                List.copyOf(missingCodes),
                 (int) (TRACK_REQUIREMENT_COUNT - completedCount)
         );
     }
@@ -170,15 +173,15 @@ public class CSDegreeAuditService extends BaseDegreeAuditService{
         return new RequirementResult(
                 "General CS Track",
                 completedCount >= 5,
-                Set.copyOf(missingCodes),
+                List.copyOf(missingCodes),
                 (int) (TRACK_REQUIREMENT_COUNT - completedCount)
         );
     }
 
     @Override
-    protected Set<String> getCoreAndTrackCourseCodes() {
+    protected List<String> getCoreAndTrackCourseCodes() {
         // Union of CS core + all track sets for CS
-        Set<String> combined = new HashSet<>(CS_CORE);
+        List<String> combined = new ArrayList<>(CS_CORE);
         combined.addAll(MATH_MODELING);
         combined.addAll(APPLIED_CS);
         combined.addAll(GENERAL_CS_TRACK);
@@ -186,15 +189,15 @@ public class CSDegreeAuditService extends BaseDegreeAuditService{
     }
 
     @Override
-    protected Set<String> getCoreCourseCodes() {
-        return new HashSet<>(CS_CORE);
+    protected List<String> getCoreCourseCodes() {
+        return new ArrayList<>(CS_CORE);
     }
 
     // The "chosen" track is the one with the most courses
     // If they are equal we'll just assume the general track
     // TODO: Extend so student can explicitly choose their track
     @Override
-    protected DegreeScenarioType pickChosenTrack(UUID studentId) {
+    public DegreeScenarioType pickChosenTrack(UUID studentId) {
         long mmCount = countMathModelingTrackCompleted(studentId);
         long csCount = countAppliedCSTrackCompleted(studentId);
         long genCount = countGeneralTrackCompleted(studentId);
@@ -215,11 +218,10 @@ public class CSDegreeAuditService extends BaseDegreeAuditService{
         } else {
             return DegreeScenarioType.CS_GENERAL;
         }
-
     }
 
     @Override
-    protected Set<String> getTrackCourseCodes(DegreeScenarioType trackType) {
+    public List<String> getTrackCourseCodes(DegreeScenarioType trackType) {
         if (trackType == DegreeScenarioType.CS_MATH_MODELING) {
             return MATH_MODELING;
         } else if (trackType == DegreeScenarioType.CS_APPLIED_CS) {
@@ -234,6 +236,11 @@ public class CSDegreeAuditService extends BaseDegreeAuditService{
     @Override
     protected int getRequiredFreeElectiveCount() {
         return FREE_ELECTIVE_REQUIREMENT_COUNT;
+    }
+
+    @Override
+    public String getCapstoneCode() {
+        return CAPSTONE_REQUIREMENT;
     }
 
     private long countMathModelingTrackCompleted(UUID studentId) {
