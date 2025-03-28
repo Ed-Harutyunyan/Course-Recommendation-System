@@ -18,6 +18,7 @@ public class StartupAdminInitializer {
     @Bean
     CommandLineRunner initAdminUser(UserRepository userRepository) {
         return args -> {
+            // In real flow we'll generate some usernames
             String adminUsername = "admin";
             String adminEmail = "admin@example.com";
 
