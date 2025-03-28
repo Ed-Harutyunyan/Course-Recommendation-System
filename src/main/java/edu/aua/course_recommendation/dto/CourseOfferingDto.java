@@ -22,6 +22,6 @@ public record CourseOfferingDto(
         @JsonProperty("year") String year,
         @JsonProperty("semester") String semester,
         @JsonProperty("course_description") String courseDescription,
-        @JsonProperty("clusters") List<Integer> clusters
+        @JsonProperty("themes") List<Integer> themes
 ) {}
 

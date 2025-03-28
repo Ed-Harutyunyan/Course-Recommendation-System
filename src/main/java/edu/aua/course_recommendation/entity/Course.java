@@ -4,6 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.util.*;
 
@@ -46,9 +48,11 @@ public class Course {
     private Set<String> prerequisites = new HashSet<>();
 
     @ElementCollection
-    @CollectionTable(name = "course_clusters", joinColumns = @JoinColumn(name = "course_id"))
-    @Column(name = "cluster")
-    private List<Integer> clusters = new ArrayList<>();
+    @CollectionTable(name = "course_themes", joinColumns = @JoinColumn(name = "course_id"))
+    @Column(name = "theme")
+    @Builder.Default
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private List<Integer> themes = new ArrayList<>();
 
     @OneToMany(mappedBy = "baseCourse", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CourseOffering> offerings = new ArrayList<>();

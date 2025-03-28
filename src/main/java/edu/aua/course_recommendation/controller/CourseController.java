@@ -2,7 +2,6 @@ package edu.aua.course_recommendation.controller;
 
 import edu.aua.course_recommendation.dto.CourseDto;
 import edu.aua.course_recommendation.dto.CourseOfferingDto;
-import edu.aua.course_recommendation.dto.RecommendationDto;
 import edu.aua.course_recommendation.entity.Course;
 import edu.aua.course_recommendation.entity.CourseOffering;
 import edu.aua.course_recommendation.service.course.CourseOfferingService;
@@ -11,13 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -25,39 +19,8 @@ import java.util.UUID;
 @RequestMapping("/api/course")
 public class CourseController {
 
-    private final ObjectMapper objectMapper;
     private final CourseService courseService;
     private final CourseOfferingService courseOfferingService;
-
-    @GetMapping("/details")
-    public ResponseEntity<Map<String, Object>> getCourseDetails() {
-        Map<String, Object> response = new HashMap<>();
-        response.put("courseName", "Java Basics");
-        response.put("courseId", "101");
-        response.put("instructor", "John Doe");
-        response.put("description", "Introduction to Java programming");
-
-        return ResponseEntity.ok(response);
-    }
-
-    @PostMapping("/recommendations")
-    public ResponseEntity<String> postRecommendedCourses(@RequestBody RecommendationDto payload) {
-        File file = new File("src/main/resources/data/received_payload.json");
-
-        try {
-            File parentDir = file.getParentFile();
-            if (parentDir != null && !parentDir.exists()) {
-                parentDir.mkdirs();
-            }
-
-            objectMapper.writeValue(file, payload);
-        } catch (IOException e) {
-            e.printStackTrace();
-            return ResponseEntity.status(500).body("Error saving JSON to file");
-        }
-
-        return ResponseEntity.ok("JSON received and saved successfully");
-    }
 
     /*
      * BASE COURSE RELATED ENDPOINTS
@@ -73,10 +36,21 @@ public class CourseController {
         return ResponseEntity.ok(courseService.getAllCourses());
     }
 
-    // This endpoint takes a Json payload and creates a course
-    // This is only a "base course" used for the algorithm
-    // Other data in the JSON will be stored along with a reference to this course
-    // in course offering
+    @GetMapping("/all/themes")
+    public ResponseEntity<List<Course>> getCoursesByThemes(@RequestParam List<Integer> themes) {
+        return ResponseEntity.ok(courseService.getCoursesByThemes(themes));
+    }
+
+    @GetMapping("/all/theme")
+    public ResponseEntity<List<Course>> getCoursesByTheme(@RequestParam Integer theme) {
+        return ResponseEntity.ok(courseService.getCoursesByTheme(theme));
+    }
+
+    @GetMapping("/all/themes/any")
+    public ResponseEntity<List<Course>> getAllCoursesWithThemes() {
+        return ResponseEntity.ok(courseService.getAllCoursesWithThemes());
+    }
+
     @PostMapping("/create")
     public ResponseEntity<String> createCourse(@RequestBody CourseDto courseDto) {
         Course createdCourse = courseService.createCourse(courseDto);
