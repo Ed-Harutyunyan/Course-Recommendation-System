@@ -22,7 +22,7 @@ public class OtpService {
 
         final var cacheKey = getCacheKey(id);
 
-        redisTemplate.opsForValue().set(cacheKey, otp, Duration.ofMinutes(5));
+        redisTemplate.opsForValue().set(cacheKey, otp, Duration.ofMinutes(15));
 
         return otp;
     }

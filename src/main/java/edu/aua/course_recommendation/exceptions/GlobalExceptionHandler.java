@@ -33,5 +33,10 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
     }
 
+    @ExceptionHandler(EmailVerificationException.class)
+    public ResponseEntity<String> handleEmailVerificationException(EmailVerificationException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+    }
+
     // TODO: Add other exceptions here as well.
 }

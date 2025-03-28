@@ -3,6 +3,7 @@ package edu.aua.course_recommendation.controller;
 import edu.aua.course_recommendation.dto.CourseDto;
 import edu.aua.course_recommendation.entity.Course;
 import edu.aua.course_recommendation.model.Role;
+import edu.aua.course_recommendation.service.auth.UserService;
 import edu.aua.course_recommendation.service.course.CourseService;
 import edu.aua.course_recommendation.service.auth.JwtService;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +18,7 @@ import org.springframework.web.bind.annotation.*;
 public class AdminController {
 
     private final JwtService jwtService;
-    private final CourseService courseService;
+    private final UserService userService;
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/get-token")
@@ -26,10 +27,10 @@ public class AdminController {
         return ResponseEntity.ok(token);
     }
 
-    @PostMapping("/courses/create")
-    public ResponseEntity<Course> createCourse(@RequestBody CourseDto courseDto) {
-        Course newCourse = courseService.createCourse(courseDto);
-        return new ResponseEntity<>(newCourse, HttpStatus.CREATED);
+    @PostMapping("/user/deactivate")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> deactivateUser(@RequestParam String email) {
+        userService.deactivateUser(email);
+        return ResponseEntity.noContent().build();
     }
-
 }

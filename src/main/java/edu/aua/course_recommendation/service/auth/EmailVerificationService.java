@@ -24,17 +24,37 @@ public class EmailVerificationService {
     private final JavaMailSender mailSender;
 
     @Async
-    public void sendVerificationToken(UUID userId, String email) {
+    public void sendVerificationToken(UUID userId, String email, String username) {
         final var token = otpService.generateAndStoreOtp(userId);
 
         final var emailVerificationUrl =
-                "http://localhost:8080/api/auth/email/verify?uid=%s&t=%s".formatted(userId, token);
+                "http://localhost:5173/password-setup?uid=%s&t=%s".formatted(userId, token);
 
-        final var text = "Click here to verify your account: " + emailVerificationUrl;
+        final var text = "Your generated username is: " + username + "\n\n" +
+                "Click here to set-up your password: " + emailVerificationUrl;
 
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(email);
-        message.setSubject("Email Verification");
+        message.setSubject("Set Up Your Password");
+        message.setText(text);
+        message.setFrom("support@gmail.com");
+
+        mailSender.send(message);
+    }
+
+    @Async
+    public void sendPasswordReset(UUID userId, String email, String username) {
+        final var token = otpService.generateAndStoreOtp(userId);
+
+        final var emailVerificationUrl =
+                "http://localhost:5173/password-setup?uid=%s&t=%s".formatted(userId, token);
+
+        final var text = "Hey: " + username + "\n\n" +
+                "Click here to reset password: " + emailVerificationUrl;
+
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(email);
+        message.setSubject("Reset Your Password");
         message.setText(text);
         message.setFrom("support@gmail.com");
 
@@ -47,11 +67,12 @@ public class EmailVerificationService {
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND, "Email not found or account is already verified"));
 
-        sendVerificationToken(user.getId(), user.getEmail());
+        sendVerificationToken(user.getId(), user.getEmail(), user.getUsername());
     }
 
     @Transactional
     public User verifyEmail(UUID userId, String token) {
+
         if (!otpService.isOtpValid(userId, token)) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or Expired OTP");
         }

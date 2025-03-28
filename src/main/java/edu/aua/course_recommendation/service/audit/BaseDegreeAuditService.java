@@ -225,11 +225,12 @@ public abstract class BaseDegreeAuditService {
                 .collect(Collectors.toSet());
 
         // 4. freeElectiveEligible = allCodes - excluded
-        allCodes.removeAll(excluded);
+        Set<String> freeElectiveEligible = new HashSet<>(allCodes);
+        freeElectiveEligible.removeAll(excluded);
 
         // 5. Student's completed free electives = intersection of completedCodes with freeElectiveEligible
         Set<String> completedFreeElectives = completedCodes.stream()
-                .filter(allCodes::contains)
+                .filter(freeElectiveEligible::contains)
                 .collect(Collectors.toSet());
 
         // 6. Compare with the required free elective count for the major
@@ -242,7 +243,7 @@ public abstract class BaseDegreeAuditService {
         List<String> missingCodes = new ArrayList<>();
 
         if (!isSatisfied) {
-            List<String> filtered = allCodes.stream()
+            List<String> filtered = freeElectiveEligible.stream()
                     .filter(code -> !completedFreeElectives.contains(code))
                     .collect(Collectors.toList());
 
