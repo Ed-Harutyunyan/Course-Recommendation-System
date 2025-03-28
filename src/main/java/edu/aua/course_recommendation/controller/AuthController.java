@@ -70,9 +70,21 @@ public class AuthController {
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Account is already verified");
         }
 
-        // Reuse the email service to send the password setup email
-        // (You may modify the email subject/text if needed.)
-        emailVerificationService.sendVerificationToken(user.getId(), user.getEmail());
+        emailVerificationService.sendVerificationToken(user.getId(), user.getEmail(), user.getUsername());
+
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/password-setup/reset")
+    public ResponseEntity<Void> resetPassword(@RequestParam String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "No user found for the provided email"));
+
+        if (!user.isEmailVerified()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Account not yet verified. Please sign-up first.");
+        }
+
+        emailVerificationService.sendPasswordReset(user.getId(), user.getEmail(), user.getUsername());
 
         return ResponseEntity.noContent().build();
     }
