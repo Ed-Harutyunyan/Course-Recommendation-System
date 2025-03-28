@@ -28,13 +28,13 @@ public class EmailVerificationService {
         final var token = otpService.generateAndStoreOtp(userId);
 
         final var emailVerificationUrl =
-                "http://localhost:8080/api/auth/email/verify?uid=%s&t=%s".formatted(userId, token);
+                "http://localhost:8080/api/auth/password-setup/confirm?uid=%s&t=%s".formatted(userId, token);
 
-        final var text = "Click here to verify your account: " + emailVerificationUrl;
+        final var text = "Click here to set-up your password: " + emailVerificationUrl;
 
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(email);
-        message.setSubject("Email Verification");
+        message.setSubject("Set Up Your Password");
         message.setText(text);
         message.setFrom("support@gmail.com");
 
@@ -52,6 +52,7 @@ public class EmailVerificationService {
 
     @Transactional
     public User verifyEmail(UUID userId, String token) {
+
         if (!otpService.isOtpValid(userId, token)) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or Expired OTP");
         }
