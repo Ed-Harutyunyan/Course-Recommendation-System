@@ -39,12 +39,6 @@ public class PythonController {
         return ResponseEntity.ok("JSON received and saved successfully");
     }
 
-//    Testing only
-//    @PostMapping("/send")
-//    public String sendPython(@RequestBody List<CourseDto> data) {
-//        return pythonService.sendTest(data);
-//    }
-
     @PostMapping("/newCourses")
     public String newCourses(@RequestBody List<CourseDto> data) {
         return pythonService.sendCourses(data);
