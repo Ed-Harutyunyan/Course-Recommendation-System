@@ -2,8 +2,10 @@ package edu.aua.course_recommendation.service;
 
 import edu.aua.course_recommendation.dto.CourseDto;
 import edu.aua.course_recommendation.dto.KeywordsDto;
+import edu.aua.course_recommendation.dto.RecommendationDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -36,13 +38,16 @@ public class PythonService {
       * @param keywords List of keywords that interest the student
      * @return
      */
-    public String sendKeywordsRecommendations(KeywordsDto keywords) {
+    public List<RecommendationDto> sendKeywordsRecommendations(KeywordsDto keywords) {
         HttpHeaders headers = new HttpHeaders();
         System.out.println(pythonServiceEndpoint);
 
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<KeywordsDto> request = new HttpEntity<>(keywords, headers);
-        ResponseEntity<String> response = restTemplate.exchange(pythonServiceEndpoint + "api/recommend/keyword", HttpMethod.POST, request, String.class);
+        String URL = pythonServiceEndpoint + "/api/recommend/keyword";
+        System.out.println(URL);
+        ResponseEntity<List<RecommendationDto>> response = restTemplate.exchange(URL, HttpMethod.POST, request, new ParameterizedTypeReference<>() {
+        });
         return response.getBody();
     }
 
