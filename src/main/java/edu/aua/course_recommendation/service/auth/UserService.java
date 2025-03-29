@@ -22,16 +22,16 @@ public class UserService {
     private final UserRepository userRepository;
 
     @Transactional(readOnly = true)
-    public User getUserByUsername(final String username) {
+    public User getUserByEmail(final String email) {
         return userRepository
-                .findByUsername(username)
+                .findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(GONE, "User has been deactivated or deleted"));
     }
 
     @Transactional(readOnly = true)
-    public User getUserByEmail(final String email) {
+    public User getUserByUsername(final String username) {
         return userRepository
-                .findByEmail(email)
+                .findByUsername(username)
                 .orElseThrow(() -> new ResponseStatusException(GONE, "User has been deactivated or deleted"));
     }
 
@@ -51,8 +51,8 @@ public class UserService {
         // By default, principal is a Jwt when using the Spring Security OAuth2 Resource Server
         Object principal = authentication.getPrincipal();
         if (principal instanceof Jwt jwt) {
-            String username = jwt.getClaimAsString("sub");
-            return userRepository.findByUsername(username).orElse(null);
+            String email = jwt.getClaimAsString("sub");
+            return userRepository.findByEmail(email).orElse(null);
         }
 
         return null;
@@ -75,5 +75,14 @@ public class UserService {
         if (!student.getId().equals(currentUser.getId())) {
             throw new IllegalArgumentException("You are not authorized to audit this student");
         }
+    }
+
+    @Transactional
+    public void deactivateUser(String email) {
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(GONE, "User not found"));
+
+        user.setEmailVerified(false);
+        userRepository.save(user);
     }
 }

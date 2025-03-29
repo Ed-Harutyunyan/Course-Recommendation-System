@@ -2,10 +2,13 @@ package edu.aua.course_recommendation.service.auth;
 
 import edu.aua.course_recommendation.entity.RefreshToken;
 import edu.aua.course_recommendation.entity.User;
+import edu.aua.course_recommendation.exceptions.EmailVerificationException;
 import edu.aua.course_recommendation.model.AuthTokens;
 import edu.aua.course_recommendation.repository.RefreshTokenRepository;
 import edu.aua.course_recommendation.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -14,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Map;
 import java.util.UUID;
 
 import static java.time.Duration.between;
@@ -22,18 +26,34 @@ import static java.time.Duration.between;
 @RequiredArgsConstructor
 public class AuthenticationService {
 
+    @Value("${email-verification.required}")
+    private boolean emailVerificationRequired;
+
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final UserRepository userRepository;
     private final RefreshTokenRepository refreshTokenRepository;
 
     public AuthTokens authenticate(final String username, final String password) {
+
+        if (emailVerificationRequired) {
+            final var user = userRepository.findByUsername(username)
+                    .orElseThrow(() ->
+                            new UsernameNotFoundException("User with username [%s] not found".formatted(username)));
+
+            if (!user.isEmailVerified()) {
+                throw new EmailVerificationException(HttpStatus.FORBIDDEN,
+                        Map.of("email", "Email is not verified"));
+            }
+        }
+
         final var authToken = UsernamePasswordAuthenticationToken.unauthenticated(username, password);
         final var authentication = authenticationManager.authenticate(authToken);
 
         final var user = userRepository.findByUsername(username)
                 .orElseThrow(() ->
                         new UsernameNotFoundException("User with username [%s] not found".formatted(username)));
+
 
         return authenticate(user);
     }
