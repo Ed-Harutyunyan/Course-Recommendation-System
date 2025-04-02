@@ -5,6 +5,7 @@ import edu.aua.course_recommendation.dto.CourseDto;
 import edu.aua.course_recommendation.dto.KeywordsDto;
 import edu.aua.course_recommendation.service.PythonService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,10 +20,13 @@ public class PythonController {
 
     private final PythonService pythonService;
 
+    @Value("${python.sent.recommendations}")
+    private String dataPath;
+
     @PostMapping("/sendKeywords")
     public ResponseEntity<String> sendKeywords(@RequestBody KeywordsDto keywords) {
         ObjectMapper objectMapper = new ObjectMapper();
-        File file = new File("src/main/resources/data/received_payload.json");
+        File file = new File(String.format(dataPath, "received_payload.json"));
 
         try {
             File parentDir = file.getParentFile();
@@ -38,12 +42,6 @@ public class PythonController {
 
         return ResponseEntity.ok("JSON received and saved successfully");
     }
-
-//    Testing only
-//    @PostMapping("/send")
-//    public String sendPython(@RequestBody List<CourseDto> data) {
-//        return pythonService.sendTest(data);
-//    }
 
     @PostMapping("/newCourses")
     public String newCourses(@RequestBody List<CourseDto> data) {
