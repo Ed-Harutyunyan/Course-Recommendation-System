@@ -3,18 +3,18 @@
     "id": "8",
     "title": "Advanced Java Programming",
     "description": "This course covers advanced Java topics such as concurrency, memory management, and design patterns. Through in-depth projects, learners develop robust applications and gain insights into best practices in enterprise-level Java development.",
-    "score": "0.4746521"
+    "score": "0.47661912"
   },
   {
     "id": "6",
     "title": "Recommender Systems: Theory and Practice",
     "description": "An in-depth exploration of recommendation algorithms covering collaborative filtering, content-based methods, and hybrid approaches. Students work on hands-on projects to build and evaluate recommender models as used in e-commerce, media streaming, and more.",
-    "score": "0.441589"
+    "score": "0.44159275"
   },
   {
     "id": "7",
     "title": "Business Analytics and Data Visualization",
     "description": "This course equips professionals with tools and techniques for analyzing business data and creating impactful visualizations using Excel, Tableau, and Power BI. Real-world projects help students generate insights and make data-driven decisions.",
-    "score": "0.41364163"
+    "score": "0.4136474"
   }
 ]

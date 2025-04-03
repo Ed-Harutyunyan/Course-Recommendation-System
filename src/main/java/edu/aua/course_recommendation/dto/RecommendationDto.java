@@ -7,5 +7,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public record RecommendationDto (
         @JsonProperty("id")String id,
         @JsonProperty("title")String title,
-        @JsonProperty("description")String description
+        @JsonProperty("description")String description,
+        @JsonProperty("score")String score
 ) {}
