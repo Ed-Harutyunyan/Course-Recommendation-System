@@ -104,6 +104,13 @@ public class CourseOfferingService {
     }
 
     @Transactional(readOnly = true)
+    public Course getBaseCourseByOfferingId(UUID offeringId) {
+        CourseOffering courseOffering = courseOfferingRepository.findById(offeringId)
+                .orElseThrow(() -> new CourseOfferingNotFoundException("Course offering not found with id: " + offeringId));
+        return courseOffering.getBaseCourse();
+    }
+
+    @Transactional(readOnly = true)
     public CourseOffering getCourseOfferingById(UUID id) {
         return courseOfferingRepository.findById(id).orElseThrow(
                 () -> new CourseOfferingNotFoundException("Course offering not found with id: " + id)

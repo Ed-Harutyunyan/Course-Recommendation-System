@@ -3,7 +3,6 @@ package edu.aua.course_recommendation.service.course;
 import edu.aua.course_recommendation.entity.*;
 import edu.aua.course_recommendation.exceptions.AuthenticationException;
 import edu.aua.course_recommendation.exceptions.CourseNotFoundException;
-import edu.aua.course_recommendation.exceptions.CourseOfferingNotFoundException;
 import edu.aua.course_recommendation.exceptions.EnrollmentException;
 import edu.aua.course_recommendation.model.AcademicStanding;
 import edu.aua.course_recommendation.model.Role;
@@ -11,20 +10,21 @@ import edu.aua.course_recommendation.repository.CourseRepository;
 import edu.aua.course_recommendation.repository.EnrollmentRepository;
 import edu.aua.course_recommendation.repository.UserRepository;
 import edu.aua.course_recommendation.service.auth.UserService;
-import jakarta.transaction.Transactional;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class EnrollmentService {
+
+    private static final ThreadLocal<Set<String>> simulatedCompletedCourses = new ThreadLocal<>();
 
     private final UserService userService;
     private final EnrollmentRepository enrollmentRepository;
@@ -109,11 +109,29 @@ public class EnrollmentService {
 
     // This returns all the course *codes* that the student didn't get a
     // W or F grade in
+    @Transactional(readOnly = true)
     public List<String> getCompletedCourseCodes(UUID studentId) {
-        return enrollmentRepository.findByUser_Id(studentId).stream()
+        List<String> actual = enrollmentRepository.findByUser_Id(studentId).stream()
                 .filter(e -> isPassingGrade(e.getGrade()))
                 .map(e -> e.getCourse().getCode())
                 .toList();
+
+        Set<String> simulated = simulatedCompletedCourses.get();
+        if (simulated != null) {
+            Set<String> union = new HashSet<>(actual);
+            union.addAll(simulated);
+            return new ArrayList<>(union);
+        }
+
+        return actual;
+    }
+
+    public void setSimulatedCompletedCourses(Set<String> simulated) {
+        simulatedCompletedCourses.set(simulated);
+    }
+
+    public void clearSimulatedCompletedCourses() {
+        simulatedCompletedCourses.remove();
     }
 
     // By default, each grade is set to "N/A"
