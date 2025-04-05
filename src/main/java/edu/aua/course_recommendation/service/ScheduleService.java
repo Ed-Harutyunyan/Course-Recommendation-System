@@ -7,9 +7,12 @@ import edu.aua.course_recommendation.exceptions.ScheduleValidationException;
 import edu.aua.course_recommendation.exceptions.UserNotFoundException;
 import edu.aua.course_recommendation.exceptions.ValidationError;
 import edu.aua.course_recommendation.model.AcademicStanding;
+import edu.aua.course_recommendation.model.DegreeScenarioType;
 import edu.aua.course_recommendation.repository.CourseOfferingRepository;
 import edu.aua.course_recommendation.repository.ScheduleRepository;
+import edu.aua.course_recommendation.service.audit.BaseDegreeAuditService;
 import edu.aua.course_recommendation.service.auth.UserService;
+import edu.aua.course_recommendation.service.course.CourseOfferingService;
 import edu.aua.course_recommendation.service.course.CourseService;
 import edu.aua.course_recommendation.service.course.EnrollmentService;
 import lombok.AllArgsConstructor;
@@ -26,8 +29,10 @@ public class ScheduleService {
     private final CourseService courseService;
     private final UserService userService;
     private final CourseOfferingRepository courseOfferingRepository;
+    private final BaseDegreeAuditService baseDegreeAuditService;
 
     public static final int MAX_CREDITS_PER_REGISTRATION = 15;
+    private final CourseOfferingService courseOfferingService;
 
     public Schedule getScheduleById(UUID id) {
         return scheduleRepository.findById(id).orElse(null);
@@ -130,6 +135,97 @@ public class ScheduleService {
                 .filter(off -> prerequisitesMet(off, studentId))
                 .filter(off -> validAcademicStanding(off, studentId))
                 .findFirst();
+    }
+
+    public List<CourseOffering> findValidOfferings(UUID studentId) {
+        // Get the course offerings that the student needs to take
+        List<CourseOffering> neededOfferings = getNeededCourseOfferings(studentId);
+
+        // Filter only those that the student can take based on prerequisites and academic standing
+        return neededOfferings.stream()
+                .filter(off -> validAcademicStanding(off, studentId))
+                .filter(off -> prerequisitesMet(off, studentId))
+                .toList();
+    }
+
+    public List<CourseOffering> getNeededCourseOfferings(UUID studentId) {
+        // List to hold all offerings in proper order
+        List<CourseOffering> orderedOfferings = new ArrayList<>();
+
+        // Map to keep track of which category a course code belongs to
+        Map<String, Integer> categoryPriority = new HashMap<>();
+        int priorityIndex = 0;
+
+        // 1. First Aid & Civil Defense
+        List<String> firstAidCodes = baseDegreeAuditService.checkFirstAidAndCivilDefense(studentId).getPossibleCourseCodes();
+        for (String code : firstAidCodes) {
+            categoryPriority.put(code, priorityIndex);
+        }
+        priorityIndex++;
+
+        // 2. Physical Education
+        List<String> physEdCodes = baseDegreeAuditService.checkPhysicalEducationRequirementsDetailed(studentId).getPossibleCourseCodes();
+        for (String code : physEdCodes) {
+            categoryPriority.put(code, priorityIndex);
+        }
+        priorityIndex++;
+
+        // 3. Foundation Requirements
+        List<String> foundationCodes = baseDegreeAuditService.checkFoundationRequirementsDetailed(studentId).getPossibleCourseCodes();
+        for (String code : foundationCodes) {
+            categoryPriority.put(code, priorityIndex);
+        }
+        priorityIndex++;
+
+        // 4. Core Courses
+        List<String> coreCodes = baseDegreeAuditService.checkProgramCore(studentId).getPossibleCourseCodes();
+        for (String code : coreCodes) {
+            categoryPriority.put(code, priorityIndex);
+        }
+        priorityIndex++;
+
+        // 5. General Education
+        List<String> genEdCodes = baseDegreeAuditService.checkGeneralEducationRequirementsDetailed(studentId).getPossibleCourseCodes();
+        for (String code : genEdCodes) {
+            categoryPriority.put(code, priorityIndex);
+        }
+        priorityIndex++;
+
+        // 6. Track Requirements
+        DegreeScenarioType chosenTrack = baseDegreeAuditService.pickChosenTrack(studentId);
+        List<String> trackCodes = baseDegreeAuditService.getTrackCourseCodes(chosenTrack);
+        for (String code : trackCodes) {
+            categoryPriority.put(code, priorityIndex);
+        }
+        priorityIndex++;
+
+        // 7. Free Electives
+        List<String> freeElectiveCodes = baseDegreeAuditService.checkFreeElectiveRequirements(studentId).getPossibleCourseCodes();
+        for (String code : freeElectiveCodes) {
+            categoryPriority.put(code, priorityIndex);
+        }
+        priorityIndex++;
+
+        // 8. Capstone
+        List<String> capstoneCodes = baseDegreeAuditService.checkCapstoneRequirement(studentId).getPossibleCourseCodes();
+        for (String code : capstoneCodes) {
+            categoryPriority.put(code, priorityIndex);
+        }
+
+        // Combine all codes while maintaining uniqueness
+        List<String> allCodes = new ArrayList<>(categoryPriority.keySet());
+
+        // Get course offerings for all needed codes
+        List<CourseOffering> offerings = courseOfferingService.getCourseOfferingsByCourseCodes(allCodes);
+
+        // Sort offerings by category priority
+        offerings.sort((a, b) -> {
+            Integer aPriority = categoryPriority.getOrDefault(a.getBaseCourse().getCode(), Integer.MAX_VALUE);
+            Integer bPriority = categoryPriority.getOrDefault(b.getBaseCourse().getCode(), Integer.MAX_VALUE);
+            return aPriority.compareTo(bPriority);
+        });
+
+        return offerings;
     }
 
     // Checks if the student can take UPPER course.

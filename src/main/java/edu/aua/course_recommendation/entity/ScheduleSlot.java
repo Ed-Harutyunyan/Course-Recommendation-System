@@ -20,6 +20,9 @@ public class ScheduleSlot {
     @Column(name = "offering_id", nullable = false)
     private UUID offeringId;    // the specific CourseOffering ID
 
+    @Column(name = "course_code", nullable = false)
+    private String courseCode;   // e.g. "CS101", "MATH201"
+
     @Column(nullable = false)
     private int credits;        // e.g. 3 or 0
 

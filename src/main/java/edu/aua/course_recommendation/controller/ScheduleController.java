@@ -1,9 +1,12 @@
 package edu.aua.course_recommendation.controller;
 
+import edu.aua.course_recommendation.dto.CourseOfferingResponseDto;
+import edu.aua.course_recommendation.entity.CourseOffering;
 import edu.aua.course_recommendation.entity.Schedule;
-import edu.aua.course_recommendation.model.NextSemesterSchedule;
+import edu.aua.course_recommendation.mappers.CourseMapper;
 import edu.aua.course_recommendation.service.NextSemesterScheduleService;
 import edu.aua.course_recommendation.service.ScheduleService;
+import edu.aua.course_recommendation.service.course.CourseOfferingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,9 +22,11 @@ public class ScheduleController {
 
     private final NextSemesterScheduleService nextSemesterScheduleService;
     private final ScheduleService scheduleService;
+    private final CourseOfferingService courseOfferingService;
+    private final CourseMapper courseMapper;
 
     @GetMapping("/generate")
-    public ResponseEntity<NextSemesterSchedule> generateNextSemesterSchedule(
+    public ResponseEntity<Schedule> generateNextSemesterSchedule(
             @RequestParam UUID studentId,
             @RequestParam String year,
             @RequestParam String semester) {
@@ -38,11 +43,24 @@ public class ScheduleController {
         }
     }
 
-    @GetMapping("/student/{studentId}")
+    @GetMapping("/recommendation/{studentId}")
+    public ResponseEntity<List<CourseOfferingResponseDto>> getRecommendedSchedules(@PathVariable UUID studentId) {
+
+        List<CourseOffering> offerings = scheduleService.findValidOfferings(studentId);
+
+        List<CourseOfferingResponseDto> offeringDtos = offerings.stream()
+                .map(courseMapper::toCourseOfferingResponseDto)
+                .toList();
+
+        return ResponseEntity.ok(offeringDtos);
+    }
+
+    @GetMapping("/all/{studentId}")
     public ResponseEntity<List<Schedule>> getSchedulesByStudentId(@PathVariable UUID studentId) {
         List<Schedule> schedules = scheduleService.getSchedulesByStudentId(studentId);
         return ResponseEntity.ok(schedules);
     }
+
 
     @GetMapping("/all")
     public ResponseEntity<List<Schedule>> getAllSchedules() {
@@ -50,8 +68,8 @@ public class ScheduleController {
         return ResponseEntity.ok(schedules);
     }
 
-    @PostMapping("/create")
-    public ResponseEntity<Schedule> createSchedule(@RequestBody Schedule schedule) {
+    @PostMapping("/save")
+    public ResponseEntity<Schedule> saveSchedule(@RequestBody Schedule schedule) {
         Schedule saved = scheduleService.saveSchedule(schedule);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }

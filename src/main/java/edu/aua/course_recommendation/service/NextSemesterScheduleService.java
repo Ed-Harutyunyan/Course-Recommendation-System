@@ -2,6 +2,7 @@ package edu.aua.course_recommendation.service;
 
 import edu.aua.course_recommendation.entity.Course;
 import edu.aua.course_recommendation.entity.CourseOffering;
+import edu.aua.course_recommendation.entity.Schedule;
 import edu.aua.course_recommendation.entity.ScheduleSlot;
 import edu.aua.course_recommendation.model.*;
 import edu.aua.course_recommendation.service.audit.BaseDegreeAuditService;
@@ -36,14 +37,13 @@ public class NextSemesterScheduleService {
     // Python will go here to fetch the recs
 
     // TODO: Change so year and semester in inferred from local time and no need to provide it
-    public NextSemesterSchedule generateNextSemester(UUID studentId, String year, String semester) {
+    public Schedule generateNextSemester(UUID studentId, String year, String semester) {
 
         // userService.validateStudent(studentId);
 
         // 1. Fetch the next semesters offerings
         List<CourseOffering> nextSemesterOfferings = courseOfferingService.
                 getCourseOfferingsByYearAndSemester(year, semester);
-
 
         // 2. Filter out courses the student has already completed or is currently enrolled in
         Set<String> completedCodes = new HashSet<>(enrollmentService.getCompletedCourseCodes(studentId));
@@ -80,7 +80,11 @@ public class NextSemesterScheduleService {
         currentCredits += addCapstoneIfPossible(slots, studentId, available, currentCredits);
 
         // Return the final schedule
-        return new NextSemesterSchedule(slots);
+        return Schedule.builder()
+                .id(UUID.randomUUID())
+                .studentId(studentId)
+                .slots(slots)
+                .build();
     }
 
 
@@ -101,6 +105,7 @@ public class NextSemesterScheduleService {
                 offering.ifPresent(courseOffering -> slots.add(new ScheduleSlot(
                         CourseType.FIRST_AID_CD,
                         courseOffering.getId(),
+                        courseOffering.getBaseCourse().getCode(),
                         0,
                         "N/A"
                 )));
@@ -121,6 +126,7 @@ public class NextSemesterScheduleService {
                 peOffering.ifPresent(courseOffering -> slots.add(new ScheduleSlot(
                         CourseType.PE,
                         courseOffering.getId(),
+                        courseOffering.getBaseCourse().getCode(),
                         0,
                         courseOffering.getTimes()
                 )));
@@ -163,6 +169,7 @@ public class NextSemesterScheduleService {
             slots.add(new ScheduleSlot(
                     CourseType.FOUNDATION,
                     off.get().getId(),
+                    off.get().getBaseCourse().getCode(),
                     3,
                     off.get().getTimes()
             ));
@@ -211,6 +218,7 @@ public class NextSemesterScheduleService {
                 slots.add(new ScheduleSlot(
                         CourseType.CORE,
                         off.getId(),
+                        off.getBaseCourse().getCode(),
                         off.getBaseCourse().getCredits(),
                         off.getTimes()
                 ));
@@ -302,6 +310,7 @@ public class NextSemesterScheduleService {
                     slots.add(new ScheduleSlot(
                             CourseType.GENED,
                             off.getId(),
+                            off.getBaseCourse().getCode(),
                             off.getBaseCourse().getCredits(),
                             off.getTimes()
                     ));
@@ -317,7 +326,6 @@ public class NextSemesterScheduleService {
     // =============== 8. TRACK ===============
     private int addTrackIfNeeded(List<ScheduleSlot> slots, UUID studentId, List<CourseOffering> available, int currentCredits) {
         // 1. Check if the student has a track
-
         boolean atLeastOneTrackDone = baseDegreeAuditService.checkProgramScenarios(studentId).stream()
                 .peek(DegreeAuditScenario::canGraduate)
                 .anyMatch(DegreeAuditScenario::isSatisfied);
@@ -339,6 +347,7 @@ public class NextSemesterScheduleService {
                 slots.add(new ScheduleSlot(
                         CourseType.TRACK,
                         off.getId(),
+                        off.getBaseCourse().getCode(),
                         off.getBaseCourse().getCredits(),
                         off.getTimes()
                 ));
@@ -370,6 +379,7 @@ public class NextSemesterScheduleService {
                 slots.add(new ScheduleSlot(
                         CourseType.FREE_ELECTIVE,
                         off.getId(),
+                        off.getBaseCourse().getCode(),
                         off.getBaseCourse().getCredits(),
                         off.getTimes()
                 ));
@@ -413,6 +423,7 @@ public class NextSemesterScheduleService {
             slots.add(new ScheduleSlot(
                     CourseType.CAPSTONE,
                     off.getId(),
+                    off.getBaseCourse().getCode(),
                     off.getBaseCourse().getCredits(),  // e.g. 3
                     off.getTimes()
             ));

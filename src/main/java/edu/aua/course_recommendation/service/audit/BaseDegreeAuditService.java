@@ -271,7 +271,7 @@ public abstract class BaseDegreeAuditService {
         );
     }
 
-    protected RequirementResult checkCapstoneRequirement(UUID studentId) {
+    public RequirementResult checkCapstoneRequirement(UUID studentId) {
         // 1. Check if the student already completed the capstone
         List<String> completedCodes = enrollmentService.getCompletedCourseCodes(studentId);
         String capstoneCode = getCapstoneCode();
@@ -285,7 +285,6 @@ public abstract class BaseDegreeAuditService {
                 capstoneDone ? 0 : 1
         );
     }
-
 
     private Set<String> getGenEdEligibleCourseCodes() {
 
