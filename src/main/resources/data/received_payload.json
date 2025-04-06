@@ -1,0 +1,17 @@
+[
+  {
+    "id": "7",
+    "title": "Business Analytics and Data Visualization",
+    "description": "This course equips professionals with tools and techniques for analyzing business data and creating impactful visualizations using Excel, Tableau, and Power BI. Real-world projects help students generate insights and make data-driven decisions."
+  },
+  {
+    "id": "4",
+    "title": "Web Development Bootcamp",
+    "description": "An all-in-one course covering both front-end and back-end web development. Students learn HTML, CSS, JavaScript, and server-side programming with modern frameworks through real-world projects and website deployments."
+  },
+  {
+    "id": "11",
+    "title": "Mobile App Development with Flutter",
+    "description": "Learn how to build cross-platform mobile applications using Flutter and Dart. This course covers UI design, state management, integration of APIs, and deployment to both Android and iOS platforms through practical projects."
+  }
+]
