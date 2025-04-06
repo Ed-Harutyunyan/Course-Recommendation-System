@@ -74,15 +74,11 @@ public class ScheduleController {
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
     }
 
-    @DeleteMapping("/{id}")
+    @DeleteMapping("/delete/{id}")
     public ResponseEntity<Void> deleteSchedule(@PathVariable UUID id) {
         Schedule schedule = scheduleService.getScheduleById(id);
-        if (schedule != null) {
-            scheduleService.deleteSchedule(id);
-            return ResponseEntity.noContent().build();
-        } else {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
+        scheduleService.deleteSchedule(schedule.getId());
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
 }

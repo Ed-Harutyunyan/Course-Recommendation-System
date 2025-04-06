@@ -3,6 +3,7 @@ package edu.aua.course_recommendation.service;
 import edu.aua.course_recommendation.entity.CourseOffering;
 import edu.aua.course_recommendation.entity.Schedule;
 import edu.aua.course_recommendation.entity.ScheduleSlot;
+import edu.aua.course_recommendation.exceptions.ScheduleNotFoundException;
 import edu.aua.course_recommendation.exceptions.ScheduleValidationException;
 import edu.aua.course_recommendation.exceptions.UserNotFoundException;
 import edu.aua.course_recommendation.exceptions.ValidationError;
@@ -35,7 +36,9 @@ public class ScheduleService {
     private final CourseOfferingService courseOfferingService;
 
     public Schedule getScheduleById(UUID id) {
-        return scheduleRepository.findById(id).orElse(null);
+        return scheduleRepository.findById(id).orElseThrow(
+                () -> new ScheduleNotFoundException("Schedule with id " + id + " not found")
+        );
     }
 
     public Schedule saveSchedule(Schedule schedule) {

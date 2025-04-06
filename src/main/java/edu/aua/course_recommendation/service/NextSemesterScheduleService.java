@@ -103,7 +103,6 @@ public class NextSemesterScheduleService {
 
                 // Only add slot if offering exists
                 offering.ifPresent(courseOffering -> slots.add(new ScheduleSlot(
-                        CourseType.FIRST_AID_CD,
                         courseOffering.getId(),
                         courseOffering.getBaseCourse().getCode(),
                         0,
@@ -124,7 +123,6 @@ public class NextSemesterScheduleService {
             if (firstMissingPE != null) {
                 Optional<CourseOffering> peOffering = scheduleService.findOffering(available, firstMissingPE, currentCredits, slots, studentId);
                 peOffering.ifPresent(courseOffering -> slots.add(new ScheduleSlot(
-                        CourseType.PE,
                         courseOffering.getId(),
                         courseOffering.getBaseCourse().getCode(),
                         0,
@@ -167,7 +165,6 @@ public class NextSemesterScheduleService {
         if (off.isPresent()) {
             // Add the slot if an offering is found
             slots.add(new ScheduleSlot(
-                    CourseType.FOUNDATION,
                     off.get().getId(),
                     off.get().getBaseCourse().getCode(),
                     3,
@@ -216,7 +213,6 @@ public class NextSemesterScheduleService {
 
                 // 6. Add the course to the schedule
                 slots.add(new ScheduleSlot(
-                        CourseType.CORE,
                         off.getId(),
                         off.getBaseCourse().getCode(),
                         off.getBaseCourse().getCredits(),
@@ -308,7 +304,6 @@ public class NextSemesterScheduleService {
                     // Found an offering that satisfies the cluster requirement
                     CourseOffering off = offOpt.get();
                     slots.add(new ScheduleSlot(
-                            CourseType.GENED,
                             off.getId(),
                             off.getBaseCourse().getCode(),
                             off.getBaseCourse().getCredits(),
@@ -345,7 +340,6 @@ public class NextSemesterScheduleService {
             if (offOpt.isPresent()) {
                 CourseOffering off = offOpt.get();
                 slots.add(new ScheduleSlot(
-                        CourseType.TRACK,
                         off.getId(),
                         off.getBaseCourse().getCode(),
                         off.getBaseCourse().getCredits(),
@@ -377,7 +371,6 @@ public class NextSemesterScheduleService {
             if (offOpt.isPresent()) {
                 CourseOffering off = offOpt.get();
                 slots.add(new ScheduleSlot(
-                        CourseType.FREE_ELECTIVE,
                         off.getId(),
                         off.getBaseCourse().getCode(),
                         off.getBaseCourse().getCredits(),
@@ -421,7 +414,6 @@ public class NextSemesterScheduleService {
         if (offOpt.isPresent()) {
             CourseOffering off = offOpt.get();
             slots.add(new ScheduleSlot(
-                    CourseType.CAPSTONE,
                     off.getId(),
                     off.getBaseCourse().getCode(),
                     off.getBaseCourse().getCredits(),  // e.g. 3

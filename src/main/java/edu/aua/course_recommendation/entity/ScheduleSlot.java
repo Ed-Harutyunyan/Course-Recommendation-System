@@ -13,10 +13,6 @@ import java.util.UUID;
 @AllArgsConstructor
 public class ScheduleSlot {
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "course_type", nullable = false)
-    private CourseType courseType;    // e.g. "CORE", "GENED", "TRACK", "PE", "FIRST_AID"
-
     @Column(name = "offering_id", nullable = false)
     private UUID offeringId;    // the specific CourseOffering ID
 
