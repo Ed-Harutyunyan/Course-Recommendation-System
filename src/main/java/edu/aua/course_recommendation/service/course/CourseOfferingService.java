@@ -1,6 +1,7 @@
 package edu.aua.course_recommendation.service.course;
 
 import edu.aua.course_recommendation.dto.CourseOfferingDto;
+import edu.aua.course_recommendation.dto.CourseOfferingResponseDto;
 import edu.aua.course_recommendation.entity.Course;
 import edu.aua.course_recommendation.entity.CourseOffering;
 import edu.aua.course_recommendation.entity.Instructor;
@@ -104,10 +105,26 @@ public class CourseOfferingService {
     }
 
     @Transactional(readOnly = true)
+    public Course getBaseCourseByOfferingId(UUID offeringId) {
+        CourseOffering courseOffering = courseOfferingRepository.findById(offeringId)
+                .orElseThrow(() -> new CourseOfferingNotFoundException("Course offering not found with id: " + offeringId));
+        return courseOffering.getBaseCourse();
+    }
+
+    @Transactional(readOnly = true)
     public CourseOffering getCourseOfferingById(UUID id) {
         return courseOfferingRepository.findById(id).orElseThrow(
                 () -> new CourseOfferingNotFoundException("Course offering not found with id: " + id)
         );
+    }
+
+    @Transactional(readOnly = true)
+    public List<CourseOffering> getCourseOfferingsByCourseCodes(List<String> courseCodes) {
+        if (courseCodes == null || courseCodes.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        return courseOfferingRepository.findByBaseCourse_CodeIn(courseCodes);
     }
 
     @Transactional

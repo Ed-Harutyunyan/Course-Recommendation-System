@@ -1,6 +1,7 @@
 package edu.aua.course_recommendation.service.auth;
 
 import edu.aua.course_recommendation.entity.User;
+import edu.aua.course_recommendation.exceptions.UserNotFoundException;
 import edu.aua.course_recommendation.model.AcademicStanding;
 import edu.aua.course_recommendation.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -69,7 +70,7 @@ public class UserService {
         User currentUser = getCurrentUser();
 
         if (student == null) {
-            throw new IllegalArgumentException("Student not found");
+            throw new UserNotFoundException("Student not found");
         }
 
         if (!student.getId().equals(currentUser.getId())) {

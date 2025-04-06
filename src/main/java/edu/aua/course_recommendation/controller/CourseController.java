@@ -2,8 +2,10 @@ package edu.aua.course_recommendation.controller;
 
 import edu.aua.course_recommendation.dto.CourseDto;
 import edu.aua.course_recommendation.dto.CourseOfferingDto;
+import edu.aua.course_recommendation.dto.CourseOfferingResponseDto;
 import edu.aua.course_recommendation.entity.Course;
 import edu.aua.course_recommendation.entity.CourseOffering;
+import edu.aua.course_recommendation.mappers.CourseMapper;
 import edu.aua.course_recommendation.service.course.CourseOfferingService;
 import edu.aua.course_recommendation.service.course.CourseService;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequiredArgsConstructor
@@ -21,6 +24,7 @@ public class CourseController {
 
     private final CourseService courseService;
     private final CourseOfferingService courseOfferingService;
+    private final CourseMapper courseMapper;
 
     /*
      * BASE COURSE RELATED ENDPOINTS
@@ -82,13 +86,18 @@ public class CourseController {
      */
 
     @GetMapping("/offering/all")
-    public ResponseEntity<List<CourseOffering>> getAllCourseOfferings() {
-        return ResponseEntity.ok(courseOfferingService.getAllCourseOfferings());
+    public ResponseEntity<List<CourseOfferingResponseDto>> getAllCourseOfferings() {
+        List<CourseOffering> offerings = courseOfferingService.getAllCourseOfferings();
+        List<CourseOfferingResponseDto> responseDtos = offerings.stream()
+                .map(courseMapper::toCourseOfferingResponseDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(responseDtos);
     }
 
     @GetMapping("/offering")
-    public ResponseEntity<CourseOffering> getCourseOfferingById(@RequestParam UUID id) {
-        return ResponseEntity.ok(courseOfferingService.getCourseOfferingById(id));
+    public ResponseEntity<CourseOfferingResponseDto> getCourseOfferingById(@RequestParam UUID id) {
+        CourseOffering offering = courseOfferingService.getCourseOfferingById(id);
+        return ResponseEntity.ok(courseMapper.toCourseOfferingResponseDto(offering));
     }
 
     @PostMapping("/offering/create")

@@ -1,9 +1,12 @@
 package edu.aua.course_recommendation.service.audit;
 
 import edu.aua.course_recommendation.entity.Course;
+import edu.aua.course_recommendation.entity.CourseOffering;
 import edu.aua.course_recommendation.entity.User;
 import edu.aua.course_recommendation.model.*;
+import edu.aua.course_recommendation.repository.CourseOfferingRepository;
 import edu.aua.course_recommendation.service.auth.UserService;
+import edu.aua.course_recommendation.service.course.CourseOfferingService;
 import edu.aua.course_recommendation.service.course.CourseService;
 import edu.aua.course_recommendation.service.course.EnrollmentService;
 import lombok.RequiredArgsConstructor;
@@ -268,7 +271,7 @@ public abstract class BaseDegreeAuditService {
         );
     }
 
-    protected RequirementResult checkCapstoneRequirement(UUID studentId) {
+    public RequirementResult checkCapstoneRequirement(UUID studentId) {
         // 1. Check if the student already completed the capstone
         List<String> completedCodes = enrollmentService.getCompletedCourseCodes(studentId);
         String capstoneCode = getCapstoneCode();
@@ -282,7 +285,6 @@ public abstract class BaseDegreeAuditService {
                 capstoneDone ? 0 : 1
         );
     }
-
 
     private Set<String> getGenEdEligibleCourseCodes() {
 
@@ -384,8 +386,9 @@ public abstract class BaseDegreeAuditService {
                 .anyMatch(DegreeAuditScenario::isSatisfied);
         boolean genEdDone = checkGeneralEducationRequirementsDetailed(studentId).isSatisfied();
         boolean freeElecDone = checkFreeElectiveRequirements(studentId).isSatisfied();
-
         return (foundationDone && coreDone && trackDone && genEdDone && freeElecDone);
     }
+
+
 
 }

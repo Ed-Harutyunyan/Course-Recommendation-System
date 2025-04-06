@@ -20,12 +20,12 @@ public class AdminController {
     private final JwtService jwtService;
     private final UserService userService;
 
-    @PreAuthorize("hasRole('ADMIN')")
-    @GetMapping("/get-token")
-    public ResponseEntity<String> getServiceToken(@RequestParam String serviceName) {
-        String token = jwtService.generateToken(serviceName, String.valueOf(Role.ROLE_SERVICE));
-        return ResponseEntity.ok(token);
-    }
+//    @PreAuthorize("hasRole('ADMIN')")
+//    @GetMapping("/get-token")
+//    public ResponseEntity<String> getServiceToken(@RequestParam String serviceName) {
+//        String token = jwtService.generateToken(serviceName, String.valueOf(Role.ROLE_SERVICE));
+//        return ResponseEntity.ok(token);
+//    }
 
     @PostMapping("/user/deactivate")
     @PreAuthorize("hasRole('ADMIN')")

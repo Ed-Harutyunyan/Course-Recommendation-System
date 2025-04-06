@@ -59,7 +59,7 @@ public class AuthenticationService {
     }
 
     public AuthTokens authenticate(final User user) {
-        final var accessToken = jwtService.generateToken(user.getUsername(), user.getRole().name());
+        final var accessToken = jwtService.generateToken(user.getUsername(), user.getRole().name(), user.getId());
 
         final var refreshTokenEntity = new RefreshToken();
         refreshTokenEntity.setUser(user);
@@ -73,7 +73,7 @@ public class AuthenticationService {
         final var refreshTokenEntity = refreshTokenRepository.findByIdAndExpiresAtAfter(validateRefreshTokenFormat(refreshToken), Instant.now())
                 .orElseThrow(() -> new BadCredentialsException("Invalid or expired refresh token"));
 
-        final var newAccessToken = jwtService.generateToken(refreshTokenEntity.getUser().getUsername(), refreshTokenEntity.getUser().getRole().name());
+        final var newAccessToken = jwtService.generateToken(refreshTokenEntity.getUser().getUsername(), refreshTokenEntity.getUser().getRole().name(), refreshTokenEntity.getUser().getId());
 
         return new AuthTokens(newAccessToken, refreshToken, between(Instant.now(), refreshTokenEntity.getExpiresAt()));
     }
