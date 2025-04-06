@@ -1,4 +1,4 @@
-package edu.aua.course_recommendation.service;
+package edu.aua.course_recommendation.service.schedule;
 
 import edu.aua.course_recommendation.entity.Course;
 import edu.aua.course_recommendation.entity.CourseOffering;
@@ -11,6 +11,7 @@ import edu.aua.course_recommendation.service.auth.UserService;
 import edu.aua.course_recommendation.service.course.CourseOfferingService;
 import edu.aua.course_recommendation.service.course.CourseService;
 import edu.aua.course_recommendation.service.course.EnrollmentService;
+import edu.aua.course_recommendation.util.AcademicCalendarUtil;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -18,14 +19,12 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static edu.aua.course_recommendation.service.ScheduleService.MAX_CREDITS_PER_REGISTRATION;
+import static edu.aua.course_recommendation.service.schedule.ScheduleService.MAX_CREDITS_PER_REGISTRATION;
 
 @Slf4j
 @Service
 @AllArgsConstructor
 public class NextSemesterScheduleService {
-
-//    private static final int MAX_CREDITS_PER_REGISTRATION = 15;
 
     private final EnrollmentService enrollmentService;
     private final BaseDegreeAuditService baseDegreeAuditService;
@@ -36,9 +35,7 @@ public class NextSemesterScheduleService {
     private final ScheduleService scheduleService;
     // Python will go here to fetch the recs
 
-    // TODO: Change so year and semester in inferred from local time and no need to provide it
-    public Schedule generateNextSemester(UUID studentId, String year, String semester) {
-
+    public Schedule generateNextSemesterCustom(UUID studentId, String year, String semester) {
         // userService.validateStudent(studentId);
 
         // 1. Fetch the next semesters offerings
@@ -85,6 +82,21 @@ public class NextSemesterScheduleService {
                 .studentId(studentId)
                 .slots(slots)
                 .build();
+    }
+
+    /**
+     * Generates a schedule for the next semester based on the current date.
+     * The semester is determined by the current date and the academic calendar.
+     *
+     * @param studentId The ID of the student for whom to generate the schedule.
+     * @return A Schedule object containing the generated schedule.
+     */
+    public Schedule generateNextSemester(UUID studentId) {
+        String[] nextPeriod = AcademicCalendarUtil.getNextAcademicPeriod();
+        String year = nextPeriod[0];
+        String semester = nextPeriod[1];
+
+        return generateNextSemesterCustom(studentId, year, semester);
     }
 
 

@@ -1,4 +1,4 @@
-package edu.aua.course_recommendation.service;
+package edu.aua.course_recommendation.service.schedule;
 
 import edu.aua.course_recommendation.entity.CourseOffering;
 import edu.aua.course_recommendation.entity.Schedule;

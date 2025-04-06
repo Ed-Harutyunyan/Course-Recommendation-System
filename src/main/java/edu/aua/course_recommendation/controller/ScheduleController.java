@@ -4,8 +4,8 @@ import edu.aua.course_recommendation.dto.CourseOfferingResponseDto;
 import edu.aua.course_recommendation.entity.CourseOffering;
 import edu.aua.course_recommendation.entity.Schedule;
 import edu.aua.course_recommendation.mappers.CourseMapper;
-import edu.aua.course_recommendation.service.NextSemesterScheduleService;
-import edu.aua.course_recommendation.service.ScheduleService;
+import edu.aua.course_recommendation.service.schedule.NextSemesterScheduleService;
+import edu.aua.course_recommendation.service.schedule.ScheduleService;
 import edu.aua.course_recommendation.service.course.CourseOfferingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -27,10 +27,16 @@ public class ScheduleController {
 
     @GetMapping("/generate")
     public ResponseEntity<Schedule> generateNextSemesterSchedule(
+            @RequestParam UUID studentId) {
+        return ResponseEntity.ok(nextSemesterScheduleService.generateNextSemester(studentId));
+    }
+
+    @GetMapping("/generate/custom")
+    public ResponseEntity<Schedule> generateNextSemesterSchedule(
             @RequestParam UUID studentId,
             @RequestParam String year,
             @RequestParam String semester) {
-        return ResponseEntity.ok(nextSemesterScheduleService.generateNextSemester(studentId, year, semester));
+        return ResponseEntity.ok(nextSemesterScheduleService.generateNextSemesterCustom(studentId, year, semester));
     }
 
     @GetMapping("/{id}")
@@ -72,6 +78,14 @@ public class ScheduleController {
     public ResponseEntity<Schedule> saveSchedule(@RequestBody Schedule schedule) {
         Schedule saved = scheduleService.saveSchedule(schedule);
         return ResponseEntity.status(HttpStatus.CREATED).body(saved);
+    }
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<Schedule> updateSchedule(@PathVariable UUID id, @RequestBody Schedule schedule) {
+        scheduleService.getScheduleById(id);
+        schedule.setId(id);
+        Schedule updatedSchedule = scheduleService.saveSchedule(schedule);
+        return ResponseEntity.ok(updatedSchedule);
     }
 
     @DeleteMapping("/delete/{id}")

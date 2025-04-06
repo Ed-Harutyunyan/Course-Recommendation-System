@@ -22,6 +22,9 @@ public class Schedule {
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
+    @Column(name = "schedule_name", nullable = false)
+    private String scheduleName;
+
     @Column(name = "user_id", nullable = false)
     private UUID studentId;
 
