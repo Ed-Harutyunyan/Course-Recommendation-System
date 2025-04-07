@@ -1,4 +1,4 @@
-package edu.aua.course_recommendation.service;
+package edu.aua.course_recommendation.service.schedule;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.aua.course_recommendation.dto.*;

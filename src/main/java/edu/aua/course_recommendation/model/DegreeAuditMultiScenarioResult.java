@@ -22,4 +22,5 @@ public class DegreeAuditMultiScenarioResult {
         this.canGraduateInAnyScenario = this.commonRequirementsSatisfied &&
                 scenarios.stream().anyMatch(DegreeAuditScenario::isSatisfied);
     }
+
 }

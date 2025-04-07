@@ -1,15 +1,17 @@
-package edu.aua.course_recommendation.service;
+package edu.aua.course_recommendation.service.schedule;
 
 import edu.aua.course_recommendation.entity.Course;
 import edu.aua.course_recommendation.entity.CourseOffering;
+import edu.aua.course_recommendation.entity.Schedule;
+import edu.aua.course_recommendation.entity.ScheduleSlot;
 import edu.aua.course_recommendation.model.*;
-import edu.aua.course_recommendation.repository.CourseOfferingRepository;
 import edu.aua.course_recommendation.service.audit.BaseDegreeAuditService;
 import edu.aua.course_recommendation.service.audit.GenedClusteringService;
 import edu.aua.course_recommendation.service.auth.UserService;
 import edu.aua.course_recommendation.service.course.CourseOfferingService;
 import edu.aua.course_recommendation.service.course.CourseService;
 import edu.aua.course_recommendation.service.course.EnrollmentService;
+import edu.aua.course_recommendation.util.AcademicCalendarUtil;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -17,29 +19,28 @@ import org.springframework.stereotype.Service;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static edu.aua.course_recommendation.service.schedule.ScheduleService.MAX_CREDITS_PER_REGISTRATION;
+
 @Slf4j
 @Service
 @AllArgsConstructor
 public class NextSemesterScheduleService {
 
-    private static final int MAX_CREDITS_PER_REGISTRATION = 15;
-
     private final EnrollmentService enrollmentService;
     private final BaseDegreeAuditService baseDegreeAuditService;
     private final CourseOfferingService courseOfferingService;
-    private final CourseOfferingRepository courseOfferingRepository;
     private final GenedClusteringService genedClusteringService;
     private final CourseService courseService;
     private final UserService userService;
+    private final ScheduleService scheduleService;
     // Python will go here to fetch the recs
 
-    // TODO: Change so year and semester in inferred from local time and no need to provide it
-    public NextSemesterSchedule getNextSemester(UUID studentId, String year, String semester) {
+    public Schedule generateNextSemesterCustom(UUID studentId, String year, String semester) {
+        // userService.validateStudent(studentId);
 
         // 1. Fetch the next semesters offerings
         List<CourseOffering> nextSemesterOfferings = courseOfferingService.
                 getCourseOfferingsByYearAndSemester(year, semester);
-
 
         // 2. Filter out courses the student has already completed or is currently enrolled in
         Set<String> completedCodes = new HashSet<>(enrollmentService.getCompletedCourseCodes(studentId));
@@ -76,7 +77,26 @@ public class NextSemesterScheduleService {
         currentCredits += addCapstoneIfPossible(slots, studentId, available, currentCredits);
 
         // Return the final schedule
-        return new NextSemesterSchedule(slots);
+        return Schedule.builder()
+                .id(UUID.randomUUID())
+                .studentId(studentId)
+                .slots(slots)
+                .build();
+    }
+
+    /**
+     * Generates a schedule for the next semester based on the current date.
+     * The semester is determined by the current date and the academic calendar.
+     *
+     * @param studentId The ID of the student for whom to generate the schedule.
+     * @return A Schedule object containing the generated schedule.
+     */
+    public Schedule generateNextSemester(UUID studentId) {
+        String[] nextPeriod = AcademicCalendarUtil.getNextAcademicPeriod();
+        String year = nextPeriod[0];
+        String semester = nextPeriod[1];
+
+        return generateNextSemesterCustom(studentId, year, semester);
     }
 
 
@@ -89,13 +109,14 @@ public class NextSemesterScheduleService {
         RequirementResult facd = baseDegreeAuditService.checkFirstAidAndCivilDefense(studentId);
 
         if (!facd.isSatisfied()) {
+            // Doing this since there is no time conflict but ideally logic should be moved to findOffering replaced with a single findOffering call
             for (String missingCode : facd.getPossibleCourseCodes()) {
                 Optional<CourseOffering> offering = courseOfferingService.findOfferingByBaseCourseCode(missingCode);
 
                 // Only add slot if offering exists
                 offering.ifPresent(courseOffering -> slots.add(new ScheduleSlot(
-                        CourseType.FIRST_AID_CD,
                         courseOffering.getId(),
+                        courseOffering.getBaseCourse().getCode(),
                         0,
                         "N/A"
                 )));
@@ -112,10 +133,10 @@ public class NextSemesterScheduleService {
                     .orElse(null);
 
             if (firstMissingPE != null) {
-                Optional<CourseOffering> peOffering = findOffering(available, firstMissingPE, currentCredits, slots, studentId);
+                Optional<CourseOffering> peOffering = scheduleService.findOffering(available, firstMissingPE, currentCredits, slots, studentId);
                 peOffering.ifPresent(courseOffering -> slots.add(new ScheduleSlot(
-                        CourseType.PE,
                         courseOffering.getId(),
+                        courseOffering.getBaseCourse().getCode(),
                         0,
                         courseOffering.getTimes()
                 )));
@@ -152,12 +173,12 @@ public class NextSemesterScheduleService {
         }
 
         // find an actual offering from 'available'
-        Optional<CourseOffering> off = findOffering(available, firstMissing, currentCredits, slots, studentId);
+        Optional<CourseOffering> off = scheduleService.findOffering(available, firstMissing, currentCredits, slots, studentId);
         if (off.isPresent()) {
             // Add the slot if an offering is found
             slots.add(new ScheduleSlot(
-                    CourseType.FOUNDATION,
                     off.get().getId(),
+                    off.get().getBaseCourse().getCode(),
                     3,
                     off.get().getTimes()
             ));
@@ -197,15 +218,15 @@ public class NextSemesterScheduleService {
 
             // 5. Find a matching offering from the 'available' list
             //    that doesn't conflict in time and doesn't exceed credit limit
-            Optional<CourseOffering> offOpt = findOffering(available, code, currentCredits, slots, studentId);
+            Optional<CourseOffering> offOpt = scheduleService.findOffering(available, code, currentCredits, slots, studentId);
 
             if (offOpt.isPresent()) {
                 CourseOffering off = offOpt.get();
 
                 // 6. Add the course to the schedule
                 slots.add(new ScheduleSlot(
-                        CourseType.CORE,
                         off.getId(),
+                        off.getBaseCourse().getCode(),
                         off.getBaseCourse().getCredits(),
                         off.getTimes()
                 ));
@@ -289,14 +310,14 @@ public class NextSemesterScheduleService {
             // TODO: Replace it so find offering returns all possible offerings
             // TODO: Change so python chooses best one
             for (Course base : themeCourses) {
-                Optional<CourseOffering> offOpt = findOffering(
+                Optional<CourseOffering> offOpt = scheduleService.findOffering(
                         available, base.getCode(), currentCredits, slots, studentId);
                 if (offOpt.isPresent()) {
                     // Found an offering that satisfies the cluster requirement
                     CourseOffering off = offOpt.get();
                     slots.add(new ScheduleSlot(
-                            CourseType.GENED,
                             off.getId(),
+                            off.getBaseCourse().getCode(),
                             off.getBaseCourse().getCredits(),
                             off.getTimes()
                     ));
@@ -312,7 +333,6 @@ public class NextSemesterScheduleService {
     // =============== 8. TRACK ===============
     private int addTrackIfNeeded(List<ScheduleSlot> slots, UUID studentId, List<CourseOffering> available, int currentCredits) {
         // 1. Check if the student has a track
-
         boolean atLeastOneTrackDone = baseDegreeAuditService.checkProgramScenarios(studentId).stream()
                 .peek(DegreeAuditScenario::canGraduate)
                 .anyMatch(DegreeAuditScenario::isSatisfied);
@@ -328,12 +348,12 @@ public class NextSemesterScheduleService {
         // TODO: Replace with Python recommendation
         // 3. Try each missing track code until we find a valid offering
         for (String trackCode : missingTrackCodes) {
-            Optional<CourseOffering> offOpt = findOffering(available, trackCode, currentCredits, slots, studentId);
+            Optional<CourseOffering> offOpt = scheduleService.findOffering(available, trackCode, currentCredits, slots, studentId);
             if (offOpt.isPresent()) {
                 CourseOffering off = offOpt.get();
                 slots.add(new ScheduleSlot(
-                        CourseType.TRACK,
                         off.getId(),
+                        off.getBaseCourse().getCode(),
                         off.getBaseCourse().getCredits(),
                         off.getTimes()
                 ));
@@ -359,12 +379,12 @@ public class NextSemesterScheduleService {
         // TODO: Replace with Python recommendation
         // 2. Find an offering from any of the free electives that satisfies the requirements
         for (String courseCode : missingCodes) {
-            Optional<CourseOffering> offOpt = findOffering(available, courseCode, currentCredits, slots, studentId);
+            Optional<CourseOffering> offOpt = scheduleService.findOffering(available, courseCode, currentCredits, slots, studentId);
             if (offOpt.isPresent()) {
                 CourseOffering off = offOpt.get();
                 slots.add(new ScheduleSlot(
-                        CourseType.FREE_ELECTIVE,
                         off.getId(),
+                        off.getBaseCourse().getCode(),
                         off.getBaseCourse().getCredits(),
                         off.getTimes()
                 ));
@@ -382,8 +402,17 @@ public class NextSemesterScheduleService {
             List<CourseOffering> available,
             int currentCredits
     ) {
+
+        // 0. Add the courses in slots to the students completed courses temporarily
+        // Can the student graduate assuming they will pass whatever they're taking this semester?
+        Set<String> simulatedCompleted = getSimulatedCompletedCourseCodes(studentId, slots);
+        enrollmentService.setSimulatedCompletedCourses(simulatedCompleted);
+
         // 1. Check if all else is done but capstone
         boolean allElseDone = baseDegreeAuditService.isAllElseDoneButCapstone(studentId);
+
+        enrollmentService.clearSimulatedCompletedCourses();
+
         if (!allElseDone) {
             // The student isn't ready to do capstone
             return 0;
@@ -393,12 +422,12 @@ public class NextSemesterScheduleService {
         String capstoneCode = baseDegreeAuditService.getCapstoneCode(); // e.g. "CS296"
 
         // 3. Attempt to find an offering for this code
-        Optional<CourseOffering> offOpt = findOffering(available, capstoneCode, currentCredits, slots, studentId);
+        Optional<CourseOffering> offOpt = scheduleService.findOffering(available, capstoneCode, currentCredits, slots, studentId);
         if (offOpt.isPresent()) {
             CourseOffering off = offOpt.get();
             slots.add(new ScheduleSlot(
-                    CourseType.CAPSTONE,
                     off.getId(),
+                    off.getBaseCourse().getCode(),
                     off.getBaseCourse().getCredits(),  // e.g. 3
                     off.getTimes()
             ));
@@ -407,140 +436,16 @@ public class NextSemesterScheduleService {
         return 0;
     }
 
-
-    // =============== HELPER FUNCTIONS ===============
-    private Optional<CourseOffering> findOffering(List<CourseOffering> available, String code, int currentCredits, List<ScheduleSlot> slots, UUID studentId) {
-        return available.stream()
-                .filter(off -> off.getBaseCourse().getCode().equals(code))
-                .filter(off -> currentCredits + off.getBaseCourse().getCredits() <= MAX_CREDITS_PER_REGISTRATION)
-                .filter(off -> !hasTimeConflict(off, slots))
-                .filter(off -> prerequisitesMet(off, studentId))
-                .filter(off -> validAcademicStanding(off, studentId))
-                .findFirst();
+    // Used to temporarily add current semesters courses to completed courses
+    // To determine if the student can SHOULD take capstone
+    private Set<String> getSimulatedCompletedCourseCodes(UUID studentId, List<ScheduleSlot> slots) {
+        Set<String> union = new HashSet<>(enrollmentService.getCompletedCourseCodes(studentId));
+        for (ScheduleSlot slot : slots) {
+            // Assuming each slot has a valid offeringId, and getBaseCourseByOfferingId will throw if not found.
+            Course baseCourse = courseOfferingService.getBaseCourseByOfferingId(slot.getOfferingId());
+            union.add(baseCourse.getCode());
+        }
+        return union;
     }
 
-    // Checks if the student can take UPPER course.
-    // Only Sophomores and above can take upper courses
-    private boolean validAcademicStanding(CourseOffering off, UUID studentId) {
-        AcademicStanding standing = userService.getAcademicStanding(studentId);
-
-        if (courseService.isUpperDivision(off.getBaseCourse().getCode())) {
-            // Upper division courses require the student to be at least sophomore
-            return standing == AcademicStanding.SOPHOMORE
-                    || standing == AcademicStanding.JUNIOR
-                    || standing == AcademicStanding.SENIOR;
-        } else {
-            // For lower division courses, assume all students (including freshmen) are eligible
-            return true;
-        }
-    }
-
-
-    public boolean prerequisitesMet(CourseOffering offering, UUID studentId) {
-        // Get prerequisites from the base course
-        Set<String> prerequisites = offering.getBaseCourse().getPrerequisites();
-
-        // If no prerequisites, always return true
-        if (prerequisites == null || prerequisites.isEmpty()) {
-            return true;
-        }
-
-        // Get the student's completed course codes
-        Set<String> completedCourses = new HashSet<>(enrollmentService.getCompletedCourseCodes(studentId));
-
-        // Check if all prerequisites are in the completed courses
-        return completedCourses.containsAll(prerequisites);
-    }
-
-
-    // Naive approach
-    // Does String Parsing
-    // Works with Jenzabar's Time Format
-    private boolean hasTimeConflict(CourseOffering newOffering, List<ScheduleSlot> existingSlots) {
-        if (newOffering.getTimes() == null || newOffering.getTimes().isEmpty()) {
-            return false;
-        }
-
-        return existingSlots.stream()
-                .filter(slot -> slot.getOfferingId() != null)
-                .map(slot -> courseOfferingRepository.findCourseOfferingsById(slot.getOfferingId()))
-                .filter(Optional::isPresent)
-                .map(Optional::get)
-                .anyMatch(existing -> doTimesConflict(existing.getTimes(), newOffering.getTimes()));
-    }
-
-    private boolean doTimesConflict(String times1, String times2) {
-        // Handle TBD case
-        if ("TBD".equalsIgnoreCase(times1) || "TBD".equalsIgnoreCase(times2)) {
-            return false;
-        }
-
-        // Handle null or empty cases
-        if (times1 == null || times2 == null || times1.isEmpty() || times2.isEmpty()) {
-            return false;
-        }
-
-        // Split multiple time slots
-        String[] slots1 = times1.split(", ");
-        String[] slots2 = times2.split(", ");
-
-        // Check each combination of time slots
-        for (String slot1 : slots1) {
-            for (String slot2 : slots2) {
-                if (doSingleSlotsConflict(slot1, slot2)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    private boolean doSingleSlotsConflict(String slot1, String slot2) {
-        String[] parts1 = slot1.trim().split(" ");
-        String[] parts2 = slot2.trim().split(" ");
-
-        if (parts1.length < 2 || parts2.length < 2) {
-            return false;
-        }
-
-        // Check if days overlap
-        if (!parts1[0].equals(parts2[0])) {
-            return false;
-        }
-
-        // Parse times
-        String[] timeRange1 = parts1[1].split("-");
-        String[] timeRange2 = parts2[1].split("-");
-
-        if (timeRange1.length != 2 || timeRange2.length != 2) {
-            return false;
-        }
-
-        int start1 = parseTimeToMinutes(timeRange1[0]);
-        int end1 = parseTimeToMinutes(timeRange1[1]);
-        int start2 = parseTimeToMinutes(timeRange2[0]);
-        int end2 = parseTimeToMinutes(timeRange2[1]);
-
-        return !(end1 <= start2 || end2 <= start1);
-    }
-
-    private int parseTimeToMinutes(String time) {
-        // Remove am/pm and convert to 24-hour format
-        time = time.toLowerCase();
-        boolean isPM = time.endsWith("pm");
-        time = time.replace("am", "").replace("pm", "");
-
-        String[] parts = time.split(":");
-        int hours = Integer.parseInt(parts[0]);
-        int minutes = Integer.parseInt(parts[1]);
-
-        if (isPM && hours != 12) {
-            hours += 12;
-        }
-        if (!isPM && hours == 12) {
-            hours = 0;
-        }
-
-        return hours * 60 + minutes;
-    }
 }

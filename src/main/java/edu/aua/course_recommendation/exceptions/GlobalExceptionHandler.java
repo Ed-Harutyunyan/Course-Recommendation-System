@@ -38,5 +38,26 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
     }
 
+    @ExceptionHandler(UserNotFoundException.class)
+    public ResponseEntity<String> handleUserNotFoundException(UserNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(ScheduleValidationException.class)
+    public ResponseEntity<ErrorResponse> handleScheduleValidationException(ScheduleValidationException ex) {
+        ErrorResponse error = new ErrorResponse(
+                ex.getError().toString(),
+                ex.getMessage()
+        );
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(error);
+    }
+
+    @ExceptionHandler(ScheduleNotFoundException.class)
+    public ResponseEntity<String> handleScheduleNotFoundException(ScheduleNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+    }
+
     // TODO: Add other exceptions here as well.
 }
