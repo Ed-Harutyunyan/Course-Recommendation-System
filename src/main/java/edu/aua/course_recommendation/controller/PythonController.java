@@ -3,7 +3,7 @@ package edu.aua.course_recommendation.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.aua.course_recommendation.dto.CourseDto;
 import edu.aua.course_recommendation.dto.KeywordsDto;
-import edu.aua.course_recommendation.service.PythonService;
+import edu.aua.course_recommendation.service.schedule.PythonService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
