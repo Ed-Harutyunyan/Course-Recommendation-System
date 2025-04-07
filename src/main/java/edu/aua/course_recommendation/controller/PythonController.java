@@ -3,7 +3,7 @@ package edu.aua.course_recommendation.controller;
 import edu.aua.course_recommendation.dto.CourseDto;
 import edu.aua.course_recommendation.dto.KeywordsDto;
 import edu.aua.course_recommendation.dto.PassedAndPossibleCoursesDto;
-import edu.aua.course_recommendation.service.PythonService;
+import edu.aua.course_recommendation.service.schedule.PythonService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
