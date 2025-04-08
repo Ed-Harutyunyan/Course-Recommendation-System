@@ -152,9 +152,6 @@ public class ScheduleService {
     }
 
     public List<CourseOffering> getNeededCourseOfferings(UUID studentId) {
-        // List to hold all offerings in proper order
-        List<CourseOffering> orderedOfferings = new ArrayList<>();
-
         // Map to keep track of which category a course code belongs to
         Map<String, Integer> categoryPriority = new HashMap<>();
         int priorityIndex = 0;

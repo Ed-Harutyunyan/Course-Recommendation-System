@@ -14,6 +14,7 @@ import org.springframework.web.client.RestTemplate;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -48,14 +49,14 @@ public class PythonService {
 
     /** For freshman: keywords
      *
-     * @param keywords List of keywords that interest the student
+     * @param body List of keywords that interest the student and possible course ids
      */
-    public ResponseEntity<String> sendKeywordsRecommendations(KeywordsDto keywords) {
+    public ResponseEntity<String> sendKeywordsRecommendations(KeywordAndPossibleIdsDto body) {
         HttpHeaders headers = new HttpHeaders();
         String URL = pythonServiceEndpoint + "/api/recommend/keyword";
 
         headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<KeywordsDto> request = new HttpEntity<>(keywords, headers);
+        HttpEntity<KeywordAndPossibleIdsDto> request = new HttpEntity<>(body, headers);
 
         try {
             ResponseEntity<List<RecommendationDto>> response = restTemplate.exchange(
@@ -74,7 +75,42 @@ public class PythonService {
         }
     }
 
-    public ResponseEntity<String> getRecommendationsWithPassedCourses(PassedAndPossibleCoursesDto UUIDs) {
+//    public ResponseEntity<String> getRecommendationsWithPassedCourses(List<UUID> passed_ids, List<UUID> possible_ids) {
+//
+//        PassedAndPossibleCoursesDto UUIDs = PassedAndPossibleCoursesDto.builder()
+//                .passed_ids(passed_ids)
+//                .possible_ids(possible_ids)
+//                .build();
+//
+//        HttpHeaders headers = new HttpHeaders();
+//        String URL = pythonServiceEndpoint + "/api/recommend/byPassed";
+//
+//        headers.setContentType(MediaType.APPLICATION_JSON);
+//        HttpEntity<PassedAndPossibleCoursesDto> request = new HttpEntity<>(UUIDs, headers);
+//
+//        try {
+//            ResponseEntity<List<RecommendationDto>> response = restTemplate.exchange(
+//                    URL, HttpMethod.POST, request, new ParameterizedTypeReference<>() {}
+//            );
+//
+//            if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
+//                saveRecommendationsToFile(response.getBody());
+//                return ResponseEntity.ok("JSON received and saved successfully in: " + dataPath);
+//            } else {
+//                return ResponseEntity.status(response.getStatusCode()).body("Error while fetching recommendations");
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to send keywords to python");
+//        }
+//    }
+
+    public List<RecommendationDto> getRecommendationsWithPassedCourses(List<UUID> passed_ids, List<UUID> possible_ids) {
+        PassedAndPossibleCoursesDto UUIDs = PassedAndPossibleCoursesDto.builder()
+                .passed_ids(passed_ids)
+                .possible_ids(possible_ids)
+                .build();
+
         HttpHeaders headers = new HttpHeaders();
         String URL = pythonServiceEndpoint + "/api/recommend/byPassed";
 
@@ -87,14 +123,12 @@ public class PythonService {
             );
 
             if (response.getStatusCode() == HttpStatus.OK && response.getBody() != null) {
-                saveRecommendationsToFile(response.getBody());
-                return ResponseEntity.ok("JSON received and saved successfully in: " + dataPath);
-            } else {
-                return ResponseEntity.status(response.getStatusCode()).body("Error while fetching recommendations");
+                return response.getBody();
             }
+            return List.of();
         } catch (Exception e) {
             e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to send keywords to python");
+            return List.of();
         }
     }
 

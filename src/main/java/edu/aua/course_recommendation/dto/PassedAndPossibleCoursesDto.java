@@ -1,8 +1,13 @@
 package edu.aua.course_recommendation.dto;
 
-import java.util.List;
+import lombok.Builder;
+import lombok.Getter;
 
+import java.util.List;
+import java.util.UUID;
+
+@Builder
 public record PassedAndPossibleCoursesDto (
-        List<String> passedCourseCodes, // TODO: Maybe UUID?
-        List<String> possibleCourseCodes
+        List<UUID> passed_ids,
+        List<UUID> possible_ids
 ) {}
