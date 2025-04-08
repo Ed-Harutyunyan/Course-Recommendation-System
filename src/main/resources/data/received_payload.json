@@ -1,20 +1,30 @@
 [
   {
-    "id": "8",
-    "title": "Advanced Java Programming",
-    "description": "This course covers advanced Java topics such as concurrency, memory management, and design patterns. Through in-depth projects, learners develop robust applications and gain insights into best practices in enterprise-level Java development.",
-    "score": "0.47661912"
+    "id": "f80edaf0-75cc-4a91-b80e-fdee91f5e98d",
+    "courseCode": "CS230",
+    "courseTitle": "Web Development with JavaScript",
+    "courseDescription": "hand course building interactive website using html cs javascript emphasis client side logic dom manipulation",
+    "score": "0.41603637"
   },
   {
-    "id": "6",
-    "title": "Recommender Systems: Theory and Practice",
-    "description": "An in-depth exploration of recommendation algorithms covering collaborative filtering, content-based methods, and hybrid approaches. Students work on hands-on projects to build and evaluate recommender models as used in e-commerce, media streaming, and more.",
-    "score": "0.44159275"
+    "id": "a5d7110a-d5e6-41be-993a-021375104210",
+    "courseCode": "CS101",
+    "courseTitle": "Introduction to Python Programming",
+    "courseDescription": "learn fundamental python programming hand project cover variable control structure function basic oop",
+    "score": "0.3380642"
   },
   {
-    "id": "7",
-    "title": "Business Analytics and Data Visualization",
-    "description": "This course equips professionals with tools and techniques for analyzing business data and creating impactful visualizations using Excel, Tableau, and Power BI. Real-world projects help students generate insights and make data-driven decisions.",
-    "score": "0.4136474"
+    "id": "9eb65243-786f-404e-929c-65df23c71fda",
+    "courseCode": "CS202",
+    "courseTitle": "Data Structures and Algorithms",
+    "courseDescription": "study classical data structure algorithm emphasis performance memory efficiency problem solving",
+    "score": "0.3147193"
+  },
+  {
+    "id": "fbe36b0a-90e8-48c9-9a6b-87e416d5768b",
+    "courseCode": "COMM150",
+    "courseTitle": "Public Speaking and Presentation",
+    "courseDescription": "practical course effective public speaking visual communication student deliver speech receive structured feedback",
+    "score": "0.28364626"
   }
 ]

@@ -1,5 +1,6 @@
 package edu.aua.course_recommendation.service.schedule;
 
+import edu.aua.course_recommendation.dto.RecommendationDto;
 import edu.aua.course_recommendation.entity.Course;
 import edu.aua.course_recommendation.entity.CourseOffering;
 import edu.aua.course_recommendation.entity.Schedule;
@@ -33,6 +34,7 @@ public class NextSemesterScheduleService {
     private final CourseService courseService;
     private final UserService userService;
     private final ScheduleService scheduleService;
+    private final PythonService pythonService;
     // Python will go here to fetch the recs
 
     public Schedule generateNextSemesterCustom(UUID studentId, String year, String semester) {
@@ -309,6 +311,18 @@ public class NextSemesterScheduleService {
             // This fetches the first offering that is found
             // TODO: Replace it so find offering returns all possible offerings
             // TODO: Change so python chooses best one
+
+            // IF WE HAVE COMPLETED COURSES
+            // GET RECOMMENDATIONS FROM PYTHON
+            List<Course> completedCourses = enrollmentService.getCompletedCourses(studentId);
+            if (!completedCourses.isEmpty()) {
+                List<RecommendationDto> pythonRecommends = pythonService.getRecommendationsWithPassedCourses(
+                    completedCourses.stream().map(Course::getId).toList(),
+                    themeCourses.stream().map(Course::getId).toList()
+                );
+            }
+
+            // OTHERWISE, SIMPLY PICK THE FIRST ONE THAT MATCHES.
             for (Course base : themeCourses) {
                 Optional<CourseOffering> offOpt = scheduleService.findOffering(
                         available, base.getCode(), currentCredits, slots, studentId);
