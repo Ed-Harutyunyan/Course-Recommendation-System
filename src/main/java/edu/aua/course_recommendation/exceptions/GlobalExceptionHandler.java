@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.util.InvalidUrlException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -57,6 +58,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ScheduleNotFoundException.class)
     public ResponseEntity<String> handleScheduleNotFoundException(ScheduleNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidUrlException.class)
+    public ResponseEntity<String> handleInvalidUrlException(InvalidUrlException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
     }
 
     // TODO: Add other exceptions here as well.
