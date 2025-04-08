@@ -2,6 +2,8 @@ package edu.aua.course_recommendation.service.schedule;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.aua.course_recommendation.dto.*;
+import edu.aua.course_recommendation.mappers.CourseMapper;
+import edu.aua.course_recommendation.service.course.CourseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
@@ -18,19 +20,27 @@ import java.util.List;
 public class PythonService {
 
     private final RestTemplate restTemplate = new RestTemplate();
+    private final CourseMapper courseMapper;
 
     @Value("${python.service.url}")
     private String pythonServiceEndpoint;
     @Value("${python.sent.recommendations}")
     private String dataPath;
 
-    public String sendCourses(List<CourseDto> data) {
+    private final CourseService courseService;
+
+    public String sendCourses() {
         HttpHeaders headers = new HttpHeaders();
 
         headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<List<CourseDto>> request = new HttpEntity<>(data, headers);
+        HttpEntity<List<CourseResponseDto>> request =
+                new HttpEntity<>(courseService
+                        .getAllCourses()
+                        .stream()
+                        .map(courseMapper::toCourseResponseDto)
+                        .toList(), headers);
 
-        ResponseEntity<String> response = restTemplate.exchange(pythonServiceEndpoint + "api/vectorize",
+        ResponseEntity<String> response = restTemplate.exchange(pythonServiceEndpoint + "/api/vectorize",
                 HttpMethod.PUT, request, String.class);
 
         return response.getBody();

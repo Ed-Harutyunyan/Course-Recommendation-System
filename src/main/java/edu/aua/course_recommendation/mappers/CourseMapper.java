@@ -3,6 +3,8 @@ package edu.aua.course_recommendation.mappers;
 import edu.aua.course_recommendation.dto.CourseDto;
 import edu.aua.course_recommendation.dto.CourseOfferingDto;
 import edu.aua.course_recommendation.dto.CourseOfferingResponseDto;
+import edu.aua.course_recommendation.dto.CourseResponseDto;
+import edu.aua.course_recommendation.entity.Course;
 import edu.aua.course_recommendation.entity.CourseOffering;
 import org.springframework.stereotype.Component;
 
@@ -17,6 +19,15 @@ public class CourseMapper {
                 courseOfferingDto.prerequisites(),
                 String.valueOf(courseOfferingDto.credits()),
                 courseOfferingDto.themes()
+        );
+    }
+
+    public CourseResponseDto toCourseResponseDto(Course course) {
+        return new CourseResponseDto(
+                course.getId(),
+                course.getCode(),
+                course.getTitle(),
+                course.getDescription()
         );
     }
 

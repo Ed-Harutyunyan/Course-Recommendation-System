@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.util.List;
 import java.util.UUID;
@@ -29,6 +31,10 @@ public class Schedule {
     private UUID studentId;
 
     @ElementCollection
-    @CollectionTable(name = "schedule_slots", joinColumns = @JoinColumn(name = "schedule_id"))
+    @CollectionTable(
+            name = "schedule_slots",
+            joinColumns = @JoinColumn(name = "schedule_id")
+    )
+    @OnDelete(action = OnDeleteAction.CASCADE)  // This makes Hibernate generate ON DELETE CASCADE
     private List<ScheduleSlot> slots;
 }
