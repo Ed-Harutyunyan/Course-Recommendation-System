@@ -1,9 +1,8 @@
 package edu.aua.course_recommendation.controller;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import edu.aua.course_recommendation.dto.CourseDto;
 import edu.aua.course_recommendation.dto.KeywordsDto;
-import edu.aua.course_recommendation.service.PythonService;
+import edu.aua.course_recommendation.dto.PassedAndPossibleCoursesDto;
+import edu.aua.course_recommendation.service.schedule.PythonService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
@@ -11,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/python")
@@ -23,29 +21,19 @@ public class PythonController {
     @Value("${python.sent.recommendations}")
     private String dataPath;
 
-    @PostMapping("/sendKeywords")
+    @PostMapping("/send/keywords")
     public ResponseEntity<String> sendKeywords(@RequestBody KeywordsDto keywords) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        File file = new File(String.format(dataPath, "received_payload.json"));
-
-        try {
-            File parentDir = file.getParentFile();
-            if (parentDir != null && !parentDir.exists()) {
-                parentDir.mkdirs();
-            }
-
-            objectMapper.writeValue(file, pythonService.sendKeywordsRecommendations(keywords));
-        } catch (IOException e) {
-            e.printStackTrace();
-            return ResponseEntity.status(500).body("Error saving JSON to file");
-        }
-
-        return ResponseEntity.ok("JSON received and saved successfully");
+        return pythonService.sendKeywordsRecommendations(keywords);
     }
 
-    @PostMapping("/newCourses")
-    public String newCourses(@RequestBody List<CourseDto> data) {
-        return pythonService.sendCourses(data);
+    @PostMapping("/send/PassedAndPossibleCourses")
+    public ResponseEntity<String> sendPassedAndPossibleCourses(@RequestBody PassedAndPossibleCoursesDto courses) {
+        return pythonService.getRecommendationsWithPassedCourses(courses);
+    }
+
+    @PostMapping("/send/courses")
+    public String newCourses() {
+        return pythonService.sendCourses();
     }
 
 }

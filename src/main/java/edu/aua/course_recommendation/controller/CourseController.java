@@ -3,6 +3,7 @@ package edu.aua.course_recommendation.controller;
 import edu.aua.course_recommendation.dto.CourseDto;
 import edu.aua.course_recommendation.dto.CourseOfferingDto;
 import edu.aua.course_recommendation.dto.CourseOfferingResponseDto;
+import edu.aua.course_recommendation.dto.CourseResponseDto;
 import edu.aua.course_recommendation.entity.Course;
 import edu.aua.course_recommendation.entity.CourseOffering;
 import edu.aua.course_recommendation.mappers.CourseMapper;
@@ -36,8 +37,11 @@ public class CourseController {
     }
 
     @GetMapping("/all")
-    public ResponseEntity<List<Course>> getAllCourses() {
-        return ResponseEntity.ok(courseService.getAllCourses());
+    public ResponseEntity<List<CourseResponseDto>> getAllCourses() {
+        return ResponseEntity.ok(courseService
+                .getAllCourses().stream()
+                .map(courseMapper::toCourseResponseDto)
+                .collect(Collectors.toList()));
     }
 
     @GetMapping("/all/themes")
