@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.client.RestClientException;
 import org.springframework.web.util.InvalidUrlException;
 
 @RestControllerAdvice
@@ -63,6 +64,17 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(InvalidUrlException.class)
     public ResponseEntity<String> handleInvalidUrlException(InvalidUrlException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(RecommendationException.class)
+    public ResponseEntity<String> handleRecommendationException(RecommendationException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(ex.getMessage());
+    }
+
+    @ExceptionHandler(RestClientException.class)
+    public ResponseEntity<String> handleRestClientException(RestClientException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                             .body("Error communicating with Python recommendation service: " + ex.getMessage());
     }
 
     // TODO: Add other exceptions here as well.
