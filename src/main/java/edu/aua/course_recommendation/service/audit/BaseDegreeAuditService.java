@@ -29,6 +29,7 @@ public abstract class BaseDegreeAuditService {
     private final static int REQUIRED_PHYS_ED_COUNT = 4;
     private static final String FIRST_AID_CODE = "FND152";
     private static final String CIVIL_DEFENSE_CODE = "FND153";
+    private static final String PEER_MENTORING_CODE = "PEER001";
 
     protected final EnrollmentService enrollmentService;
     private final GenedClusteringService genedClusteringService;
@@ -332,6 +333,7 @@ public abstract class BaseDegreeAuditService {
         Set<String> excluded = new HashSet<>(FOUNDATION_REQUIREMENTS);
         excluded.add(FIRST_AID_CODE);
         excluded.add(CIVIL_DEFENSE_CODE);
+        excluded.add(PEER_MENTORING_CODE);
 
         // Exclude physed courses
         Set<String> physEdCodes = courseService.getAllPhysedCourses().stream()

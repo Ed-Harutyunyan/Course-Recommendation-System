@@ -119,6 +119,7 @@ public class CourseOfferingService {
 
     @Transactional(readOnly = true)
     public List<CourseOffering> getCourseOfferingsByCourseCodes(List<String> courseCodes) {
+
         if (courseCodes == null || courseCodes.isEmpty()) {
             return new ArrayList<>();
         }
