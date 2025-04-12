@@ -50,6 +50,7 @@ public abstract class BaseDegreeAuditService {
 
         // 1. Build common requirements
         RequirementResult foundation = checkFoundationRequirementsDetailed(studentId);
+        RequirementResult peerMentoring = checkPeerMentoringRequirement(studentId);
         RequirementResult phed = checkPhysicalEducationRequirementsDetailed(studentId);
         RequirementResult genEd = checkGeneralEducationRequirementsDetailed(studentId);
         RequirementResult firstAidCivDef = checkFirstAidAndCivilDefense(studentId);
@@ -72,6 +73,22 @@ public abstract class BaseDegreeAuditService {
         List<DegreeAuditScenario> scenarios = checkProgramScenarios(studentId);
 
         return new DegreeAuditMultiScenarioResult(commonReqs, scenarios);
+    }
+
+    public RequirementResult checkPeerMentoringRequirement(UUID studentId) {
+        List<String> completedCodes = enrollmentService.getCompletedCourseCodes(studentId);
+
+        // Check if the student has completed the Peer Mentoring course
+        boolean isSatisfied = completedCodes.contains("PEER001"); // TODO: Remove hardcoded code
+
+        // If not satisfied, return the missing code
+        List<String> missingCodes = isSatisfied ? List.of() : List.of("PEER001");
+        return new RequirementResult(
+                "Peer Mentoring",
+                isSatisfied,
+                missingCodes,
+                missingCodes.size()
+        );
     }
 
     public RequirementResult checkFoundationRequirementsDetailed(UUID studentId) {
