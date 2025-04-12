@@ -153,8 +153,15 @@ public class ScheduleService {
 
     public List<CourseOffering> getNeededCourseOfferings(UUID studentId) {
         // Map to keep track of which category a course code belongs to
-        Map<String, Integer> categoryPriority = new HashMap<>();
+        Map<String, Integer> categoryPriority = new LinkedHashMap<>();
         int priorityIndex = 0;
+
+        // 0. Peer Mentoring
+        List<String> peerMentoring = baseDegreeAuditService.checkPeerMentoringRequirement(studentId).getPossibleCourseCodes();
+        for (String code : peerMentoring) {
+            categoryPriority.put(code, priorityIndex);
+        }
+        priorityIndex++;
 
         // 1. First Aid & Civil Defense
         List<String> firstAidCodes = baseDegreeAuditService.checkFirstAidAndCivilDefense(studentId).getPossibleCourseCodes();

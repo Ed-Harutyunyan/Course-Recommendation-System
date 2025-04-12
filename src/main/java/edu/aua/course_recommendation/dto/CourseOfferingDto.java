@@ -10,7 +10,7 @@ public record CourseOfferingDto(
         @JsonProperty("prerequisites") String prerequisites,
         @JsonProperty("section") String section,
         @JsonProperty("session") String session,
-        @JsonProperty("credits") Integer credits,
+        @JsonProperty("credits") String credits,
         @JsonProperty("campus") String campus,
         @JsonProperty("instructor") String instructor,
         @JsonProperty("times") String times,

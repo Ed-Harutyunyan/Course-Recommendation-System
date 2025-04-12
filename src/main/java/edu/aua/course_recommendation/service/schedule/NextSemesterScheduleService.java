@@ -39,6 +39,7 @@ public class NextSemesterScheduleService {
 
     public Schedule generateNextSemesterCustom(UUID studentId, String year, String semester) {
         // userService.validateStudent(studentId);
+        log.info("Generating schedule for student {} for {}-{}", studentId, year, semester);
 
         // 1. Fetch the next semesters offerings
         List<CourseOffering> nextSemesterOfferings = courseOfferingService.
@@ -57,26 +58,33 @@ public class NextSemesterScheduleService {
         // 4. Add zero-credit items (First Aid, Civil Defense, 1 PhysEd if needed)
         // TODO: We'll add a waiver check that sets completed to 4 if the student has a waiver for physed in audit service
         currentCredits += addZeroCreditItems(slots, studentId, available, currentCredits);
+        log.info("After zero-credit items: {} credits", currentCredits);
 
         // 5. Add 1 Foundation if needed
         // This will be IN ORDER (They are all prerequisites to each other)
         currentCredits += addFoundationIfNeeded(slots, studentId, available, currentCredits);
+        log.info("After foundation: {} credits", currentCredits);
 
         // 6. Add up to 3 core if GenEd is not done (or 4 if done)
         currentCredits += addCoreCoursesIfNeeded(slots, studentId, available, currentCredits);
+        log.info("After core courses: {} credits", currentCredits);
 
         // 7. If GenEd not done, add 1 GenEd
         currentCredits += addGenEdIfNeeded(slots, studentId, available, currentCredits);
+        log.info("After GenEd: {} credits", currentCredits);
 
         // 8. Add 1 Track if there's space
         // This will only happen if the student has CORE and GENED completed
         currentCredits += addTrackIfNeeded(slots, studentId, available, currentCredits);
+        log.info("After track: {} credits", currentCredits);
 
         // 9. Add 1 Free Elective if there's still space
         currentCredits += addFreeElectiveIfNeeded(slots, studentId, available, currentCredits);
+        log.info("After free elective: {} credits", currentCredits);
 
         // 10. Capstone only if all else is complete
         currentCredits += addCapstoneIfPossible(slots, studentId, available, currentCredits);
+        log.info("After capstone: {} credits (final)", currentCredits);
 
         // Return the final schedule
         return Schedule.builder()
@@ -103,10 +111,11 @@ public class NextSemesterScheduleService {
 
 
     // =============== 4. ZERO-CREDIT ITEMS ===============
-    // =============== FIRST AID, CIVIL DEFENSE AND PHYSED ===============
+    // =============== FIRST AID, CIVIL DEFENSE, PHYSICAL EDUCATION AND PEER MENTORING ===============
     private int addZeroCreditItems(List<ScheduleSlot> slots, UUID studentId,
                                    List<CourseOffering> available,
                                    int currentCredits) {
+
         // Check First Aid and Civil Defense
         RequirementResult facd = baseDegreeAuditService.checkFirstAidAndCivilDefense(studentId);
 
@@ -116,12 +125,15 @@ public class NextSemesterScheduleService {
                 Optional<CourseOffering> offering = courseOfferingService.findOfferingByBaseCourseCode(missingCode);
 
                 // Only add slot if offering exists
-                offering.ifPresent(courseOffering -> slots.add(new ScheduleSlot(
-                        courseOffering.getId(),
-                        courseOffering.getBaseCourse().getCode(),
-                        0,
-                        "N/A"
-                )));
+                offering.ifPresent(courseOffering -> {
+                    slots.add(new ScheduleSlot(
+                            courseOffering.getId(),
+                            courseOffering.getBaseCourse().getCode(),
+                            0,
+                            "N/A"
+                    ));
+                    log.info("Added zero-credit course: {} (First Aid/Civil Defense)", courseOffering.getBaseCourse().getCode());
+                });
             }
         }
 
@@ -136,12 +148,37 @@ public class NextSemesterScheduleService {
 
             if (firstMissingPE != null) {
                 Optional<CourseOffering> peOffering = scheduleService.findOffering(available, firstMissingPE, currentCredits, slots, studentId);
-                peOffering.ifPresent(courseOffering -> slots.add(new ScheduleSlot(
-                        courseOffering.getId(),
-                        courseOffering.getBaseCourse().getCode(),
-                        0,
-                        courseOffering.getTimes()
-                )));
+                peOffering.ifPresent(courseOffering -> {
+                    slots.add(new ScheduleSlot(
+                            courseOffering.getId(),
+                            courseOffering.getBaseCourse().getCode(),
+                            0,
+                            courseOffering.getTimes()
+                    ));
+                    log.info("Added PhysEd course: {}", courseOffering.getBaseCourse().getCode());
+                });
+            }
+        }
+
+        // Peer mentoring check
+        RequirementResult peerMentoring = baseDegreeAuditService.checkPeerMentoringRequirement(studentId);
+        if (!peerMentoring.isSatisfied()) {
+            // Try to find an offering for the first missing Peer Mentoring code
+            String firstMissingPeer = peerMentoring.getPossibleCourseCodes().stream()
+                    .findFirst()
+                    .orElse(null);
+
+            if (firstMissingPeer != null) {
+                Optional<CourseOffering> peerOffering = scheduleService.findOffering(available, firstMissingPeer, currentCredits, slots, studentId);
+                peerOffering.ifPresent(courseOffering -> {
+                    slots.add(new ScheduleSlot(
+                            courseOffering.getId(),
+                            courseOffering.getBaseCourse().getCode(),
+                            0,
+                            courseOffering.getTimes()
+                    ));
+                    log.info("Added Peer Mentoring course: {}", courseOffering.getBaseCourse().getCode());
+                });
             }
         }
 
@@ -156,6 +193,10 @@ public class NextSemesterScheduleService {
             List<CourseOffering> available,
             int currentCredits
     ) {
+        if (currentCredits >= MAX_CREDITS_PER_REGISTRATION) {
+            return 0; // No room for foundation
+        }
+
         RequirementResult foundation = baseDegreeAuditService.checkFoundationRequirementsDetailed(studentId);
 
         // All foundation courses are complete
@@ -177,13 +218,13 @@ public class NextSemesterScheduleService {
         // find an actual offering from 'available'
         Optional<CourseOffering> off = scheduleService.findOffering(available, firstMissing, currentCredits, slots, studentId);
         if (off.isPresent()) {
-            // Add the slot if an offering is found
             slots.add(new ScheduleSlot(
                     off.get().getId(),
                     off.get().getBaseCourse().getCode(),
                     3,
                     off.get().getTimes()
             ));
+            log.info("Added foundation course: {}", off.get().getBaseCourse().getCode());
             return 3;
         }
 
@@ -199,6 +240,10 @@ public class NextSemesterScheduleService {
             List<CourseOffering> available,
             int currentCredits
     ) {
+        if (currentCredits >= MAX_CREDITS_PER_REGISTRATION) {
+            return 0; // No room for core
+        }
+
         // 1. Check if the student still needs any core courses
         RequirementResult coreResult = baseDegreeAuditService.checkProgramCore(studentId);
         if (coreResult.isSatisfied()) {
@@ -232,6 +277,8 @@ public class NextSemesterScheduleService {
                         off.getBaseCourse().getCredits(),
                         off.getTimes()
                 ));
+                log.info("Added core course: {} ({}/{} core courses)",
+                        off.getBaseCourse().getCode(), added + 1, 3);
 
                 // 7. Update current credits
                 currentCredits += off.getBaseCourse().getCredits();
@@ -250,6 +297,9 @@ public class NextSemesterScheduleService {
             List<CourseOffering> available,
             int currentCredits
     ) {
+        if (currentCredits >= MAX_CREDITS_PER_REGISTRATION) {
+            return 0; // No room for GenEd
+        }
 
         // 1. Check if GenEd is already satisfied (clusters + numeric)
         RequirementResult genEdResult = baseDegreeAuditService.checkGeneralEducationRequirementsDetailed(studentId);
@@ -335,6 +385,8 @@ public class NextSemesterScheduleService {
                             off.getBaseCourse().getCredits(),
                             off.getTimes()
                     ));
+                    log.info("Added GenEd course: {} (Theme {})",
+                            off.getBaseCourse().getCode(), theme);
                     return off.getBaseCourse().getCredits();
                 }
             }
@@ -346,13 +398,17 @@ public class NextSemesterScheduleService {
 
     // =============== 8. TRACK ===============
     private int addTrackIfNeeded(List<ScheduleSlot> slots, UUID studentId, List<CourseOffering> available, int currentCredits) {
+        if (currentCredits >= MAX_CREDITS_PER_REGISTRATION) {
+            return 0; // No room for track
+        }
+
         // 1. Check if the student has a track
         boolean atLeastOneTrackDone = baseDegreeAuditService.checkProgramScenarios(studentId).stream()
                 .peek(DegreeAuditScenario::canGraduate)
                 .anyMatch(DegreeAuditScenario::isSatisfied);
 
         if (atLeastOneTrackDone) {
-            return 0; // Some track is complete
+            return 0; // Some track is already complete
         }
 
         // 2. Gather the missing track codes for the track that has the most missing courses
@@ -371,6 +427,8 @@ public class NextSemesterScheduleService {
                         off.getBaseCourse().getCredits(),
                         off.getTimes()
                 ));
+                log.info("Added track course: {} (Track: {})",
+                        off.getBaseCourse().getCode(), chosenTrack);
                 return off.getBaseCourse().getCredits();
             }
         }
@@ -380,6 +438,10 @@ public class NextSemesterScheduleService {
 
     // =============== 9. FREE ELECTIVE ===============
     private int addFreeElectiveIfNeeded(List<ScheduleSlot> slots, UUID studentId, List<CourseOffering> available, int currentCredits) {
+        if (currentCredits >= MAX_CREDITS_PER_REGISTRATION) {
+            return 0; // No room for free elective
+        }
+
         // 1. Check if the student has any free electives left
         RequirementResult freeElective = baseDegreeAuditService.checkFreeElectiveRequirements(studentId);
 
@@ -402,6 +464,7 @@ public class NextSemesterScheduleService {
                         off.getBaseCourse().getCredits(),
                         off.getTimes()
                 ));
+                log.info("Added free elective: {}", off.getBaseCourse().getCode());
                 return off.getBaseCourse().getCredits();
             }
         }
@@ -416,6 +479,9 @@ public class NextSemesterScheduleService {
             List<CourseOffering> available,
             int currentCredits
     ) {
+        if (currentCredits >= MAX_CREDITS_PER_REGISTRATION) {
+            return 0; // No room for capstone
+        }
 
         // 0. Add the courses in slots to the students completed courses temporarily
         // Can the student graduate assuming they will pass whatever they're taking this semester?
@@ -445,6 +511,7 @@ public class NextSemesterScheduleService {
                     off.getBaseCourse().getCredits(),  // e.g. 3
                     off.getTimes()
             ));
+            log.info("Added capstone course: {}", off.getBaseCourse().getCode());
             return off.getBaseCourse().getCredits();
         }
         return 0;

@@ -30,11 +30,29 @@ public class CSDegreeAuditService extends BaseDegreeAuditService{
 
     // Static for now, will change it so it is saved in db and update-able
     private static final List<String> CS_CORE = List.of(
-            "CS100", "CS101", "CS102", "CS103", "CS104",
-            "CS111", "CS107", "CS108", "CS110", "CS120",
-            "CS121", "CS211", "CS112", "CS213", "CS130",
-            "ENGS121"
+            "CS110", // Intro to Computer Science (Fall 1)
+            "CS100", // Calculus 1
+            "CS111", // Discrete Math
+
+            "CS120", // Intro to OOP (Spring 1)
+            "CS101", // Calculus 2
+            "CS104", // Linear Algebra
+
+            "CS121", // Data Structures (Fall 2)
+            "CS102", // Calculus 3
+            "CS130", // Computer Organization
+
+            "CS211", // Intro to Algorithms (Spring 2)
+            "CS103", // Real Analysis
+            "CS107", // Probability
+
+            "CS112", // Numerical Analysis (Fall 3)
+            "CS108", // Statistics
+
+            "CS213", // Optimization (Spring 3)
+            "CS140"  // Mechanics
     );
+
 
     private final static List<String> MATH_MODELING = List.of(
             "CS105", "CS205", "CS226", "CS221",

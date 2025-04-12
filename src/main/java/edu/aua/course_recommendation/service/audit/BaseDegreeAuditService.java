@@ -29,6 +29,7 @@ public abstract class BaseDegreeAuditService {
     private final static int REQUIRED_PHYS_ED_COUNT = 4;
     private static final String FIRST_AID_CODE = "FND152";
     private static final String CIVIL_DEFENSE_CODE = "FND153";
+    private static final String PEER_MENTORING_CODE = "PEER001";
 
     protected final EnrollmentService enrollmentService;
     private final GenedClusteringService genedClusteringService;
@@ -50,6 +51,7 @@ public abstract class BaseDegreeAuditService {
 
         // 1. Build common requirements
         RequirementResult foundation = checkFoundationRequirementsDetailed(studentId);
+        RequirementResult peerMentoring = checkPeerMentoringRequirement(studentId);
         RequirementResult phed = checkPhysicalEducationRequirementsDetailed(studentId);
         RequirementResult genEd = checkGeneralEducationRequirementsDetailed(studentId);
         RequirementResult firstAidCivDef = checkFirstAidAndCivilDefense(studentId);
@@ -72,6 +74,22 @@ public abstract class BaseDegreeAuditService {
         List<DegreeAuditScenario> scenarios = checkProgramScenarios(studentId);
 
         return new DegreeAuditMultiScenarioResult(commonReqs, scenarios);
+    }
+
+    public RequirementResult checkPeerMentoringRequirement(UUID studentId) {
+        List<String> completedCodes = enrollmentService.getCompletedCourseCodes(studentId);
+
+        // Check if the student has completed the Peer Mentoring course
+        boolean isSatisfied = completedCodes.contains("PEER001"); // TODO: Remove hardcoded code
+
+        // If not satisfied, return the missing code
+        List<String> missingCodes = isSatisfied ? List.of() : List.of("PEER001");
+        return new RequirementResult(
+                "Peer Mentoring",
+                isSatisfied,
+                missingCodes,
+                missingCodes.size()
+        );
     }
 
     public RequirementResult checkFoundationRequirementsDetailed(UUID studentId) {
@@ -315,6 +333,7 @@ public abstract class BaseDegreeAuditService {
         Set<String> excluded = new HashSet<>(FOUNDATION_REQUIREMENTS);
         excluded.add(FIRST_AID_CODE);
         excluded.add(CIVIL_DEFENSE_CODE);
+        excluded.add(PEER_MENTORING_CODE);
 
         // Exclude physed courses
         Set<String> physEdCodes = courseService.getAllPhysedCourses().stream()
