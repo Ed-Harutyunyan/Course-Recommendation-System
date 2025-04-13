@@ -32,8 +32,8 @@ public class PythonController {
     @PostMapping("/send/passed")
     public ResponseEntity<List<RecommendationDto>> sendPassedAndPossibleCourses(@RequestBody PassedAndPossibleCoursesDto dto) {
         List<RecommendationDto> recommendations = pythonService.getRecommendationsWithPassedCourses(
-                dto.passed_ids(),
-                dto.possible_ids()
+                dto.passed_course_codes(),
+                dto.possible_course_codes()
         );
         return ResponseEntity.ok(recommendations);
     }

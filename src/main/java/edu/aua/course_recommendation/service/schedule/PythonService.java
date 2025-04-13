@@ -120,8 +120,8 @@ public class PythonService {
 
     public List<RecommendationDto> getRecommendationsWithPassedCourses(List<String> passed_ids, List<String> possible_ids) {
         PassedAndPossibleCoursesDto courseCodes = PassedAndPossibleCoursesDto.builder()
-                                                                       .passed_ids(passed_ids)
-                                                                       .possible_ids(possible_ids)
+                                                                       .passed_course_codes(passed_ids)
+                                                                       .possible_course_codes(possible_ids)
                                                                        .build();
 
         HttpHeaders headers = new HttpHeaders();

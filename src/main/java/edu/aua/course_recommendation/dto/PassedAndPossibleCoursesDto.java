@@ -8,6 +8,6 @@ import java.util.UUID;
 
 @Builder
 public record PassedAndPossibleCoursesDto (
-        List<String> passed_ids,
-        List<String> possible_ids
+        List<String> passed_course_codes,
+        List<String> possible_course_codes
 ) {}
