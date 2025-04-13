@@ -4,5 +4,5 @@ import java.util.List;
 
 public record KeywordAndPossibleCourseDto(
     List<String> keywords,
-    List<String> possibleCourseIds
+    List<String> possibleCourseCodes
 ) {}
