@@ -1,6 +1,6 @@
 package edu.aua.course_recommendation.controller;
 
-import edu.aua.course_recommendation.dto.KeywordAndPossibleIdsDto;
+import edu.aua.course_recommendation.dto.KeywordAndPossibleCourseDto;
 import edu.aua.course_recommendation.dto.PassedAndPossibleCoursesDto;
 import edu.aua.course_recommendation.dto.RecommendationDto;
 import edu.aua.course_recommendation.service.schedule.PythonService;
@@ -18,7 +18,7 @@ public class PythonController {
     private final PythonService pythonService;
 
     @PostMapping("/send/keywords")
-    public ResponseEntity<List<RecommendationDto>> sendKeywords(@RequestBody KeywordAndPossibleIdsDto body) {
+    public ResponseEntity<List<RecommendationDto>> sendKeywords(@RequestBody KeywordAndPossibleCourseDto body) {
         List<RecommendationDto> recommendations = pythonService.sendKeywordsRecommendations(body);
 
         return ResponseEntity.ok(recommendations);

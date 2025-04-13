@@ -1,9 +1,8 @@
 package edu.aua.course_recommendation.dto;
 
 import java.util.List;
-import java.util.UUID;
 
-public record KeywordAndPossibleIdsDto(
+public record KeywordAndPossibleCourseDto(
     List<String> keywords,
-    List<UUID> possibleCourseIds
+    List<String> possibleCourseCodes
 ) {}

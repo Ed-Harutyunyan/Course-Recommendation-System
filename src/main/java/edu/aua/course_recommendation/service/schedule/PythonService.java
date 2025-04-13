@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -99,12 +98,12 @@ public class PythonService {
 //        }
 //    }
 
-    public List<RecommendationDto> sendKeywordsRecommendations(KeywordAndPossibleIdsDto body) {
+    public List<RecommendationDto> sendKeywordsRecommendations(KeywordAndPossibleCourseDto body) {
         HttpHeaders headers = new HttpHeaders();
         String URL = pythonServiceEndpoint + "/api/recommend/keyword";
 
         headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<KeywordAndPossibleIdsDto> request = new HttpEntity<>(body, headers);
+        HttpEntity<KeywordAndPossibleCourseDto> request = new HttpEntity<>(body, headers);
 
         ResponseEntity<List<RecommendationDto>> response = restTemplate.exchange(
                 URL, HttpMethod.POST, request, new ParameterizedTypeReference<>() {
@@ -119,8 +118,8 @@ public class PythonService {
     }
 
 
-    public List<RecommendationDto> getRecommendationsWithPassedCourses(List<UUID> passed_ids, List<UUID> possible_ids) {
-        PassedAndPossibleCoursesDto UUIDs = PassedAndPossibleCoursesDto.builder()
+    public List<RecommendationDto> getRecommendationsWithPassedCourses(List<String> passed_ids, List<String> possible_ids) {
+        PassedAndPossibleCoursesDto courseCodes = PassedAndPossibleCoursesDto.builder()
                                                                        .passed_ids(passed_ids)
                                                                        .possible_ids(possible_ids)
                                                                        .build();
@@ -129,7 +128,7 @@ public class PythonService {
         String URL = pythonServiceEndpoint + "/api/recommend/byPassed";
 
         headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<PassedAndPossibleCoursesDto> request = new HttpEntity<>(UUIDs, headers);
+        HttpEntity<PassedAndPossibleCoursesDto> request = new HttpEntity<>(courseCodes, headers);
 
         ResponseEntity<List<RecommendationDto>> response = restTemplate.exchange(
                 URL, HttpMethod.POST, request, new ParameterizedTypeReference<>() {
