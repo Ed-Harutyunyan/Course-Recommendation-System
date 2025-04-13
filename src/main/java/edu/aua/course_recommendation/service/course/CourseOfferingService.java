@@ -1,7 +1,6 @@
 package edu.aua.course_recommendation.service.course;
 
 import edu.aua.course_recommendation.dto.CourseOfferingDto;
-import edu.aua.course_recommendation.dto.CourseOfferingResponseDto;
 import edu.aua.course_recommendation.entity.Course;
 import edu.aua.course_recommendation.entity.CourseOffering;
 import edu.aua.course_recommendation.entity.Instructor;
@@ -175,7 +174,11 @@ public class CourseOfferingService {
 
     @Transactional(readOnly = true)
     public Optional<CourseOffering> findOfferingByBaseCourseCode(String courseCode) {
-        return courseOfferingRepository.findByBaseCourse_Code(courseCode);
+        return courseOfferingRepository.findFirstByBaseCourse_Code(courseCode);
     }
 
+    @Transactional(readOnly = true)
+    public List<CourseOffering> getCourseOfferingsByCourseCode(String code) {
+        return courseOfferingRepository.findAllByBaseCourse_Code(code);
+    }
 }
