@@ -365,12 +365,13 @@ public class NextSemesterScheduleService {
             // IF WE HAVE COMPLETED COURSES
             // GET RECOMMENDATIONS FROM PYTHON
             List<Course> completedCourses = enrollmentService.getCompletedCourses(studentId);
-            if (!completedCourses.isEmpty()) {
-                List<RecommendationDto> pythonRecommends = pythonService.getRecommendationsWithPassedCourses(
-                    completedCourses.stream().map(Course::getId).toList(),
-                    themeCourses.stream().map(Course::getId).toList()
-                );
-            }
+            // TODO: This chunk of code causes issues as the UUID is not used in the Dtos
+//            if (!completedCourses.isEmpty()) {
+//                List<RecommendationDto> pythonRecommends = pythonService.getRecommendationsWithPassedCourses(
+//                    completedCourses.stream().map(Course::getId).toList(),
+//                    themeCourses.stream().map(Course::getId).toList()
+//                );
+//            }
 
             // OTHERWISE, SIMPLY PICK THE FIRST ONE THAT MATCHES.
             for (Course base : themeCourses) {
