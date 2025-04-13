@@ -1,9 +1,6 @@
 package edu.aua.course_recommendation.controller;
 
-import edu.aua.course_recommendation.dto.CourseDto;
-import edu.aua.course_recommendation.dto.CourseOfferingDto;
-import edu.aua.course_recommendation.dto.CourseOfferingResponseDto;
-import edu.aua.course_recommendation.dto.CourseResponseDto;
+import edu.aua.course_recommendation.dto.*;
 import edu.aua.course_recommendation.entity.Course;
 import edu.aua.course_recommendation.entity.CourseOffering;
 import edu.aua.course_recommendation.mappers.CourseMapper;
@@ -32,8 +29,8 @@ public class CourseController {
      */
 
     @GetMapping
-    public ResponseEntity<Course> getCourseByCode(@RequestParam String code) {
-        return ResponseEntity.ok(courseService.getCourseByCode(code));
+    public ResponseEntity<DetailedCourseResponseDto> getCourseByCode(@RequestParam String code) {
+        return ResponseEntity.ok(courseMapper.toDetailedCourseResponseDto(courseService.getCourseByCode(code)));
     }
 
     @GetMapping("/all")
@@ -102,6 +99,16 @@ public class CourseController {
     public ResponseEntity<CourseOfferingResponseDto> getCourseOfferingById(@RequestParam UUID id) {
         CourseOffering offering = courseOfferingService.getCourseOfferingById(id);
         return ResponseEntity.ok(courseMapper.toCourseOfferingResponseDto(offering));
+    }
+
+    // TODO: Should be updated to only return next semesters offerings, not every offering
+    @GetMapping("/offering/course")
+    public ResponseEntity<List<CourseOfferingResponseDto>> getCourseOfferingsByCourseCode(@RequestParam String code) {
+        List<CourseOffering> offerings = courseOfferingService.getCourseOfferingsByCourseCode(code);
+        List<CourseOfferingResponseDto> responseDtos = offerings.stream()
+                .map(courseMapper::toCourseOfferingResponseDto)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(responseDtos);
     }
 
     @PostMapping("/offering/create")

@@ -13,7 +13,9 @@ public interface CourseOfferingRepository extends JpaRepository<CourseOffering, 
 
     Optional<CourseOffering> findCourseOfferingsById(UUID id);
 
-    Optional<CourseOffering> findByBaseCourse_Code(String code);
+    Optional<CourseOffering> findFirstByBaseCourse_Code(String code);
+
+    List<CourseOffering> findAllByBaseCourse_Code(String code);
 
     List<CourseOffering> findByYearAndSemester(String year, String semester);
 
