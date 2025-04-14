@@ -62,11 +62,12 @@ public abstract class BaseDegreeAuditService {
         RequirementResult core = checkProgramCore(studentId);
 
         List<RequirementResult> commonReqs = List.of(
+                peerMentoring,
+                firstAidCivDef,
                 core,
                 foundation,
                 phed,
                 genEd,
-                firstAidCivDef,
                 freeElective,
                 capstone);
 
@@ -119,10 +120,16 @@ public abstract class BaseDegreeAuditService {
 
         int completedCount = completedPhysedCodes.size();
         boolean isSatisfied = (completedCount >= 4);
+
+        List<String> availablePhysedCodes = courseService.getAllCourses().stream()
+                .map(Course::getCode)
+                .filter(code -> code.startsWith("FND110"))
+                .filter(code -> !completedPhysedCodes.contains(code))
+                .toList();
         return new RequirementResult(
                 "Physical Education",
                 isSatisfied,
-                Collections.nCopies(REQUIRED_PHYS_ED_COUNT - completedCount, "FND110"), // Any course starting with "FND110"
+                availablePhysedCodes,
                 REQUIRED_PHYS_ED_COUNT - completedCount
         );
     }
