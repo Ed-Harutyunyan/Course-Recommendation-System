@@ -127,6 +127,11 @@ public class CourseOfferingService {
     }
 
     @Transactional
+    public List<CourseOffering> getCourseOfferingsByYearAndSemester(String year, String semester) {
+        return courseOfferingRepository.findByYearAndSemester(year, semester);
+    }
+
+    @Transactional
     public void deleteCourseOfferingById(UUID id) {
         CourseOffering offering = courseOfferingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Course offering not found with id: " + id));
@@ -165,11 +170,6 @@ public class CourseOfferingService {
 
         // 3. Delete them all at once
         courseOfferingRepository.deleteAll(allOfferings);
-    }
-
-    @Transactional
-    public List<CourseOffering> getCourseOfferingsByYearAndSemester(String year, String semester) {
-        return courseOfferingRepository.findByYearAndSemester(year, semester);
     }
 
     @Transactional(readOnly = true)

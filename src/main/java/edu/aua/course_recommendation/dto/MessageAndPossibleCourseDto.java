@@ -1,8 +1,11 @@
 package edu.aua.course_recommendation.dto;
 
+import lombok.Builder;
+
 import java.util.List;
 
-public record KeywordAndPossibleCourseDto(
-    List<String> keywords,
+@Builder
+public record MessageAndPossibleCourseDto(
+    String message,
     List<String> possibleCourseCodes
 ) {}

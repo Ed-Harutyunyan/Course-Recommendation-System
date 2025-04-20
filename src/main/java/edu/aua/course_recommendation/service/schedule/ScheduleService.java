@@ -1,5 +1,7 @@
 package edu.aua.course_recommendation.service.schedule;
 
+import edu.aua.course_recommendation.dto.MessageAndPossibleCourseDto;
+import edu.aua.course_recommendation.dto.RecommendationDto;
 import edu.aua.course_recommendation.entity.CourseOffering;
 import edu.aua.course_recommendation.entity.Schedule;
 import edu.aua.course_recommendation.entity.ScheduleSlot;
@@ -17,10 +19,13 @@ import edu.aua.course_recommendation.service.course.CourseOfferingService;
 import edu.aua.course_recommendation.service.course.CourseService;
 import edu.aua.course_recommendation.service.course.EnrollmentService;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @AllArgsConstructor
 public class ScheduleService {
@@ -34,6 +39,7 @@ public class ScheduleService {
 
     public static final int MAX_CREDITS_PER_REGISTRATION = 15;
     private final CourseOfferingService courseOfferingService;
+    private final PythonService pythonService;
 
     public Schedule getScheduleById(UUID id) {
         return scheduleRepository.findById(id).orElseThrow(
@@ -150,6 +156,37 @@ public class ScheduleService {
                 .filter(off -> prerequisitesMet(off, studentId))
                 .toList();
     }
+
+    public List<CourseOffering> findValidOfferingsForPeriod(UUID studentId, String year, String semester) {
+        // Get all valid offerings for the student
+        List<CourseOffering> allValidOfferings = findValidOfferings(studentId);
+
+        // Filter for specific period only
+        return allValidOfferings.stream()
+                .filter(offering -> offering.getYear().equals(year)
+                        && offering.getSemester().equals(semester))
+                .toList();
+    }
+
+    public List<CourseOffering> findValidOfferingsForPeriodWithMessage(UUID studentId, String year, String semester, String message) {
+        // Get all valid offerings for the student
+        List<CourseOffering> allValidOfferings = findValidOfferingsForPeriod(studentId, year, semester);
+
+        // Ask python for recommendations
+        List<RecommendationDto> recommendationDtos = pythonService.sendMessageRecommendations(MessageAndPossibleCourseDto
+                .builder().possibleCourseCodes(allValidOfferings.stream().map(off -> off.getBaseCourse().getCode()).collect(Collectors.toList()))
+                .message(message)
+                .build());
+
+        // Filter for specific period only
+        return allValidOfferings.stream()
+                .filter(offering -> offering.getYear().equals(year)
+                        && offering.getSemester().equals(semester))
+                .filter(offering -> recommendationDtos.stream()
+                        .anyMatch(recommendation -> recommendation.courseCode().equals(offering.getBaseCourse().getCode())))
+                .toList();
+    }
+
 
     public List<CourseOffering> getNeededCourseOfferings(UUID studentId) {
         // Map to keep track of which category a course code belongs to

@@ -6,6 +6,7 @@ import edu.aua.course_recommendation.entity.CourseOffering;
 import edu.aua.course_recommendation.mappers.CourseMapper;
 import edu.aua.course_recommendation.service.course.CourseOfferingService;
 import edu.aua.course_recommendation.service.course.CourseService;
+import edu.aua.course_recommendation.util.AcademicCalendarUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -95,6 +96,23 @@ public class CourseController {
         return ResponseEntity.ok(responseDtos);
     }
 
+    @GetMapping("/offering")
+    public ResponseEntity<CourseOfferingResponseDto> getCourseOfferingById(@RequestParam UUID id) {
+        CourseOffering offering = courseOfferingService.getCourseOfferingById(id);
+        return ResponseEntity.ok(courseMapper.toCourseOfferingResponseDto(offering));
+    }
+
+    @GetMapping("/offering/current")
+    public ResponseEntity<List<CourseOfferingResponseDto>> getCurrentCourseOfferings() {
+        String[] nextPeriod = AcademicCalendarUtil.getNextAcademicPeriod();
+        List<CourseOffering> offerings = courseOfferingService.getCourseOfferingsByYearAndSemester(nextPeriod[0], nextPeriod[1]);
+        List<CourseOfferingResponseDto> responseDtos = offerings.stream()
+                .map(courseMapper::toCourseOfferingResponseDto)
+                .toList();
+        return ResponseEntity.ok(responseDtos);
+    }
+
+
     @GetMapping("/offering/{year}/{semester}")
     public ResponseEntity<List<CourseOfferingResponseDto>> getAllCourseOfferingsByYearAndSemester(
             @PathVariable String year,
@@ -108,13 +126,6 @@ public class CourseController {
         return ResponseEntity.ok(responseDtos);
     }
 
-    @GetMapping("/offering")
-    public ResponseEntity<CourseOfferingResponseDto> getCourseOfferingById(@RequestParam UUID id) {
-        CourseOffering offering = courseOfferingService.getCourseOfferingById(id);
-        return ResponseEntity.ok(courseMapper.toCourseOfferingResponseDto(offering));
-    }
-
-    // TODO: Should be updated to only return next semesters offerings, not every offering
     @GetMapping("/offering/course")
     public ResponseEntity<List<CourseOfferingResponseDto>> getCourseOfferingsByCourseCode(@RequestParam String code) {
         List<CourseOffering> offerings = courseOfferingService.getCourseOfferingsByCourseCode(code);

@@ -7,6 +7,7 @@ import edu.aua.course_recommendation.mappers.CourseMapper;
 import edu.aua.course_recommendation.service.schedule.NextSemesterScheduleService;
 import edu.aua.course_recommendation.service.schedule.ScheduleService;
 import edu.aua.course_recommendation.service.course.CourseOfferingService;
+import edu.aua.course_recommendation.util.AcademicCalendarUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -49,10 +50,49 @@ public class ScheduleController {
         }
     }
 
+    @GetMapping("/recommendation/{studentId}/custom/{year}/{semester}")
+    public ResponseEntity<List<CourseOfferingResponseDto>> getRecommendedSchedulesForPeriod(
+            @PathVariable UUID studentId,
+            @PathVariable String year,
+            @PathVariable String semester) {
+
+        // Get valid offerings for the specified period
+        List<CourseOffering> offerings = scheduleService.findValidOfferingsForPeriod(studentId, year, semester);
+
+        List<CourseOfferingResponseDto> offeringDtos = offerings.stream()
+                .map(courseMapper::toCourseOfferingResponseDto)
+                .toList();
+
+        return ResponseEntity.ok(offeringDtos);
+    }
+
+    @GetMapping(value = "/recommendation/{studentId}/custom/{year}/{semester}", params = "message")
+    public ResponseEntity<List<CourseOfferingResponseDto>> getRecommendedSchedulesForPeriod(
+            @PathVariable UUID studentId,
+            @PathVariable String year,
+            @PathVariable String semester,
+            @RequestParam(required = false) String message) {
+
+        // Get valid offerings for the specified period
+        List<CourseOffering> offerings = scheduleService.findValidOfferingsForPeriodWithMessage(studentId, year, semester, message);
+
+        List<CourseOfferingResponseDto> offeringDtos = offerings.stream()
+                .map(courseMapper::toCourseOfferingResponseDto)
+                .toList();
+
+        return ResponseEntity.ok(offeringDtos);
+    }
+
+
     @GetMapping("/recommendation/{studentId}")
     public ResponseEntity<List<CourseOfferingResponseDto>> getRecommendedSchedules(@PathVariable UUID studentId) {
+        // Get next academic period
+        String[] nextPeriod = AcademicCalendarUtil.getNextAcademicPeriod();
+        String year = nextPeriod[0];
+        String semester = nextPeriod[1];
 
-        List<CourseOffering> offerings = scheduleService.findValidOfferings(studentId);
+        // Get valid offerings for the next period only
+        List<CourseOffering> offerings = scheduleService.findValidOfferingsForPeriod(studentId, year, semester);
 
         List<CourseOfferingResponseDto> offeringDtos = offerings.stream()
                 .map(courseMapper::toCourseOfferingResponseDto)
