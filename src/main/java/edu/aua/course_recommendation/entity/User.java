@@ -64,4 +64,8 @@ public class User {
     @Column(nullable = false)
     @Enumerated(EnumType.STRING)
     private AcademicStanding academicStanding = AcademicStanding.FRESHMAN;
+
+    public boolean isAdmin() {
+        return Role.ROLE_ADMIN.equals(role);
+    }
 }

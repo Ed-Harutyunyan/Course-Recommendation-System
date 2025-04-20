@@ -1,6 +1,15 @@
 package edu.aua.course_recommendation.dto;
 
-import edu.aua.course_recommendation.model.Role;
+import lombok.Data;
+import java.util.List;
 
-public record UserProfileDto(String email, String username, Role role) {
+@Data
+public class UserProfileDto {
+    private String username;
+    private String role;
+    private String department;
+    private String academicStanding;
+
+    // only populated if the viewer is the same as the profile
+    private List<EnrollmentDto> enrollments;
 }
