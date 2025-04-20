@@ -39,6 +39,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/degree-audit/**").permitAll() // Open for testing
                         .requestMatchers("/api/schedule/**").permitAll() // Open for testing
                         .requestMatchers("/api/user/**").permitAll()   // Open for testing
+                        .requestMatchers("/uploads/**").permitAll()
+                        .requestMatchers(("/api/user/profile-picture/**")).permitAll()
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()

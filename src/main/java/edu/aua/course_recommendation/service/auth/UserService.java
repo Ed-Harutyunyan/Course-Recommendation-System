@@ -86,4 +86,8 @@ public class UserService {
         user.setEmailVerified(false);
         userRepository.save(user);
     }
+
+    public void saveUser(User currentUser) {
+        userRepository.save(currentUser);
+    }
 }

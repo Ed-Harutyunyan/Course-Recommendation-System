@@ -65,6 +65,9 @@ public class User {
     @Enumerated(EnumType.STRING)
     private AcademicStanding academicStanding = AcademicStanding.FRESHMAN;
 
+    @Column(name = "profile_picture_url")
+    private String profilePictureUrl;
+
     public boolean isAdmin() {
         return Role.ROLE_ADMIN.equals(role);
     }

@@ -23,6 +23,8 @@ public class UserMapper {
         dto.setRole(user.getRole().name());
         dto.setDepartment(user.getDepartment().name());
         dto.setAcademicStanding(user.getAcademicStanding().name());
+        dto.setEmail(user.getEmail());
+        dto.setProfilePictureUrl(user.getProfilePictureUrl());
 
         // Who’s calling?
         User me = userService.getCurrentUser();
@@ -30,7 +32,6 @@ public class UserMapper {
         boolean isSelf = me != null && me.getId().equals(user.getId());
 
         if (isSelf || isAdmin) {
-            // Only your own page gets enrollments
             var list = user.getEnrollments().stream().map(e -> {
                 var ed = new EnrollmentDto();
                 ed.setCourse(courseMapper.toCourseResponseDto(e.getCourse()));
