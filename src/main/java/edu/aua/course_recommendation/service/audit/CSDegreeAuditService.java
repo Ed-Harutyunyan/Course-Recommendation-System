@@ -2,6 +2,7 @@ package edu.aua.course_recommendation.service.audit;
 
 import edu.aua.course_recommendation.model.DegreeAuditScenario;
 import edu.aua.course_recommendation.model.DegreeScenarioType;
+import edu.aua.course_recommendation.model.Requirement;
 import edu.aua.course_recommendation.model.RequirementResult;
 import edu.aua.course_recommendation.service.auth.UserService;
 import edu.aua.course_recommendation.service.course.CourseService;
@@ -91,7 +92,7 @@ public class CSDegreeAuditService extends BaseDegreeAuditService{
 
         boolean isSatisfied = missing.isEmpty();
         return new RequirementResult(
-                "CS Core Requirements",
+                Requirement.CORE,
                 isSatisfied,
                 List.copyOf(missing),
                 missing.size()
@@ -146,7 +147,7 @@ public class CSDegreeAuditService extends BaseDegreeAuditService{
                 .toList();
 
         return new RequirementResult(
-                "Math Modeling Track",
+                Requirement.TRACK,
                 completedCount >= 5,
                 List.copyOf(missingCodes),
                 (int) (TRACK_REQUIREMENT_COUNT - completedCount)
@@ -169,7 +170,7 @@ public class CSDegreeAuditService extends BaseDegreeAuditService{
                 .toList();
 
         return new RequirementResult(
-                "Applied CS Track",
+                Requirement.TRACK,
                 completedCount >= 5,
                 List.copyOf(missingCodes),
                 (int) (TRACK_REQUIREMENT_COUNT - completedCount)
@@ -189,7 +190,7 @@ public class CSDegreeAuditService extends BaseDegreeAuditService{
                 .toList();
 
         return new RequirementResult(
-                "General CS Track",
+                Requirement.TRACK,
                 completedCount >= 5,
                 List.copyOf(missingCodes),
                 (int) (TRACK_REQUIREMENT_COUNT - completedCount)

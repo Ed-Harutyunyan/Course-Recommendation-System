@@ -9,7 +9,7 @@ import java.util.List;
 @AllArgsConstructor
 @Getter @Setter
 public class RequirementResult {
-    private String requirementName; // TODO: This should be changed to ENUM
+    private Requirement requirementName;
     private boolean isSatisfied;
     private List<String> possibleCourseCodes;
     private int howManyLeft;
