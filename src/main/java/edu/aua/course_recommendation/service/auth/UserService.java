@@ -52,8 +52,8 @@ public class UserService {
         // By default, principal is a Jwt when using the Spring Security OAuth2 Resource Server
         Object principal = authentication.getPrincipal();
         if (principal instanceof Jwt jwt) {
-            String email = jwt.getClaimAsString("sub");
-            return userRepository.findByEmail(email).orElse(null);
+            String username = jwt.getClaimAsString("sub");
+            return userRepository.findByUsername(username).orElse(null);
         }
 
         return null;

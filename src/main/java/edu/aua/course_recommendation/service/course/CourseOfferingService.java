@@ -181,4 +181,12 @@ public class CourseOfferingService {
     public List<CourseOffering> getCourseOfferingsByCourseCode(String code) {
         return courseOfferingRepository.findAllByBaseCourse_Code(code);
     }
+
+    public List<CourseOffering> getAllCourseOfferingsByYearAndSemester(String year, String semester) {
+        List<CourseOffering> offerings = courseOfferingRepository.findByYearAndSemester(year, semester);
+        if (offerings.isEmpty()) {
+            log.warn("No course offerings found for year: {} and semester: {}", year, semester);
+        }
+        return offerings;
+    }
 }

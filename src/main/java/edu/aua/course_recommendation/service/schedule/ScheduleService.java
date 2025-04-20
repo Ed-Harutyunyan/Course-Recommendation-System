@@ -263,9 +263,24 @@ public class ScheduleService {
 
         // Get the student's completed course codes
         Set<String> completedCourses = new HashSet<>(enrollmentService.getCompletedCourseCodes(studentId));
+        Set<String> effectivePrerequisites = new HashSet<>();
 
-        // Check if all prerequisites are in the completed courses
-        return completedCourses.containsAll(prerequisites);
+        // TODO: This is so so bad, why would anyone code like this?
+        // TODO: Somehow figure out how to handle prerequisites that are not exact course codes...
+        for (String prereq : prerequisites) {
+            if (prereq.contains("EQCALC1")) {
+                effectivePrerequisites.add("CS100");
+            } else if (prereq.contains("EQCALC2")) {
+                effectivePrerequisites.add("CS101");
+            } else if (prereq.contains("EQDATASTRC")) {
+                effectivePrerequisites.add("CS121");
+            } else {
+                effectivePrerequisites.add(prereq);
+            }
+        }
+
+        // Check if all effective prerequisites are in the completed courses
+        return completedCourses.containsAll(effectivePrerequisites);
     }
 
 

@@ -17,11 +17,17 @@ public class EnrollmentController {
 
     private final EnrollmentService enrollmentService;
 
-    @PostMapping("/{studentId}/enroll/{courseId}")
+    @PostMapping("/{studentId}/enroll/{courseCode}")
     public ResponseEntity<String> enroll(
             @PathVariable final UUID studentId,
-            @PathVariable final UUID courseId) {
-        enrollmentService.enroll(studentId, courseId);
+            @PathVariable final String courseCode) {
+        enrollmentService.enroll(studentId, courseCode);
+        return ResponseEntity.ok("Enrolled successfully");
+    }
+
+    @PostMapping("/{studentId}/enroll")
+    public ResponseEntity<String> enroll(@PathVariable final UUID studentId, @RequestBody final List<String> courseCodes) {
+        enrollmentService.enrollList(studentId, courseCodes);
         return ResponseEntity.ok("Enrolled successfully");
     }
 
@@ -31,10 +37,22 @@ public class EnrollmentController {
         return ResponseEntity.ok("Enrolled in all courses successfully");
     }
     
-    @DeleteMapping("/{studentId}/drop/{courseId}")
-    public ResponseEntity<String> drop(@PathVariable final UUID studentId, @PathVariable final UUID courseId) {
-        enrollmentService.drop(studentId, courseId);
-        return ResponseEntity.ok("Course dropped successfully");
+    @DeleteMapping("/{studentId}/drop/{courseCode}")
+    public ResponseEntity<String> drop(@PathVariable final UUID studentId, @PathVariable final String courseCode) {
+        enrollmentService.drop(studentId, courseCode);
+        return ResponseEntity.ok("Enrollment dropped successfully");
+    }
+
+    @DeleteMapping("/{studentId}/drop/all")
+    public ResponseEntity<String> dropAll(@PathVariable final UUID studentId) {
+        enrollmentService.dropAll(studentId);
+        return ResponseEntity.ok("All enrollments dropped successfully");
+    }
+
+    @DeleteMapping("/drop/all")
+    public ResponseEntity<String> dropAll() {
+        enrollmentService.dropAllEnrollments();
+        return ResponseEntity.ok("All enrollments for all students dropped successfully");
     }
 
     @GetMapping("/{studentId}/enrollments")

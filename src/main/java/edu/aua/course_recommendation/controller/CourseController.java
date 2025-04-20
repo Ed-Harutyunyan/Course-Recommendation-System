@@ -95,6 +95,19 @@ public class CourseController {
         return ResponseEntity.ok(responseDtos);
     }
 
+    @GetMapping("/offering/{year}/{semester}")
+    public ResponseEntity<List<CourseOfferingResponseDto>> getAllCourseOfferingsByYearAndSemester(
+            @PathVariable String year,
+            @PathVariable String semester) {
+        List<CourseOffering> offerings = courseOfferingService.getAllCourseOfferingsByYearAndSemester(year, semester);
+
+        List<CourseOfferingResponseDto> responseDtos = offerings.stream()
+                .map(courseMapper::toCourseOfferingResponseDto)
+                .toList();
+
+        return ResponseEntity.ok(responseDtos);
+    }
+
     @GetMapping("/offering")
     public ResponseEntity<CourseOfferingResponseDto> getCourseOfferingById(@RequestParam UUID id) {
         CourseOffering offering = courseOfferingService.getCourseOfferingById(id);

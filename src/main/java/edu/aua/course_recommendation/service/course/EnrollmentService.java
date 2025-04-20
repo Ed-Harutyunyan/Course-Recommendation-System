@@ -32,8 +32,8 @@ public class EnrollmentService {
     private final UserRepository userRepository;
 
     @Transactional
-    public void enroll(final UUID studentId, final UUID courseId, String grade) {
-        StudentAndCourse studentAndCourse = validateAndFetch(studentId, courseId);
+    public void enroll(final UUID studentId, final String courseCode, String grade) {
+        StudentAndCourse studentAndCourse = validateAndFetch(studentId, courseCode);
         User student = studentAndCourse.getStudent();
         Course course = studentAndCourse.getCourse();
 
@@ -44,7 +44,7 @@ public class EnrollmentService {
         // Make the composite key
         EnrollmentId enrollmentId = new EnrollmentId();
         enrollmentId.setUserId(studentId);
-        enrollmentId.setCourseId(courseId);
+        enrollmentId.setCourseId(course.getId());
 
         // Create the enrollment
         Enrollment enrollment = new Enrollment();
@@ -60,15 +60,15 @@ public class EnrollmentService {
     // Overloaded method for enrolling without providing a grade
     // Not providing a grade sets it to N/A
     @Transactional
-    public void enroll(final UUID studentId, final UUID courseId) {
-        enroll(studentId, courseId, "N/A");
+    public void enroll(final UUID studentId, final String courseCode) {
+        enroll(studentId, courseCode, "N/A");
     }
 
     @Transactional
     public void enrollAll(UUID studentId) {
         List<Course> courses = courseRepository.findAll();
         for (Course course : courses) {
-            StudentAndCourse studentAndCourse = validateAndFetch(studentId, course.getId());
+            StudentAndCourse studentAndCourse = validateAndFetch(studentId, course.getCode());
             User student = studentAndCourse.getStudent();
             Course validCourse = studentAndCourse.getCourse();
 
@@ -94,8 +94,8 @@ public class EnrollmentService {
     }
 
     @Transactional
-    public void drop(UUID studentId, UUID courseOfferingId) {
-        StudentAndCourse studentAndCourse = validateAndFetch(studentId, courseOfferingId);
+    public void drop(UUID studentId, String courseCode) {
+        StudentAndCourse studentAndCourse = validateAndFetch(studentId, courseCode);
         User student = studentAndCourse.getStudent();
         Course course = studentAndCourse.getCourse();
 
@@ -148,7 +148,7 @@ public class EnrollmentService {
 
 
     // Validates the authenticated user against the provided studentId and fetches the course.
-    private StudentAndCourse validateAndFetch(UUID studentId, UUID courseId) {
+    private StudentAndCourse validateAndFetch(UUID studentId, String courseCode) {
         User authenticatedUser = userService.getCurrentUser();
         if (authenticatedUser == null) {
             throw new AuthenticationException("No authenticated user found");
@@ -159,8 +159,8 @@ public class EnrollmentService {
         if (authenticatedUser.getRole() != Role.ROLE_STUDENT) {
             throw new EnrollmentException("Only students can enroll in courses");
         }
-        Course course = courseRepository.findCourseById(courseId)
-                .orElseThrow(() -> new CourseNotFoundException("Course not found"));
+        Course course = courseRepository.findByCode(courseCode)
+                .orElseThrow(() -> new CourseNotFoundException("Course with code " + courseCode + " not found"));
 
         return new StudentAndCourse(authenticatedUser, course);
     }
@@ -195,6 +195,28 @@ public class EnrollmentService {
         userRepository.save(student);
 
         return standing;
+    }
+
+    @Transactional
+    public void enrollList(UUID studentId, List<String> courseCodes) {
+        for (String code : courseCodes) {
+            enroll(studentId, code);
+        }
+    }
+
+    public void dropAll(UUID studentId) {
+        List<Enrollment> enrollments = enrollmentRepository.findByUser_Id(studentId);
+        enrollmentRepository.deleteAll(enrollments);
+        calculateAcademicStanding(studentId);
+    }
+
+    public void dropAllEnrollments() {
+        List<Enrollment> enrollments = enrollmentRepository.findAll();
+        enrollmentRepository.deleteAll(enrollments);
+        for (Enrollment enrollment : enrollments) {
+            User student = enrollment.getUser();
+            calculateAcademicStanding(student.getId());
+        }
     }
 
     @RequiredArgsConstructor
