@@ -37,7 +37,7 @@ public class UserMapper {
                 var ed = new EnrollmentDto();
                 ed.setCourse(courseMapper.toCourseResponseDto(e.getCourse()));
                 ed.setGrade(e.getGrade());
-                ed.setGrade(e.getYear());
+                ed.setYear(e.getYear());
                 ed.setSemester(e.getSemester());
                 return ed;
             }).toList();
