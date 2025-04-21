@@ -1,11 +1,11 @@
 package edu.aua.course_recommendation.controller;
 
+import edu.aua.course_recommendation.entity.User;
 import edu.aua.course_recommendation.model.DegreeAuditMultiScenarioResult;
 import edu.aua.course_recommendation.model.Department;
-import edu.aua.course_recommendation.model.NeededCluster;
 import edu.aua.course_recommendation.service.audit.BaseDegreeAuditService;
 import edu.aua.course_recommendation.service.audit.CSDegreeAuditService;
-import edu.aua.course_recommendation.service.audit.GenedClusteringService;
+import edu.aua.course_recommendation.service.auth.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,71 +16,61 @@ import java.util.*;
 public class DegreeAuditController {
 
     private final Map<Department, BaseDegreeAuditService> deptServices;
+    private final UserService userService;
 
     public DegreeAuditController(
-            CSDegreeAuditService csService) {
+            CSDegreeAuditService csService, UserService userService) {
         Map<Department, BaseDegreeAuditService> map = new HashMap<>();
         map.put(Department.CS, csService);
         // map.put(Department.BUSINESS, businessService);
         // ...
         this.deptServices = Collections.unmodifiableMap(map);
+        this.userService = userService;
     }
 
-    // Department must correspond to Enum
-    @GetMapping("/{department}/{studentId}")
+    @GetMapping("/{studentId}")
     public ResponseEntity<DegreeAuditMultiScenarioResult> auditDegree(
-            @PathVariable("department") Department department,
             @PathVariable UUID studentId
     ) {
-        BaseDegreeAuditService service = deptServices.get(department);
+        User student = userService.findById(studentId);
+        BaseDegreeAuditService service = deptServices.get(student.getDepartment());
         if (service == null) {
             return ResponseEntity.badRequest().body(null);
         }
-        // produce multi-scenario result
-        DegreeAuditMultiScenarioResult result = service.auditStudentDegreeMultiScenario(studentId);
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(service.auditStudentDegreeMultiScenario(studentId));
     }
 
-    @GetMapping("{department}/gened/{studentId}")
-    public ResponseEntity<?> getGenedOptions(
-            @PathVariable("department") Department department,
-            @PathVariable UUID studentId
-    ) {
-        BaseDegreeAuditService service = deptServices.get(department);
+    @GetMapping("/gened/{studentId}")
+    public ResponseEntity<?> getGenedOptions(@PathVariable UUID studentId) {
+        User student = userService.findById(studentId);
+        BaseDegreeAuditService service = deptServices.get(student.getDepartment());
         if (service == null) {
             return ResponseEntity.badRequest()
-                    .body(Map.of("error", "No audit service for department: " + department));
+                    .body(Map.of("error", "No audit service for department: " + student.getDepartment()));
         }
-
         return ResponseEntity.ok(service.checkGeneralEducationRequirementsDetailed(studentId));
     }
 
-    @GetMapping("{department}/gened/missing/{studentId}")
-    public ResponseEntity<?> getGenedMissing(
-            @PathVariable("department") Department department,
-            @PathVariable UUID studentId
-    ) {
-        BaseDegreeAuditService service = deptServices.get(department);
+    @GetMapping("/gened/missing/{studentId}")
+    public ResponseEntity<?> getGenedMissing(@PathVariable UUID studentId) {
+        User student = userService.findById(studentId);
+        BaseDegreeAuditService service = deptServices.get(student.getDepartment());
         if (service == null) {
             return ResponseEntity.badRequest()
-                    .body(Map.of("error", "No audit service for department: " + department));
+                    .body(Map.of("error", "No audit service for department: " + student.getDepartment()));
         }
-        Set<NeededCluster> result = service.getNeededClusters(studentId);
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(service.getNeededClusters(studentId));
     }
 
-    @GetMapping("{department}/gened/clusters/{studentId}")
-    public ResponseEntity<?> getGenedClusters(
-            @PathVariable("department") Department department,
-            @PathVariable UUID studentId
-    ) {
-        BaseDegreeAuditService service = deptServices.get(department);
+    @GetMapping("/gened/clusters/{studentId}")
+    public ResponseEntity<?> getGenedClusters(@PathVariable UUID studentId) {
+        User student = userService.findById(studentId);
+        BaseDegreeAuditService service = deptServices.get(student.getDepartment());
         if (service == null) {
             return ResponseEntity.badRequest()
-                    .body(Map.of("error", "No audit service for department: " + department));
+                    .body(Map.of("error", "No audit service for department: " + student.getDepartment()));
         }
-        List<GenedClusteringService.ClusterSolution> result = service.getClusters(studentId);
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(service.getClusters(studentId));
     }
 
 }

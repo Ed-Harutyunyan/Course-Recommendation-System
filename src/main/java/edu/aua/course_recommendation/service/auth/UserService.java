@@ -90,4 +90,9 @@ public class UserService {
     public void saveUser(User currentUser) {
         userRepository.save(currentUser);
     }
+
+    public User findById(UUID studentId) {
+        return userRepository.findById(studentId)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+    }
 }

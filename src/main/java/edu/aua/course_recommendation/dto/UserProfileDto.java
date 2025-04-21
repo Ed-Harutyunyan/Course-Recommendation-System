@@ -5,6 +5,7 @@ import java.util.List;
 
 @Data
 public class UserProfileDto {
+    private String id;
     private String username;
     private String role;
     private String department;

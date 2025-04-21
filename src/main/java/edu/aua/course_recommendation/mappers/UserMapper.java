@@ -19,6 +19,7 @@ public class UserMapper {
     public UserProfileDto toUserProfileDto(User user) {
         // Basic public info
         var dto = new UserProfileDto();
+        dto.setId(user.getId().toString());
         dto.setUsername(user.getUsername());
         dto.setRole(user.getRole().name());
         dto.setDepartment(user.getDepartment().name());
