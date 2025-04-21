@@ -33,4 +33,6 @@ public class AdminController {
         userService.deactivateUser(email);
         return ResponseEntity.noContent().build();
     }
+
+
 }

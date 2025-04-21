@@ -1,5 +1,7 @@
 package edu.aua.course_recommendation.service.schedule;
 
+import edu.aua.course_recommendation.dto.MessageAndPossibleCourseDto;
+import edu.aua.course_recommendation.dto.RecommendationDto;
 import edu.aua.course_recommendation.entity.CourseOffering;
 import edu.aua.course_recommendation.entity.Schedule;
 import edu.aua.course_recommendation.entity.ScheduleSlot;
@@ -17,10 +19,13 @@ import edu.aua.course_recommendation.service.course.CourseOfferingService;
 import edu.aua.course_recommendation.service.course.CourseService;
 import edu.aua.course_recommendation.service.course.EnrollmentService;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @AllArgsConstructor
 public class ScheduleService {
@@ -34,6 +39,7 @@ public class ScheduleService {
 
     public static final int MAX_CREDITS_PER_REGISTRATION = 15;
     private final CourseOfferingService courseOfferingService;
+    private final PythonService pythonService;
 
     public Schedule getScheduleById(UUID id) {
         return scheduleRepository.findById(id).orElseThrow(
@@ -151,6 +157,37 @@ public class ScheduleService {
                 .toList();
     }
 
+    public List<CourseOffering> findValidOfferingsForPeriod(UUID studentId, String year, String semester) {
+        // Get all valid offerings for the student
+        List<CourseOffering> allValidOfferings = findValidOfferings(studentId);
+
+        // Filter for specific period only
+        return allValidOfferings.stream()
+                .filter(offering -> offering.getYear().equals(year)
+                        && offering.getSemester().equals(semester))
+                .toList();
+    }
+
+    public List<CourseOffering> findValidOfferingsForPeriodWithMessage(UUID studentId, String year, String semester, String message) {
+        // Get all valid offerings for the student
+        List<CourseOffering> allValidOfferings = findValidOfferingsForPeriod(studentId, year, semester);
+
+        // Ask python for recommendations
+        List<RecommendationDto> recommendationDtos = pythonService.sendMessageRecommendations(MessageAndPossibleCourseDto
+                .builder().possibleCourseCodes(allValidOfferings.stream().map(off -> off.getBaseCourse().getCode()).collect(Collectors.toList()))
+                .message(message)
+                .build());
+
+        // Filter for specific period only
+        return allValidOfferings.stream()
+                .filter(offering -> offering.getYear().equals(year)
+                        && offering.getSemester().equals(semester))
+                .filter(offering -> recommendationDtos.stream()
+                        .anyMatch(recommendation -> recommendation.courseCode().equals(offering.getBaseCourse().getCode())))
+                .toList();
+    }
+
+
     public List<CourseOffering> getNeededCourseOfferings(UUID studentId) {
         // Map to keep track of which category a course code belongs to
         Map<String, Integer> categoryPriority = new LinkedHashMap<>();
@@ -263,9 +300,24 @@ public class ScheduleService {
 
         // Get the student's completed course codes
         Set<String> completedCourses = new HashSet<>(enrollmentService.getCompletedCourseCodes(studentId));
+        Set<String> effectivePrerequisites = new HashSet<>();
 
-        // Check if all prerequisites are in the completed courses
-        return completedCourses.containsAll(prerequisites);
+        // TODO: This is so so bad, why would anyone code like this?
+        // TODO: Somehow figure out how to handle prerequisites that are not exact course codes...
+        for (String prereq : prerequisites) {
+            if (prereq.contains("EQCALC1")) {
+                effectivePrerequisites.add("CS100");
+            } else if (prereq.contains("EQCALC2")) {
+                effectivePrerequisites.add("CS101");
+            } else if (prereq.contains("EQDATASTRC")) {
+                effectivePrerequisites.add("CS121");
+            } else {
+                effectivePrerequisites.add(prereq);
+            }
+        }
+
+        // Check if all effective prerequisites are in the completed courses
+        return completedCourses.containsAll(effectivePrerequisites);
     }
 
 

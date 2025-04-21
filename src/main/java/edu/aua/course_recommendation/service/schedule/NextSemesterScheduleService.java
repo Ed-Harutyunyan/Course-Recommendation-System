@@ -39,7 +39,6 @@ public class NextSemesterScheduleService {
 
     public Schedule generateNextSemesterCustom(UUID studentId, String year, String semester) {
         // userService.validateStudent(studentId);
-        log.info("Generating schedule for student {} for {}-{}", studentId, year, semester);
 
         // 1. Fetch the next semesters offerings
         List<CourseOffering> nextSemesterOfferings = courseOfferingService.
@@ -58,33 +57,26 @@ public class NextSemesterScheduleService {
         // 4. Add zero-credit items (First Aid, Civil Defense, 1 PhysEd if needed)
         // TODO: We'll add a waiver check that sets completed to 4 if the student has a waiver for physed in audit service
         currentCredits += addZeroCreditItems(slots, studentId, available, currentCredits);
-        log.info("After zero-credit items: {} credits", currentCredits);
 
         // 5. Add 1 Foundation if needed
         // This will be IN ORDER (They are all prerequisites to each other)
         currentCredits += addFoundationIfNeeded(slots, studentId, available, currentCredits);
-        log.info("After foundation: {} credits", currentCredits);
 
         // 6. Add up to 3 core if GenEd is not done (or 4 if done)
         currentCredits += addCoreCoursesIfNeeded(slots, studentId, available, currentCredits);
-        log.info("After core courses: {} credits", currentCredits);
 
         // 7. If GenEd not done, add 1 GenEd
         currentCredits += addGenEdIfNeeded(slots, studentId, available, currentCredits);
-        log.info("After GenEd: {} credits", currentCredits);
 
         // 8. Add 1 Track if there's space
         // This will only happen if the student has CORE and GENED completed
         currentCredits += addTrackIfNeeded(slots, studentId, available, currentCredits);
-        log.info("After track: {} credits", currentCredits);
 
         // 9. Add 1 Free Elective if there's still space
         currentCredits += addFreeElectiveIfNeeded(slots, studentId, available, currentCredits);
-        log.info("After free elective: {} credits", currentCredits);
 
         // 10. Capstone only if all else is complete
         currentCredits += addCapstoneIfPossible(slots, studentId, available, currentCredits);
-        log.info("After capstone: {} credits (final)", currentCredits);
 
         // Return the final schedule
         return Schedule.builder()
@@ -105,6 +97,7 @@ public class NextSemesterScheduleService {
         String[] nextPeriod = AcademicCalendarUtil.getNextAcademicPeriod();
         String year = nextPeriod[0];
         String semester = nextPeriod[1];
+        log.info("Generating schedule for student {} for {}-{}", studentId, year, semester);
 
         return generateNextSemesterCustom(studentId, year, semester);
     }
@@ -241,7 +234,7 @@ public class NextSemesterScheduleService {
             int currentCredits
     ) {
         if (currentCredits >= MAX_CREDITS_PER_REGISTRATION) {
-            return 0; // No room for core
+            return 0;
         }
 
         // 1. Check if the student still needs any core courses
@@ -262,6 +255,7 @@ public class NextSemesterScheduleService {
 
             // Take the next missing code
             String code = missingCoreCodes.removeFirst();
+            System.out.println("Trying to add core course: " + code);
 
             // 5. Find a matching offering from the 'available' list
             //    that doesn't conflict in time and doesn't exceed credit limit

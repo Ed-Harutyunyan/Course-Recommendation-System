@@ -19,7 +19,7 @@ public class Instructor {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false)
+    @Column(nullable = false) // TODO: should be unique
     private String name;
 
     // Optionally, add more instructor-specific fields such as email, department, etc.

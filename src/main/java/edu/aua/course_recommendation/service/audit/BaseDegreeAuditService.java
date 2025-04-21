@@ -62,11 +62,12 @@ public abstract class BaseDegreeAuditService {
         RequirementResult core = checkProgramCore(studentId);
 
         List<RequirementResult> commonReqs = List.of(
+                peerMentoring,
+                firstAidCivDef,
                 core,
                 foundation,
                 phed,
                 genEd,
-                firstAidCivDef,
                 freeElective,
                 capstone);
 
@@ -85,7 +86,7 @@ public abstract class BaseDegreeAuditService {
         // If not satisfied, return the missing code
         List<String> missingCodes = isSatisfied ? List.of() : List.of("PEER001");
         return new RequirementResult(
-                "Peer Mentoring",
+                Requirement.PEER_MENTORING,
                 isSatisfied,
                 missingCodes,
                 missingCodes.size()
@@ -102,7 +103,7 @@ public abstract class BaseDegreeAuditService {
 
         boolean isSatisfied = missing.isEmpty();
         return new RequirementResult(
-                "Foundation Requirements",
+                Requirement.FOUNDATION,
                 isSatisfied,
                 List.copyOf(missing),
                 missing.size()
@@ -119,10 +120,16 @@ public abstract class BaseDegreeAuditService {
 
         int completedCount = completedPhysedCodes.size();
         boolean isSatisfied = (completedCount >= 4);
+
+        List<String> availablePhysedCodes = courseService.getAllCourses().stream()
+                .map(Course::getCode)
+                .filter(code -> code.startsWith("FND110"))
+                .filter(code -> !completedPhysedCodes.contains(code))
+                .toList();
         return new RequirementResult(
-                "Physical Education",
+                Requirement.PHYSICAL_EDUCATION,
                 isSatisfied,
-                Collections.nCopies(REQUIRED_PHYS_ED_COUNT - completedCount, "FND110"), // Any course starting with "FND110"
+                availablePhysedCodes,
                 REQUIRED_PHYS_ED_COUNT - completedCount
         );
     }
@@ -172,7 +179,7 @@ public abstract class BaseDegreeAuditService {
         // 7. Return a RequirementResult
         // Returns potential gen-eds the student might need to take the complete the clusters
         return new RequirementResult(
-                "General Education",
+                Requirement.GENERAL_EDUCATION,
                 clusterSatisfied,
                 missingCodes,
                 REQUIRED_GENED_COUNT - genEdCompleted.size()
@@ -205,7 +212,7 @@ public abstract class BaseDegreeAuditService {
 
         // 5. Possibly you store how many are missing in the 'count' field
         return new RequirementResult(
-                "First Aid & Civil Defense",
+                Requirement.FIRST_AID_AND_CIVIL_DEFENSE,
                 isSatisfied,
                 missing,
                 missing.size()
@@ -282,7 +289,7 @@ public abstract class BaseDegreeAuditService {
 
 
         return new RequirementResult(
-                "Free Electives",
+                Requirement.FREE_ELECTIVE,
                 isSatisfied,
                 missingCodes,
                 needed
@@ -297,7 +304,7 @@ public abstract class BaseDegreeAuditService {
         boolean capstoneDone = completedCodes.contains(capstoneCode);
 
         return new RequirementResult(
-                "Capstone Requirement",
+                Requirement.CAPSTONE,
                 capstoneDone,
                 capstoneDone ? List.of() : List.of(capstoneCode),
                 capstoneDone ? 0 : 1

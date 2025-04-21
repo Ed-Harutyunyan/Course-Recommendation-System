@@ -9,7 +9,7 @@ import java.util.*;
 
 @Repository
 public interface  CourseRepository extends JpaRepository<Course, UUID> {
-    Optional<Course> findCourseById(UUID courseId);
+
     Optional<Course> findByCode(String code);
 
     @Query("SELECT c FROM Course c JOIN c.themes t WHERE t IN (?1)")

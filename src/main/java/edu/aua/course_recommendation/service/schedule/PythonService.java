@@ -98,12 +98,12 @@ public class PythonService {
 //        }
 //    }
 
-    public List<RecommendationDto> sendKeywordsRecommendations(KeywordAndPossibleCourseDto body) {
+    public List<RecommendationDto> sendMessageRecommendations(MessageAndPossibleCourseDto body) {
         HttpHeaders headers = new HttpHeaders();
-        String URL = pythonServiceEndpoint + "/api/recommend/keyword";
+        String URL = pythonServiceEndpoint + "/api/recommend/message";
 
         headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<KeywordAndPossibleCourseDto> request = new HttpEntity<>(body, headers);
+        HttpEntity<MessageAndPossibleCourseDto> request = new HttpEntity<>(body, headers);
 
         ResponseEntity<List<RecommendationDto>> response = restTemplate.exchange(
                 URL, HttpMethod.POST, request, new ParameterizedTypeReference<>() {
@@ -116,7 +116,6 @@ public class PythonService {
         }
         return response.getBody();
     }
-
 
     public List<RecommendationDto> getRecommendationsWithPassedCourses(List<String> passed_ids, List<String> possible_ids) {
         PassedAndPossibleCoursesDto courseCodes = PassedAndPossibleCoursesDto.builder()
