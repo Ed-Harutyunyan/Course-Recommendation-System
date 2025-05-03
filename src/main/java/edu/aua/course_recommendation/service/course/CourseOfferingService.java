@@ -182,6 +182,15 @@ public class CourseOfferingService {
         return courseOfferingRepository.findAllByBaseCourse_Code(code);
     }
 
+    /**
+     * Retrieves a list of course offerings for a specific year, semester, and course code.
+     *
+     * @param year     the academic year of the course offerings (e.g., "2023").
+     * @param semester the semester of the course offerings (e.g., "Fall").
+     * @param code     the code of the base course (e.g., "CS101").
+     * @return a list of course offerings matching the specified criteria. If no offerings are found,
+     *         an empty list is returned, and a warning is logged.
+     */
     @Transactional(readOnly = true)
     public List<CourseOffering> getCourseOfferingsByYearSemesterAndCode(String year, String semester, String code) {
         List<CourseOffering> offerings = courseOfferingRepository.findByYearAndSemesterAndBaseCourse_Code(year, semester, code);
