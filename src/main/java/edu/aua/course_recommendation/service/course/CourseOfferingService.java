@@ -182,6 +182,15 @@ public class CourseOfferingService {
         return courseOfferingRepository.findAllByBaseCourse_Code(code);
     }
 
+    @Transactional(readOnly = true)
+    public List<CourseOffering> getCourseOfferingsByYearSemesterAndCode(String year, String semester, String code) {
+        List<CourseOffering> offerings = courseOfferingRepository.findByYearAndSemesterAndBaseCourse_Code(year, semester, code);
+        if (offerings.isEmpty()) {
+            log.warn("No course offerings found for year: {}, semester: {}, and code: {}", year, semester, code);
+        }
+        return offerings;
+    }
+
     public List<CourseOffering> getAllCourseOfferingsByYearAndSemester(String year, String semester) {
         List<CourseOffering> offerings = courseOfferingRepository.findByYearAndSemester(year, semester);
         if (offerings.isEmpty()) {

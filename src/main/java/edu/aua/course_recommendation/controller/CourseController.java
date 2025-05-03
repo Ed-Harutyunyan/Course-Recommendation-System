@@ -126,9 +126,12 @@ public class CourseController {
         return ResponseEntity.ok(responseDtos);
     }
 
-    @GetMapping("/offering/course")
-    public ResponseEntity<List<CourseOfferingResponseDto>> getCourseOfferingsByCourseCode(@RequestParam String code) {
-        List<CourseOffering> offerings = courseOfferingService.getCourseOfferingsByCourseCode(code);
+    @GetMapping("/offering/{year}/{semester}/course")
+    public ResponseEntity<List<CourseOfferingResponseDto>> getCourseOfferingsByYearSemesterAndCode(
+            @PathVariable String year,
+            @PathVariable String semester,
+            @RequestParam String code) {
+        List<CourseOffering> offerings = courseOfferingService.getCourseOfferingsByYearSemesterAndCode(year, semester, code);
         List<CourseOfferingResponseDto> responseDtos = offerings.stream()
                 .map(courseMapper::toCourseOfferingResponseDto)
                 .collect(Collectors.toList());
