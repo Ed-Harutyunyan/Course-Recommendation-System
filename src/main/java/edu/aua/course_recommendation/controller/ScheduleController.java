@@ -23,7 +23,6 @@ public class ScheduleController {
 
     private final NextSemesterScheduleService nextSemesterScheduleService;
     private final ScheduleService scheduleService;
-    private final CourseOfferingService courseOfferingService;
     private final CourseMapper courseMapper;
 
     @GetMapping("/generate")
