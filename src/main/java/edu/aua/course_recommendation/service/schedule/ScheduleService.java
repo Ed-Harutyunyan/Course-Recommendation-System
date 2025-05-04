@@ -14,6 +14,7 @@ import edu.aua.course_recommendation.model.DegreeScenarioType;
 import edu.aua.course_recommendation.repository.CourseOfferingRepository;
 import edu.aua.course_recommendation.repository.ScheduleRepository;
 import edu.aua.course_recommendation.service.audit.BaseDegreeAuditService;
+import edu.aua.course_recommendation.service.audit.DegreeAuditServiceRouter;
 import edu.aua.course_recommendation.service.auth.UserService;
 import edu.aua.course_recommendation.service.course.CourseOfferingService;
 import edu.aua.course_recommendation.service.course.CourseService;
@@ -35,7 +36,7 @@ public class ScheduleService {
     private final CourseService courseService;
     private final UserService userService;
     private final CourseOfferingRepository courseOfferingRepository;
-    private final BaseDegreeAuditService baseDegreeAuditService;
+    private final DegreeAuditServiceRouter degreeAuditServiceRouter;
 
     public static final int MAX_CREDITS_PER_REGISTRATION = 15;
     private final CourseOfferingService courseOfferingService;
@@ -192,6 +193,8 @@ public class ScheduleService {
         // Map to keep track of which category a course code belongs to
         Map<String, Integer> categoryPriority = new LinkedHashMap<>();
         int priorityIndex = 0;
+
+        BaseDegreeAuditService baseDegreeAuditService = degreeAuditServiceRouter.getServiceForStudent(studentId);
 
         // 0. Peer Mentoring
         List<String> peerMentoring = baseDegreeAuditService.checkPeerMentoringRequirement(studentId).getPossibleCourseCodes();

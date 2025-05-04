@@ -3,6 +3,7 @@ package edu.aua.course_recommendation.service.auth;
 import edu.aua.course_recommendation.entity.User;
 import edu.aua.course_recommendation.exceptions.UserNotFoundException;
 import edu.aua.course_recommendation.model.AcademicStanding;
+import edu.aua.course_recommendation.model.Department;
 import edu.aua.course_recommendation.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -94,5 +95,11 @@ public class UserService {
     public User findById(UUID studentId) {
         return userRepository.findById(studentId)
                 .orElseThrow(() -> new UserNotFoundException("User not found"));
+    }
+
+    public Department getStudentDepartment(UUID studentId) {
+        User student = userRepository.findById(studentId)
+                .orElseThrow(() -> new UserNotFoundException("Student not found"));
+        return student.getDepartment();
     }
 }

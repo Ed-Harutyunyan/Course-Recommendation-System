@@ -7,6 +7,7 @@ import edu.aua.course_recommendation.entity.Schedule;
 import edu.aua.course_recommendation.entity.ScheduleSlot;
 import edu.aua.course_recommendation.model.*;
 import edu.aua.course_recommendation.service.audit.BaseDegreeAuditService;
+import edu.aua.course_recommendation.service.audit.DegreeAuditServiceRouter;
 import edu.aua.course_recommendation.service.audit.GenedClusteringService;
 import edu.aua.course_recommendation.service.auth.UserService;
 import edu.aua.course_recommendation.service.course.CourseOfferingService;
@@ -28,7 +29,7 @@ import static edu.aua.course_recommendation.service.schedule.ScheduleService.MAX
 public class NextSemesterScheduleService {
 
     private final EnrollmentService enrollmentService;
-    private final BaseDegreeAuditService baseDegreeAuditService;
+    private final DegreeAuditServiceRouter degreeAuditServiceRouter;
     private final CourseOfferingService courseOfferingService;
     private final GenedClusteringService genedClusteringService;
     private final CourseService courseService;
@@ -109,8 +110,10 @@ public class NextSemesterScheduleService {
                                    List<CourseOffering> available,
                                    int currentCredits) {
 
+        BaseDegreeAuditService auditService = degreeAuditServiceRouter.getServiceForStudent(studentId);
+
         // Check First Aid and Civil Defense
-        RequirementResult facd = baseDegreeAuditService.checkFirstAidAndCivilDefense(studentId);
+        RequirementResult facd = auditService.checkFirstAidAndCivilDefense(studentId);
 
         if (!facd.isSatisfied()) {
             // Doing this since there is no time conflict but ideally logic should be moved to findOffering replaced with a single findOffering call
@@ -131,7 +134,7 @@ public class NextSemesterScheduleService {
         }
 
         // PhysEd check
-        RequirementResult phed = baseDegreeAuditService.checkPhysicalEducationRequirementsDetailed(studentId);
+        RequirementResult phed = auditService.checkPhysicalEducationRequirementsDetailed(studentId);
 
         if (!phed.isSatisfied()) {
             // Try to find an offering for the first missing PE code
@@ -154,7 +157,7 @@ public class NextSemesterScheduleService {
         }
 
         // Peer mentoring check
-        RequirementResult peerMentoring = baseDegreeAuditService.checkPeerMentoringRequirement(studentId);
+        RequirementResult peerMentoring = auditService.checkPeerMentoringRequirement(studentId);
         if (!peerMentoring.isSatisfied()) {
             // Try to find an offering for the first missing Peer Mentoring code
             String firstMissingPeer = peerMentoring.getPossibleCourseCodes().stream()
@@ -190,7 +193,8 @@ public class NextSemesterScheduleService {
             return 0; // No room for foundation
         }
 
-        RequirementResult foundation = baseDegreeAuditService.checkFoundationRequirementsDetailed(studentId);
+        BaseDegreeAuditService auditService = degreeAuditServiceRouter.getServiceForStudent(studentId);
+        RequirementResult foundation = auditService.checkFoundationRequirementsDetailed(studentId);
 
         // All foundation courses are complete
         if (foundation.isSatisfied()) {
@@ -237,8 +241,10 @@ public class NextSemesterScheduleService {
             return 0;
         }
 
+        BaseDegreeAuditService auditService = degreeAuditServiceRouter.getServiceForStudent(studentId);
+
         // 1. Check if the student still needs any core courses
-        RequirementResult coreResult = baseDegreeAuditService.checkProgramCore(studentId);
+        RequirementResult coreResult = auditService.checkProgramCore(studentId);
         if (coreResult.isSatisfied()) {
             // Core is already complete
             return 0;
@@ -295,14 +301,16 @@ public class NextSemesterScheduleService {
             return 0; // No room for GenEd
         }
 
+        BaseDegreeAuditService auditService = degreeAuditServiceRouter.getServiceForStudent(studentId);
+
         // 1. Check if GenEd is already satisfied (clusters + numeric)
-        RequirementResult genEdResult = baseDegreeAuditService.checkGeneralEducationRequirementsDetailed(studentId);
+        RequirementResult genEdResult = auditService.checkGeneralEducationRequirementsDetailed(studentId);
         if (genEdResult.isSatisfied()) {
             return 0;  // no GenEd needed
         }
 
         // 2. Gather the student's *completed* GenEd courses
-        List<Course> genEdCompleted = baseDegreeAuditService.getStudentGenEdCompleted(studentId);
+        List<Course> genEdCompleted = auditService.getStudentGenEdCompleted(studentId);
 
         // 3. Ask the clustering service what clusters are still missing
         Set<NeededCluster> neededClusters = genedClusteringService.findNeededClusters(genEdCompleted);
@@ -397,8 +405,10 @@ public class NextSemesterScheduleService {
             return 0; // No room for track
         }
 
+        BaseDegreeAuditService auditService = degreeAuditServiceRouter.getServiceForStudent(studentId);
+
         // 1. Check if the student has a track
-        boolean atLeastOneTrackDone = baseDegreeAuditService.checkProgramScenarios(studentId).stream()
+        boolean atLeastOneTrackDone = auditService.checkProgramScenarios(studentId).stream()
                 .peek(DegreeAuditScenario::canGraduate)
                 .anyMatch(DegreeAuditScenario::isSatisfied);
 
@@ -407,8 +417,8 @@ public class NextSemesterScheduleService {
         }
 
         // 2. Gather the missing track codes for the track that has the most missing courses
-        DegreeScenarioType chosenTrack = baseDegreeAuditService.pickChosenTrack(studentId);
-        List<String> missingTrackCodes = baseDegreeAuditService.getTrackCourseCodes(chosenTrack);
+        DegreeScenarioType chosenTrack = auditService.pickChosenTrack(studentId);
+        List<String> missingTrackCodes = auditService.getTrackCourseCodes(chosenTrack);
 
         // TODO: Replace with Python recommendation
         // 3. Try each missing track code until we find a valid offering
@@ -437,8 +447,10 @@ public class NextSemesterScheduleService {
             return 0; // No room for free elective
         }
 
+        BaseDegreeAuditService auditService = degreeAuditServiceRouter.getServiceForStudent(studentId);
+
         // 1. Check if the student has any free electives left
-        RequirementResult freeElective = baseDegreeAuditService.checkFreeElectiveRequirements(studentId);
+        RequirementResult freeElective = auditService.checkFreeElectiveRequirements(studentId);
 
         if (freeElective.isSatisfied()) {
             return 0; // No free electives needed
@@ -478,13 +490,15 @@ public class NextSemesterScheduleService {
             return 0; // No room for capstone
         }
 
+        BaseDegreeAuditService auditService = degreeAuditServiceRouter.getServiceForStudent(studentId);
+
         // 0. Add the courses in slots to the students completed courses temporarily
         // Can the student graduate assuming they will pass whatever they're taking this semester?
         Set<String> simulatedCompleted = getSimulatedCompletedCourseCodes(studentId, slots);
         enrollmentService.setSimulatedCompletedCourses(simulatedCompleted);
 
         // 1. Check if all else is done but capstone
-        boolean allElseDone = baseDegreeAuditService.isAllElseDoneButCapstone(studentId);
+        boolean allElseDone = auditService.isAllElseDoneButCapstone(studentId);
 
         enrollmentService.clearSimulatedCompletedCourses();
 
@@ -494,7 +508,7 @@ public class NextSemesterScheduleService {
         }
 
         // 2. The user can do capstone => find the capstone code
-        String capstoneCode = baseDegreeAuditService.getCapstoneCode(); // e.g. "CS296"
+        String capstoneCode = auditService.getCapstoneCode(); // e.g. "CS296"
 
         // 3. Attempt to find an offering for this code
         Optional<CourseOffering> offOpt = scheduleService.findOffering(available, capstoneCode, currentCredits, slots, studentId);
