@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.UUID;
 
+// TODO: This whole controller needs to be updated to use semester and year and grade
+// TODO: Entity should be updated so those fields are not optional
 @RestController
 @RequestMapping("/api/enrollment")
 @RequiredArgsConstructor

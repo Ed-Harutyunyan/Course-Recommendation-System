@@ -35,10 +35,10 @@ public class CourseController {
     }
 
     @GetMapping("/all")
-    public ResponseEntity<List<CourseResponseDto>> getAllCourses() {
+    public ResponseEntity<List<DetailedCourseResponseDto>> getAllCourses() {
         return ResponseEntity.ok(courseService
                 .getAllCourses().stream()
-                .map(courseMapper::toCourseResponseDto)
+                .map(courseMapper::toDetailedCourseResponseDto)
                 .collect(Collectors.toList()));
     }
 

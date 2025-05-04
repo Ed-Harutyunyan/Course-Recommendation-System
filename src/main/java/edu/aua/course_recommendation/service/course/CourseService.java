@@ -72,7 +72,7 @@ public class CourseService {
                 .code(courseDto.courseCode())
                 .title(courseDto.courseTitle())
                 .description(courseDto.courseDescription())
-                .credits((int) Double.parseDouble(courseDto.credits())) // TODO: Credits can be non-integer somehow?
+                .credits((int) Double.parseDouble(courseDto.credits()))
                 .themes(courseDto.themes())
                 .build();
 
