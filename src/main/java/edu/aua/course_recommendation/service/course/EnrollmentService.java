@@ -31,7 +31,7 @@ public class EnrollmentService {
     private final CourseRepository courseRepository;
     private final UserRepository userRepository;
 
-    @Transactional
+    @Transactional //TODO: Should make grade mandatory and also include year and semester of the enrollment
     public void enroll(final UUID studentId, final String courseCode, String grade) {
         StudentAndCourse studentAndCourse = validateAndFetch(studentId, courseCode);
         User student = studentAndCourse.getStudent();
@@ -126,6 +126,7 @@ public class EnrollmentService {
         return actual;
     }
 
+    // HELPERS
     public void setSimulatedCompletedCourses(Set<String> simulated) {
         simulatedCompletedCourses.set(simulated);
     }
