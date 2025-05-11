@@ -1,5 +1,6 @@
 package edu.aua.course_recommendation.service.course;
 
+import edu.aua.course_recommendation.dto.EnrollmentRequestDto;
 import edu.aua.course_recommendation.entity.*;
 import edu.aua.course_recommendation.exceptions.AuthenticationException;
 import edu.aua.course_recommendation.exceptions.CourseNotFoundException;
@@ -31,8 +32,8 @@ public class EnrollmentService {
     private final CourseRepository courseRepository;
     private final UserRepository userRepository;
 
-    @Transactional //TODO: Should make grade mandatory and also include year and semester of the enrollment
-    public void enroll(final UUID studentId, final String courseCode, String grade) {
+    @Transactional
+    public void enroll(final UUID studentId, final String courseCode, String grade, String year, String semester) {
         StudentAndCourse studentAndCourse = validateAndFetch(studentId, courseCode);
         User student = studentAndCourse.getStudent();
         Course course = studentAndCourse.getCourse();
@@ -50,46 +51,14 @@ public class EnrollmentService {
         Enrollment enrollment = new Enrollment();
         enrollment.setId(enrollmentId);
         enrollment.setGrade(grade);
+        enrollment.setYear(year);
+        enrollment.setSemester(semester);
         enrollment.setUser(student);
         enrollment.setCourse(course);
 
+        student.getEnrollments().add(enrollment);
+
         enrollmentRepository.save(enrollment);
-        calculateAcademicStanding(studentId);
-    }
-
-    // Overloaded method for enrolling without providing a grade
-    // Not providing a grade sets it to N/A
-    @Transactional
-    public void enroll(final UUID studentId, final String courseCode) {
-        enroll(studentId, courseCode, "N/A");
-    }
-
-    @Transactional
-    public void enrollAll(UUID studentId) {
-        List<Course> courses = courseRepository.findAll();
-        for (Course course : courses) {
-            StudentAndCourse studentAndCourse = validateAndFetch(studentId, course.getCode());
-            User student = studentAndCourse.getStudent();
-            Course validCourse = studentAndCourse.getCourse();
-
-            if (enrollmentRepository.existsByUserAndCourse(student, validCourse)) {
-                log.info("Skipping: You are already enrolled in this course: {}", validCourse.getCode());
-            }
-
-            // Make the composite key
-            EnrollmentId enrollmentId = new EnrollmentId();
-            enrollmentId.setUserId(studentId);
-            enrollmentId.setCourseId(validCourse.getId());
-
-            // Create the enrollment
-            Enrollment enrollment = new Enrollment();
-            enrollment.setId(enrollmentId);
-            enrollment.setGrade("N/A");
-            enrollment.setUser(student);
-            enrollment.setCourse(course);
-
-            enrollmentRepository.save(enrollment);
-        }
         calculateAcademicStanding(studentId);
     }
 
@@ -101,6 +70,12 @@ public class EnrollmentService {
 
         if (!enrollmentRepository.existsByUserAndCourse(student, course)) {
             throw new EnrollmentException("You are not enrolled in this course");
+        }
+
+        // Get the enrollment to remove from collection first
+        Enrollment enrollment = enrollmentRepository.findByUserAndCourse(student, course);
+        if (enrollment != null) {
+            student.getEnrollments().remove(enrollment);
         }
 
         enrollmentRepository.deleteByUserAndCourse(student, course);
@@ -147,7 +122,6 @@ public class EnrollmentService {
         return !"F".equalsIgnoreCase(grade) && !"W".equalsIgnoreCase(grade);
     }
 
-
     // Validates the authenticated user against the provided studentId and fetches the course.
     private StudentAndCourse validateAndFetch(UUID studentId, String courseCode) {
         User authenticatedUser = userService.getCurrentUser();
@@ -183,30 +157,61 @@ public class EnrollmentService {
                 .toList();
     }
 
-    public AcademicStanding calculateAcademicStanding(UUID studentId) {
+    public void calculateAcademicStanding(UUID studentId) {
         int totalCredits = getCompletedCourses(studentId).stream()
                 .mapToInt(Course::getCredits)
                 .sum();
 
         AcademicStanding standing = AcademicStanding.getStandingFromCredits(totalCredits);
 
-        // Update the user's academic standing
-        User student = userService.getCurrentUser();
+        // Update the user's academic standing using the studentId parameter
+        User student = userRepository.findById(studentId).orElseThrow();
         student.setAcademicStanding(standing);
         userRepository.save(student);
-
-        return standing;
     }
 
     @Transactional
-    public void enrollList(UUID studentId, List<String> courseCodes) {
-        for (String code : courseCodes) {
-            enroll(studentId, code);
+    public void enrollList(UUID studentId, List<EnrollmentRequestDto> requests) {
+        User student = userRepository.findById(studentId).orElseThrow();
+
+        for (EnrollmentRequestDto request : requests) {
+            Course course = courseRepository.findByCode(request.courseCode())
+                    .orElseThrow(() -> new CourseNotFoundException("Course with code " + request.courseCode() + " not found"));
+
+            // Check if already enrolled
+            if (enrollmentRepository.existsByUserAndCourse(student, course)) {
+                continue; // Skip or throw exception if needed
+            }
+
+            // Create the enrollment
+            EnrollmentId enrollmentId = new EnrollmentId();
+            enrollmentId.setUserId(studentId);
+            enrollmentId.setCourseId(course.getId());
+
+            Enrollment enrollment = new Enrollment();
+            enrollment.setId(enrollmentId);
+            enrollment.setGrade(request.grade());
+            enrollment.setYear(request.year());
+            enrollment.setSemester(request.semester());
+            enrollment.setUser(student);
+            enrollment.setCourse(course);
+
+            student.getEnrollments().add(enrollment);
         }
+
+        // Save the student which will cascade to enrollments
+        userRepository.save(student);
+        calculateAcademicStanding(studentId);
     }
 
+    @Transactional
     public void dropAll(UUID studentId) {
+        User student = userRepository.findById(studentId).orElseThrow();
         List<Enrollment> enrollments = enrollmentRepository.findByUser_Id(studentId);
+
+        // Clear the in-memory collection
+        student.getEnrollments().clear();
+
         enrollmentRepository.deleteAll(enrollments);
         calculateAcademicStanding(studentId);
     }
