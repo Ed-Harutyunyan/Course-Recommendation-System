@@ -1,6 +1,7 @@
 package edu.aua.course_recommendation.service.schedule;
 
 import edu.aua.course_recommendation.dto.MessageAndPossibleCourseDto;
+import edu.aua.course_recommendation.dto.NeededCourseOfferingDto;
 import edu.aua.course_recommendation.dto.RecommendationDto;
 import edu.aua.course_recommendation.entity.CourseOffering;
 import edu.aua.course_recommendation.entity.Schedule;
@@ -11,6 +12,8 @@ import edu.aua.course_recommendation.exceptions.UserNotFoundException;
 import edu.aua.course_recommendation.exceptions.ValidationError;
 import edu.aua.course_recommendation.model.AcademicStanding;
 import edu.aua.course_recommendation.model.DegreeScenarioType;
+import edu.aua.course_recommendation.model.Requirement;
+import edu.aua.course_recommendation.model.RequirementResult;
 import edu.aua.course_recommendation.repository.CourseOfferingRepository;
 import edu.aua.course_recommendation.repository.ScheduleRepository;
 import edu.aua.course_recommendation.service.audit.BaseDegreeAuditService;
@@ -147,132 +150,107 @@ public class ScheduleService {
                 .findFirst();
     }
 
-    public List<CourseOffering> findValidOfferings(UUID studentId) {
-        // Get the course offerings that the student needs to take
-        List<CourseOffering> neededOfferings = getNeededCourseOfferings(studentId);
+    public List<NeededCourseOfferingDto> findValidOfferings(UUID studentId) {
+        // Get the needed course offering DTOs
+        List<NeededCourseOfferingDto> neededDtos = getNeededCourseOfferings(studentId);
 
         // Filter only those that the student can take based on prerequisites and academic standing
-        return neededOfferings.stream()
-                .filter(off -> validAcademicStanding(off, studentId))
-                .filter(off -> prerequisitesMet(off, studentId))
+        return neededDtos.stream()
+                .filter(dto -> validAcademicStanding(dto.getCourseOffering(), studentId))
+                .filter(dto -> prerequisitesMet(dto.getCourseOffering(), studentId))
                 .toList();
     }
 
-    public List<CourseOffering> findValidOfferingsForPeriod(UUID studentId, String year, String semester) {
+    public List<NeededCourseOfferingDto> findValidOfferingsForPeriod(UUID studentId, String year, String semester) {
         // Get all valid offerings for the student
-        List<CourseOffering> allValidOfferings = findValidOfferings(studentId);
+        List<NeededCourseOfferingDto> allValidDtos = findValidOfferings(studentId);
 
         // Filter for specific period only
-        return allValidOfferings.stream()
-                .filter(offering -> offering.getYear().equals(year)
-                        && offering.getSemester().equals(semester))
+        return allValidDtos.stream()
+                .filter(dto -> {
+                    CourseOffering offering = dto.getCourseOffering();
+                    return offering.getYear().equals(year) && offering.getSemester().equals(semester);
+                })
                 .toList();
     }
 
-    public List<CourseOffering> findValidOfferingsForPeriodWithMessage(UUID studentId, String year, String semester, String message) {
+    public List<NeededCourseOfferingDto> findValidOfferingsForPeriodWithMessage(UUID studentId, String year, String semester, String message) {
         // Get all valid offerings for the student
-        List<CourseOffering> allValidOfferings = findValidOfferingsForPeriod(studentId, year, semester);
+        List<NeededCourseOfferingDto> allValidDtos = findValidOfferingsForPeriod(studentId, year, semester);
 
         // Ask python for recommendations
-        List<RecommendationDto> recommendationDtos = pythonService.sendMessageRecommendations(MessageAndPossibleCourseDto
-                .builder().possibleCourseCodes(allValidOfferings.stream().map(off -> off.getBaseCourse().getCode()).collect(Collectors.toList()))
-                .message(message)
-                .build());
+        List<RecommendationDto> recommendationDtos = pythonService.sendMessageRecommendations(
+                MessageAndPossibleCourseDto.builder()
+                        .possibleCourseCodes(allValidDtos.stream()
+                                .map(dto -> dto.getCourseOffering().getBaseCourse().getCode())
+                                .toList())
+                        .message(message)
+                        .build()
+        );
 
-        // Filter for specific period only
-        return allValidOfferings.stream()
-                .filter(offering -> offering.getYear().equals(year)
-                        && offering.getSemester().equals(semester))
-                .filter(offering -> recommendationDtos.stream()
-                        .anyMatch(recommendation -> recommendation.courseCode().equals(offering.getBaseCourse().getCode())))
+        // Filter for specific period and recommendations
+        return allValidDtos.stream()
+                .filter(dto -> recommendationDtos.stream()
+                        .anyMatch(recommendation -> recommendation.courseCode()
+                                .equals(dto.getCourseOffering().getBaseCourse().getCode())))
                 .toList();
     }
 
 
-    public List<CourseOffering> getNeededCourseOfferings(UUID studentId) {
-        // Map to keep track of which category a course code belongs to
-        Map<String, Integer> categoryPriority = new LinkedHashMap<>();
-        int priorityIndex = 0;
-
+    public List<NeededCourseOfferingDto> getNeededCourseOfferings(UUID studentId) {
+        List<NeededCourseOfferingDto> result = new ArrayList<>();
         BaseDegreeAuditService baseDegreeAuditService = degreeAuditServiceRouter.getServiceForStudent(studentId);
 
         // 0. Peer Mentoring
-        List<String> peerMentoring = baseDegreeAuditService.checkPeerMentoringRequirement(studentId).getPossibleCourseCodes();
-        for (String code : peerMentoring) {
-            categoryPriority.put(code, priorityIndex);
-        }
-        priorityIndex++;
+        RequirementResult peerMentoring = baseDegreeAuditService.checkPeerMentoringRequirement(studentId);
+        addOfferingsForRequirement(result, peerMentoring, courseOfferingService);
 
         // 1. First Aid & Civil Defense
-        List<String> firstAidCodes = baseDegreeAuditService.checkFirstAidAndCivilDefense(studentId).getPossibleCourseCodes();
-        for (String code : firstAidCodes) {
-            categoryPriority.put(code, priorityIndex);
-        }
-        priorityIndex++;
+        RequirementResult firstAid = baseDegreeAuditService.checkFirstAidAndCivilDefense(studentId);
+        addOfferingsForRequirement(result, firstAid, courseOfferingService);
 
         // 2. Physical Education
-        List<String> physEdCodes = baseDegreeAuditService.checkPhysicalEducationRequirementsDetailed(studentId).getPossibleCourseCodes();
-        for (String code : physEdCodes) {
-            categoryPriority.put(code, priorityIndex);
-        }
-        priorityIndex++;
+        RequirementResult physEd = baseDegreeAuditService.checkPhysicalEducationRequirementsDetailed(studentId);
+        addOfferingsForRequirement(result, physEd, courseOfferingService);
 
         // 3. Foundation Requirements
-        List<String> foundationCodes = baseDegreeAuditService.checkFoundationRequirementsDetailed(studentId).getPossibleCourseCodes();
-        for (String code : foundationCodes) {
-            categoryPriority.put(code, priorityIndex);
-        }
-        priorityIndex++;
+        RequirementResult foundation = baseDegreeAuditService.checkFoundationRequirementsDetailed(studentId);
+        addOfferingsForRequirement(result, foundation, courseOfferingService);
 
         // 4. Core Courses
-        List<String> coreCodes = baseDegreeAuditService.checkProgramCore(studentId).getPossibleCourseCodes();
-        for (String code : coreCodes) {
-            categoryPriority.put(code, priorityIndex);
-        }
-        priorityIndex++;
+        RequirementResult core = baseDegreeAuditService.checkProgramCore(studentId);
+        addOfferingsForRequirement(result, core, courseOfferingService);
 
         // 5. General Education
-        List<String> genEdCodes = baseDegreeAuditService.checkGeneralEducationRequirementsDetailed(studentId).getPossibleCourseCodes();
-        for (String code : genEdCodes) {
-            categoryPriority.put(code, priorityIndex);
-        }
-        priorityIndex++;
+        RequirementResult genEd = baseDegreeAuditService.checkGeneralEducationRequirementsDetailed(studentId);
+        addOfferingsForRequirement(result, genEd, courseOfferingService);
 
         // 6. Track Requirements
         DegreeScenarioType chosenTrack = baseDegreeAuditService.pickChosenTrack(studentId);
         List<String> trackCodes = baseDegreeAuditService.getTrackCourseCodes(chosenTrack);
         for (String code : trackCodes) {
-            categoryPriority.put(code, priorityIndex);
+            List<CourseOffering> offerings = courseOfferingService.getCourseOfferingsByCourseCodes(List.of(code));
+            for (CourseOffering offering : offerings) {
+                result.add(new NeededCourseOfferingDto(Requirement.TRACK, offering));
+            }
         }
-        priorityIndex++;
 
         // 7. Free Electives
-        List<String> freeElectiveCodes = baseDegreeAuditService.checkFreeElectiveRequirements(studentId).getPossibleCourseCodes();
-        for (String code : freeElectiveCodes) {
-            categoryPriority.put(code, priorityIndex);
-        }
-        priorityIndex++;
+        RequirementResult freeElective = baseDegreeAuditService.checkFreeElectiveRequirements(studentId);
+        addOfferingsForRequirement(result, freeElective, courseOfferingService);
 
         // 8. Capstone
-        List<String> capstoneCodes = baseDegreeAuditService.checkCapstoneRequirement(studentId).getPossibleCourseCodes();
-        for (String code : capstoneCodes) {
-            categoryPriority.put(code, priorityIndex);
+        RequirementResult capstone = baseDegreeAuditService.checkCapstoneRequirement(studentId);
+        addOfferingsForRequirement(result, capstone, courseOfferingService);
+
+        return result;
+    }
+
+    private void addOfferingsForRequirement(List<NeededCourseOfferingDto> result, RequirementResult reqResult, CourseOfferingService courseOfferingService) {
+        List<CourseOffering> offerings = courseOfferingService.getCourseOfferingsByCourseCodes(reqResult.getPossibleCourseCodes());
+        for (CourseOffering offering : offerings) {
+            result.add(new NeededCourseOfferingDto(reqResult.getRequirementName(), offering));
         }
-
-        // Combine all codes while maintaining uniqueness
-        List<String> allCodes = new ArrayList<>(categoryPriority.keySet());
-
-        // Get course offerings for all needed codes
-        List<CourseOffering> offerings = courseOfferingService.getCourseOfferingsByCourseCodes(allCodes);
-
-        // Sort offerings by category priority
-        offerings.sort((a, b) -> {
-            Integer aPriority = categoryPriority.getOrDefault(a.getBaseCourse().getCode(), Integer.MAX_VALUE);
-            Integer bPriority = categoryPriority.getOrDefault(b.getBaseCourse().getCode(), Integer.MAX_VALUE);
-            return aPriority.compareTo(bPriority);
-        });
-
-        return offerings;
     }
 
     // Checks if the student can take UPPER course.

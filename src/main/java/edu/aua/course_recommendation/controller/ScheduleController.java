@@ -1,6 +1,7 @@
 package edu.aua.course_recommendation.controller;
 
 import edu.aua.course_recommendation.dto.CourseOfferingResponseDto;
+import edu.aua.course_recommendation.dto.NeededCourseOfferingResponseDto;
 import edu.aua.course_recommendation.entity.CourseOffering;
 import edu.aua.course_recommendation.entity.Schedule;
 import edu.aua.course_recommendation.mappers.CourseMapper;
@@ -50,54 +51,56 @@ public class ScheduleController {
     }
 
     @GetMapping("/recommendation/{studentId}/custom/{year}/{semester}")
-    public ResponseEntity<List<CourseOfferingResponseDto>> getRecommendedSchedulesForPeriod(
+    public ResponseEntity<List<NeededCourseOfferingResponseDto>> getRecommendedSchedulesForPeriod(
             @PathVariable UUID studentId,
             @PathVariable String year,
             @PathVariable String semester) {
 
-        // Get valid offerings for the specified period
-        List<CourseOffering> offerings = scheduleService.findValidOfferingsForPeriod(studentId, year, semester);
-
-        List<CourseOfferingResponseDto> offeringDtos = offerings.stream()
-                .map(courseMapper::toCourseOfferingResponseDto)
+        var neededDtos = scheduleService.findValidOfferingsForPeriod(studentId, year, semester);
+        var responseDtos = neededDtos.stream()
+                .map(dto -> new NeededCourseOfferingResponseDto(
+                        dto.getRequirement(),
+                        courseMapper.toCourseOfferingResponseDto(dto.getCourseOffering())
+                ))
                 .toList();
 
-        return ResponseEntity.ok(offeringDtos);
+        return ResponseEntity.ok(responseDtos);
     }
 
     @GetMapping(value = "/recommendation/{studentId}/custom/{year}/{semester}", params = "message")
-    public ResponseEntity<List<CourseOfferingResponseDto>> getRecommendedSchedulesForPeriod(
+    public ResponseEntity<List<NeededCourseOfferingResponseDto>> getRecommendedSchedulesForPeriod(
             @PathVariable UUID studentId,
             @PathVariable String year,
             @PathVariable String semester,
             @RequestParam(required = false) String message) {
 
-        // Get valid offerings for the specified period
-        List<CourseOffering> offerings = scheduleService.findValidOfferingsForPeriodWithMessage(studentId, year, semester, message);
-
-        List<CourseOfferingResponseDto> offeringDtos = offerings.stream()
-                .map(courseMapper::toCourseOfferingResponseDto)
+        var neededDtos = scheduleService.findValidOfferingsForPeriodWithMessage(studentId, year, semester, message);
+        var responseDtos = neededDtos.stream()
+                .map(dto -> new NeededCourseOfferingResponseDto(
+                        dto.getRequirement(),
+                        courseMapper.toCourseOfferingResponseDto(dto.getCourseOffering())
+                ))
                 .toList();
 
-        return ResponseEntity.ok(offeringDtos);
+        return ResponseEntity.ok(responseDtos);
     }
 
 
     @GetMapping("/recommendation/{studentId}")
-    public ResponseEntity<List<CourseOfferingResponseDto>> getRecommendedSchedules(@PathVariable UUID studentId) {
-        // Get next academic period
+    public ResponseEntity<List<NeededCourseOfferingResponseDto>> getRecommendedSchedules(@PathVariable UUID studentId) {
         String[] nextPeriod = AcademicCalendarUtil.getNextAcademicPeriod();
         String year = nextPeriod[0];
         String semester = nextPeriod[1];
 
-        // Get valid offerings for the next period only
-        List<CourseOffering> offerings = scheduleService.findValidOfferingsForPeriod(studentId, year, semester);
-
-        List<CourseOfferingResponseDto> offeringDtos = offerings.stream()
-                .map(courseMapper::toCourseOfferingResponseDto)
+        var neededDtos = scheduleService.findValidOfferingsForPeriod(studentId, year, semester);
+        var responseDtos = neededDtos.stream()
+                .map(dto -> new NeededCourseOfferingResponseDto(
+                        dto.getRequirement(),
+                        courseMapper.toCourseOfferingResponseDto(dto.getCourseOffering())
+                ))
                 .toList();
 
-        return ResponseEntity.ok(offeringDtos);
+        return ResponseEntity.ok(responseDtos);
     }
 
     @GetMapping("/all/{studentId}")
