@@ -173,27 +173,34 @@ public class ScheduleService {
                 .toList();
     }
 
-    public List<NeededCourseOfferingDto> findValidOfferingsForPeriodWithMessage(UUID studentId, String year, String semester, String message) {
-        // Get all valid offerings for the student
-        List<NeededCourseOfferingDto> allValidDtos = findValidOfferingsForPeriod(studentId, year, semester);
+public List<NeededCourseOfferingDto> findValidOfferingsForPeriodWithMessage(UUID studentId, String year, String semester, String message) {
+    // Get all valid offerings for the student
+    List<NeededCourseOfferingDto> allValidDtos = findValidOfferingsForPeriod(studentId, year, semester);
 
-        // Ask python for recommendations
-        List<RecommendationDto> recommendationDtos = pythonService.sendMessageRecommendations(
-                MessageAndPossibleCourseDto.builder()
-                        .possibleCourseCodes(allValidDtos.stream()
-                                .map(dto -> dto.getCourseOffering().getBaseCourse().getCode())
-                                .toList())
-                        .message(message)
-                        .build()
-        );
+    // Ask python for recommendations
+    List<RecommendationDto> recommendationDtos = pythonService.sendMessageRecommendations(
+            MessageAndPossibleCourseDto.builder()
+                    .possibleCourseCodes(allValidDtos.stream()
+                            .map(dto -> dto.getCourseOffering().getBaseCourse().getCode())
+                            .toList())
+                    .message(message)
+                    .build()
+    );
 
-        // Filter for specific period and recommendations
-        return allValidDtos.stream()
-                .filter(dto -> recommendationDtos.stream()
-                        .anyMatch(recommendation -> recommendation.courseCode()
-                                .equals(dto.getCourseOffering().getBaseCourse().getCode())))
-                .toList();
-    }
+    // Create a map of course codes to their recommendation scores for efficient lookup
+    Map<String, Double> courseScoreMap = recommendationDtos.stream()
+            .collect(HashMap::new,
+                    (map, dto) -> map.put(dto.courseCode(), Double.parseDouble(dto.score())),
+                    HashMap::putAll);
+
+    // Filter for specific period and recommendations, then sort by score (highest first)
+    return allValidDtos.stream()
+            .filter(dto -> courseScoreMap.containsKey(dto.getCourseOffering().getBaseCourse().getCode()))
+            .sorted((dto1, dto2) -> Double.compare(
+                    courseScoreMap.get(dto2.getCourseOffering().getBaseCourse().getCode()),
+                    courseScoreMap.get(dto1.getCourseOffering().getBaseCourse().getCode())))
+            .toList();
+}
 
 
     public List<NeededCourseOfferingDto> getNeededCourseOfferings(UUID studentId) {
