@@ -1,5 +1,6 @@
 package edu.aua.course_recommendation.service.schedule;
 
+import edu.aua.course_recommendation.dto.response.RecommendationDto;
 import edu.aua.course_recommendation.entity.Course;
 import edu.aua.course_recommendation.entity.CourseOffering;
 import edu.aua.course_recommendation.entity.Schedule;
@@ -35,10 +36,9 @@ public class NextSemesterScheduleService {
     private final UserService userService;
     private final ScheduleService scheduleService;
     private final PythonService pythonService;
-    // Python will go here to fetch the recs
 
     public Schedule generateNextSemesterCustom(UUID studentId, String year, String semester) {
-        // userService.validateStudent(studentId);
+        userService.validateStudent(studentId);
 
         // 1. Fetch the next semesters offerings
         List<CourseOffering> nextSemesterOfferings = courseOfferingService.
@@ -349,8 +349,7 @@ public class NextSemesterScheduleService {
                     themeCourses = themeCourses.stream()
                             .filter(c -> courseService.isLowerDivision(c.getCode()))
                             .collect(Collectors.toList());
-                }
-                else if (needUpper > 0) {
+                } else if (needUpper > 0) {
                     themeCourses = themeCourses.stream()
                             .filter(c -> courseService.isUpperDivision(c.getCode()))
                             .collect(Collectors.toList());
@@ -359,22 +358,39 @@ public class NextSemesterScheduleService {
 
 
             // c) For each base course, try to find an actual offering
-            // This fetches the first offering that is found
-            // TODO: Replace it so find offering returns all possible offerings
-            // TODO: Change so python chooses best one
 
             // IF WE HAVE COMPLETED COURSES
             // GET RECOMMENDATIONS FROM PYTHON
             List<Course> completedCourses = enrollmentService.getCompletedCourses(studentId);
-            // TODO: This chunk of code causes issues as the UUID is not used in the Dtos
-//            if (!completedCourses.isEmpty()) {
-//                List<RecommendationDto> pythonRecommends = pythonService.getRecommendationsWithPassedCourses(
-//                    completedCourses.stream().map(Course::getId).toList(),
-//                    themeCourses.stream().map(Course::getId).toList()
-//                );
-//            }
 
-            // OTHERWISE, SIMPLY PICK THE FIRST ONE THAT MATCHES.
+            if (!completedCourses.isEmpty()) {
+                List<RecommendationDto> pythonRecommends = pythonService.getRecommendationsWithPassedCourses(
+                        completedCourses.stream().map(Course::getCode).toList(),
+                        themeCourses.stream().map(Course::getCode).toList()
+                );
+
+                // Try to find offerings for each recommendation first
+                for (RecommendationDto recommendation : pythonRecommends) {
+                    Optional<CourseOffering> offOpt = scheduleService.findOffering(
+                            available, recommendation.courseCode(), currentCredits, slots, studentId);
+                    if (offOpt.isPresent()) {
+                        // Found an offering that matches a recommendation
+                        CourseOffering off = offOpt.get();
+                        slots.add(new ScheduleSlot(
+                                off.getId(),
+                                off.getBaseCourse().getCode(),
+                                off.getBaseCourse().getCredits(),
+                                off.getTimes()
+                        ));
+                        log.info("Added GenEd course from recommendation: {} (Theme {}, Score: {})",
+                                off.getBaseCourse().getCode(), theme, recommendation.score());
+                        return off.getBaseCourse().getCredits();
+                    }
+                }
+            }
+
+            // Fall back to picking the first one that matches if recommendations aren't available
+            // or if no offerings were found for any recommendation
             for (Course base : themeCourses) {
                 Optional<CourseOffering> offOpt = scheduleService.findOffering(
                         available, base.getCode(), currentCredits, slots, studentId);
@@ -387,7 +403,7 @@ public class NextSemesterScheduleService {
                             off.getBaseCourse().getCredits(),
                             off.getTimes()
                     ));
-                    log.info("Added GenEd course: {} (Theme {})",
+                    log.info("Added first-found GenEd course: {} (Theme {})",
                             off.getBaseCourse().getCode(), theme);
                     return off.getBaseCourse().getCredits();
                 }
@@ -419,7 +435,6 @@ public class NextSemesterScheduleService {
         DegreeScenarioType chosenTrack = auditService.pickChosenTrack(studentId);
         List<String> missingTrackCodes = auditService.getTrackCourseCodes(chosenTrack);
 
-        // TODO: Replace with Python recommendation
         // 3. Try each missing track code until we find a valid offering
         for (String trackCode : missingTrackCodes) {
             Optional<CourseOffering> offOpt = scheduleService.findOffering(available, trackCode, currentCredits, slots, studentId);
@@ -456,11 +471,40 @@ public class NextSemesterScheduleService {
         }
 
         // Any other course that isn't taken by now can be free elective.
-        List<String> missingCodes = freeElective.getPossibleCourseCodes();
+        List<String> possibleElectives = freeElective.getPossibleCourseCodes();
 
-        // TODO: Replace with Python recommendation
-        // 2. Find an offering from any of the free electives that satisfies the requirements
-        for (String courseCode : missingCodes) {
+        // 2. First try Python recommendations if student has completed courses
+        List<Course> completedCourses = enrollmentService.getCompletedCourses(studentId);
+
+        if (!completedCourses.isEmpty()) {
+
+            List<RecommendationDto> pythonRecommends = pythonService.getRecommendationsWithPassedCourses(
+                    completedCourses.stream().map(Course::getCode).toList(),
+                    possibleElectives
+            );
+
+            // Try to find offerings for each recommendation first
+            for (RecommendationDto recommendation : pythonRecommends) {
+                Optional<CourseOffering> offOpt = scheduleService.findOffering(
+                        available, recommendation.courseCode(), currentCredits, slots, studentId);
+                if (offOpt.isPresent()) {
+                    CourseOffering off = offOpt.get();
+                    slots.add(new ScheduleSlot(
+                            off.getId(),
+                            off.getBaseCourse().getCode(),
+                            off.getBaseCourse().getCredits(),
+                            off.getTimes()
+                    ));
+                    log.info("Added free elective from recommendation: {} (Score: {})",
+                            off.getBaseCourse().getCode(), recommendation.score());
+                    return off.getBaseCourse().getCredits();
+                }
+            }
+        }
+
+        // Fall back to picking the first available elective if recommendations aren't available
+        // or if no offerings were found for any recommendation
+        for (String courseCode : possibleElectives) {
             Optional<CourseOffering> offOpt = scheduleService.findOffering(available, courseCode, currentCredits, slots, studentId);
             if (offOpt.isPresent()) {
                 CourseOffering off = offOpt.get();
