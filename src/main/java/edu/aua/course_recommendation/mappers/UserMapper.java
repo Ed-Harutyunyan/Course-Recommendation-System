@@ -1,6 +1,6 @@
 package edu.aua.course_recommendation.mappers;
 
-import edu.aua.course_recommendation.dto.UserProfileDto;
+import edu.aua.course_recommendation.dto.response.UserProfileDto;
 import edu.aua.course_recommendation.entity.Enrollment;
 import edu.aua.course_recommendation.entity.User;
 import edu.aua.course_recommendation.repository.EnrollmentRepository;

@@ -1,10 +1,8 @@
-package edu.aua.course_recommendation.dto;
+package edu.aua.course_recommendation.dto.request;
 
 import lombok.Builder;
-import lombok.Getter;
 
 import java.util.List;
-import java.util.UUID;
 
 @Builder
 public record PassedAndPossibleCoursesDto (

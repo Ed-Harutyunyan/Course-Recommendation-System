@@ -1,4 +1,4 @@
-package edu.aua.course_recommendation.dto;
+package edu.aua.course_recommendation.dto.response;
 
 import edu.aua.course_recommendation.entity.CourseOffering;
 import edu.aua.course_recommendation.model.Requirement;

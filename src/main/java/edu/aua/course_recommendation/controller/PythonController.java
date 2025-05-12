@@ -1,8 +1,8 @@
 package edu.aua.course_recommendation.controller;
 
-import edu.aua.course_recommendation.dto.MessageAndPossibleCourseDto;
-import edu.aua.course_recommendation.dto.PassedAndPossibleCoursesDto;
-import edu.aua.course_recommendation.dto.RecommendationDto;
+import edu.aua.course_recommendation.dto.request.MessageAndPossibleCourseDto;
+import edu.aua.course_recommendation.dto.request.PassedAndPossibleCoursesDto;
+import edu.aua.course_recommendation.dto.response.RecommendationDto;
 import edu.aua.course_recommendation.service.schedule.PythonService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

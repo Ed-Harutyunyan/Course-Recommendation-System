@@ -1,6 +1,6 @@
 package edu.aua.course_recommendation.service.course;
 
-import edu.aua.course_recommendation.dto.CourseDto;
+import edu.aua.course_recommendation.dto.response.CourseDto;
 import edu.aua.course_recommendation.entity.Course;
 import edu.aua.course_recommendation.exceptions.CourseAlreadyExistsException;
 import edu.aua.course_recommendation.exceptions.CourseNotFoundException;
@@ -159,4 +159,9 @@ public class CourseService {
         return !isLowerDivision(courseCode);
     }
 
+    public String getCourseCodeById(UUID courseId) {
+        return courseRepository.findById(courseId)
+                .map(Course::getCode)
+                .orElseThrow(() -> new CourseNotFoundException("Course not found with ID: " + courseId));
+    }
 }

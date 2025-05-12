@@ -1,6 +1,6 @@
 package edu.aua.course_recommendation.mappers;
 
-import edu.aua.course_recommendation.dto.*;
+import edu.aua.course_recommendation.dto.response.*;
 import edu.aua.course_recommendation.entity.Course;
 import edu.aua.course_recommendation.entity.CourseOffering;
 import org.springframework.stereotype.Component;
@@ -30,6 +30,7 @@ public class CourseMapper {
 
     public DetailedCourseResponseDto toDetailedCourseResponseDto(Course course) {
         return new DetailedCourseResponseDto(
+                course.getId(),
                 course.getCode(),
                 course.getTitle(),
                 course.getDescription(),

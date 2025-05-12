@@ -1,6 +1,5 @@
 package edu.aua.course_recommendation.service.schedule;
 
-import edu.aua.course_recommendation.dto.RecommendationDto;
 import edu.aua.course_recommendation.entity.Course;
 import edu.aua.course_recommendation.entity.CourseOffering;
 import edu.aua.course_recommendation.entity.Schedule;

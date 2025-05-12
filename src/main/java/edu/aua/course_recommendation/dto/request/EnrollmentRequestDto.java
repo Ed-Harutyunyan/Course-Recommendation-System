@@ -1,4 +1,4 @@
-package edu.aua.course_recommendation.dto;
+package edu.aua.course_recommendation.dto.request;
 
 public record EnrollmentRequestDto(
         String courseCode,

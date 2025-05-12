@@ -1,6 +1,10 @@
 package edu.aua.course_recommendation.service.schedule;
 
-import edu.aua.course_recommendation.dto.*;
+import edu.aua.course_recommendation.dto.request.MessageAndPossibleCourseDto;
+import edu.aua.course_recommendation.dto.request.PassedAndPossibleCoursesDto;
+import edu.aua.course_recommendation.dto.response.CourseDto;
+import edu.aua.course_recommendation.dto.response.CourseResponseDto;
+import edu.aua.course_recommendation.dto.response.RecommendationDto;
 import edu.aua.course_recommendation.exceptions.RecommendationException;
 import edu.aua.course_recommendation.mappers.CourseMapper;
 import edu.aua.course_recommendation.service.course.CourseService;

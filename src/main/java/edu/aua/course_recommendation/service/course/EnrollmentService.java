@@ -1,6 +1,6 @@
 package edu.aua.course_recommendation.service.course;
 
-import edu.aua.course_recommendation.dto.EnrollmentRequestDto;
+import edu.aua.course_recommendation.dto.request.EnrollmentRequestDto;
 import edu.aua.course_recommendation.entity.*;
 import edu.aua.course_recommendation.exceptions.AuthenticationException;
 import edu.aua.course_recommendation.exceptions.CourseNotFoundException;

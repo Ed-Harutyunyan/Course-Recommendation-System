@@ -1,4 +1,4 @@
-package edu.aua.course_recommendation.dto;
+package edu.aua.course_recommendation.dto.response;
 
 public record EnrollmentResponseDto(
         CourseInfo course,

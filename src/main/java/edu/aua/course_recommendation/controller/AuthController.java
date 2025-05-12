@@ -1,6 +1,6 @@
 package edu.aua.course_recommendation.controller;
 
-import edu.aua.course_recommendation.dto.UserProfileDto;
+import edu.aua.course_recommendation.dto.response.UserProfileDto;
 import edu.aua.course_recommendation.dto.request.AuthenticationRequestDto;
 import edu.aua.course_recommendation.dto.response.AuthenticationResponseDto;
 import edu.aua.course_recommendation.entity.User;

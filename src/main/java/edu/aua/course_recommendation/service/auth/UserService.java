@@ -102,4 +102,16 @@ public class UserService {
                 .orElseThrow(() -> new UserNotFoundException("Student not found"));
         return student.getDepartment();
     }
+
+    public String getUserName(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+        return user.getUsername();
+    }
+
+    public String getProfilePictureUrl(UUID userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException("User not found"));
+        return user.getProfilePictureUrl();
+    }
 }

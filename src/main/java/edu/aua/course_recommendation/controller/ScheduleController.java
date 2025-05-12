@@ -1,13 +1,10 @@
 package edu.aua.course_recommendation.controller;
 
-import edu.aua.course_recommendation.dto.CourseOfferingResponseDto;
-import edu.aua.course_recommendation.dto.NeededCourseOfferingResponseDto;
-import edu.aua.course_recommendation.entity.CourseOffering;
+import edu.aua.course_recommendation.dto.response.NeededCourseOfferingResponseDto;
 import edu.aua.course_recommendation.entity.Schedule;
 import edu.aua.course_recommendation.mappers.CourseMapper;
 import edu.aua.course_recommendation.service.schedule.NextSemesterScheduleService;
 import edu.aua.course_recommendation.service.schedule.ScheduleService;
-import edu.aua.course_recommendation.service.course.CourseOfferingService;
 import edu.aua.course_recommendation.util.AcademicCalendarUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

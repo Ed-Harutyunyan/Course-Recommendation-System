@@ -1,6 +1,5 @@
-package edu.aua.course_recommendation.dto;
+package edu.aua.course_recommendation.dto.response;
 
-import edu.aua.course_recommendation.dto.CourseOfferingResponseDto;
 import edu.aua.course_recommendation.model.Requirement;
 import lombok.AllArgsConstructor;
 import lombok.Data;

@@ -1,7 +1,7 @@
 package edu.aua.course_recommendation.controller;
 
-import edu.aua.course_recommendation.dto.EnrollmentRequestDto;
-import edu.aua.course_recommendation.dto.EnrollmentResponseDto;
+import edu.aua.course_recommendation.dto.request.EnrollmentRequestDto;
+import edu.aua.course_recommendation.dto.response.EnrollmentResponseDto;
 import edu.aua.course_recommendation.entity.Course;
 import edu.aua.course_recommendation.entity.Enrollment;
 import edu.aua.course_recommendation.mappers.EnrollmentMapper;

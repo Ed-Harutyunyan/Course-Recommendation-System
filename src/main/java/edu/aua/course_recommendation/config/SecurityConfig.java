@@ -41,6 +41,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/user/**").permitAll()   // Open for testing
                         .requestMatchers("/uploads/**").permitAll()
                         .requestMatchers(("/api/user/profile-picture/**")).permitAll()
+                        .requestMatchers("/api/course-reviews/**").permitAll() // Open for testing
                         .requestMatchers("/error").permitAll()
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()

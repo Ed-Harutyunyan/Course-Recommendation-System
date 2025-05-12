@@ -1,6 +1,6 @@
 package edu.aua.course_recommendation.mappers;
 
-import edu.aua.course_recommendation.dto.EnrollmentResponseDto;
+import edu.aua.course_recommendation.dto.response.EnrollmentResponseDto;
 import edu.aua.course_recommendation.entity.Enrollment;
 import org.springframework.stereotype.Component;
 

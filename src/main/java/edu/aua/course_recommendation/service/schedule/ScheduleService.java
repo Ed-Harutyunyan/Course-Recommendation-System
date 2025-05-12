@@ -1,8 +1,8 @@
 package edu.aua.course_recommendation.service.schedule;
 
-import edu.aua.course_recommendation.dto.MessageAndPossibleCourseDto;
-import edu.aua.course_recommendation.dto.NeededCourseOfferingDto;
-import edu.aua.course_recommendation.dto.RecommendationDto;
+import edu.aua.course_recommendation.dto.request.MessageAndPossibleCourseDto;
+import edu.aua.course_recommendation.dto.response.NeededCourseOfferingDto;
+import edu.aua.course_recommendation.dto.response.RecommendationDto;
 import edu.aua.course_recommendation.entity.CourseOffering;
 import edu.aua.course_recommendation.entity.Schedule;
 import edu.aua.course_recommendation.entity.ScheduleSlot;
@@ -27,7 +27,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
