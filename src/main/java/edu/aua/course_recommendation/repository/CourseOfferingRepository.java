@@ -9,6 +9,9 @@ import java.util.UUID;
 
 public interface CourseOfferingRepository extends JpaRepository<CourseOffering, UUID> {
 
+    Optional<CourseOffering> findByBaseCourse_CodeAndYearAndSemesterAndInstructor_NameAndSection(
+            String code, String year, String semester, String instructorName, String section);
+
     Optional<CourseOffering> findByBaseCourse_CodeAndYearAndSemester(String s, String year, String semester);
 
     List<CourseOffering> findByYearAndSemesterAndBaseCourse_Code(String year, String semester, String code);

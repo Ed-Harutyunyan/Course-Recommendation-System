@@ -34,14 +34,15 @@ public class CourseOfferingService {
     public CourseOffering createCourseOffering(CourseOfferingDto courseOfferingDto) {
         Optional<CourseOffering> existingOffering =
                 courseOfferingRepository
-                        .findByBaseCourse_CodeAndYearAndSemester(
+                        .findByBaseCourse_CodeAndYearAndSemesterAndInstructor_NameAndSection(
                                 courseOfferingDto.courseCode(),
                                 courseOfferingDto.year(),
-                                courseOfferingDto.semester());
+                                courseOfferingDto.semester(),
+                                courseOfferingDto.instructor(),
+                                courseOfferingDto.section());
 
-        // This means that the course offering already exists
         if (existingOffering.isPresent()) {
-            log.error("Course Offering already exists for this course in the given year and semester");
+            log.error("Course Offering already exists for this course, instructor, and section in the given year and semester");
             throw new CourseOfferingAlreadyExistsException(
                     courseOfferingDto.courseCode(),
                     courseOfferingDto.year(),
@@ -49,7 +50,6 @@ public class CourseOfferingService {
         }
 
         CourseOffering courseOffering = createCourseOfferingWithBaseCourseAndInstructor(courseOfferingDto);
-
         return courseOfferingRepository.save(courseOffering);
     }
 
@@ -58,20 +58,20 @@ public class CourseOfferingService {
         List<CourseOffering> createdOfferings = new ArrayList<>();
         for (CourseOfferingDto dto : courseOfferingDtos) {
             Optional<CourseOffering> existingOffering =
-                    courseOfferingRepository.findByBaseCourse_CodeAndYearAndSemester(
-                            dto.courseCode(), dto.year(), dto.semester());
+                    courseOfferingRepository.findByBaseCourse_CodeAndYearAndSemesterAndInstructor_NameAndSection(
+                            dto.courseCode(), dto.year(), dto.semester(), dto.instructor(), dto.section());
 
             if (existingOffering.isPresent()) {
-                log.info("Skipping existing offering: code={}, year={}, semester={}", dto.courseCode(), dto.year(), dto.semester());
+                log.info("Skipping existing offering: code={}, year={}, semester={}, instructor={}, section={}",
+                        dto.courseCode(), dto.year(), dto.semester(), dto.instructor(), dto.section());
                 continue; // Skip if already exists
             }
 
             CourseOffering courseOffering = createCourseOfferingWithBaseCourseAndInstructor(dto);
-
             createdOfferings.add(courseOffering);
         }
 
-        return courseOfferingRepository.saveAll(createdOfferings); // Saves all at once
+        return courseOfferingRepository.saveAll(createdOfferings);
     }
 
     private CourseOffering createCourseOfferingWithBaseCourseAndInstructor(CourseOfferingDto dto) {
