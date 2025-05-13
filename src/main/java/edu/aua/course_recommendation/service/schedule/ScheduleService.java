@@ -255,7 +255,13 @@ public List<NeededCourseOfferingDto> findValidOfferingsForPeriodWithMessage(UUID
     private void addOfferingsForRequirement(List<NeededCourseOfferingDto> result, RequirementResult reqResult, CourseOfferingService courseOfferingService) {
         List<CourseOffering> offerings = courseOfferingService.getCourseOfferingsByCourseCodes(reqResult.getPossibleCourseCodes());
         for (CourseOffering offering : offerings) {
-            result.add(new NeededCourseOfferingDto(reqResult.getRequirementName(), offering));
+            // Check if this offering already exists in the result list
+            boolean offeringExists = result.stream()
+                    .anyMatch(dto -> dto.getCourseOffering().getId().equals(offering.getId()));
+
+            if (!offeringExists) {
+                result.add(new NeededCourseOfferingDto(reqResult.getRequirementName(), offering));
+            }
         }
     }
 
@@ -298,7 +304,10 @@ public List<NeededCourseOfferingDto> findValidOfferingsForPeriodWithMessage(UUID
                 effectivePrerequisites.add("CS101");
             } else if (prereq.contains("EQDATASTRC")) {
                 effectivePrerequisites.add("CS121");
-            } else {
+            } else if (prereq.contains("EQOOP")) {
+                effectivePrerequisites.add("CS110");
+            }
+            else {
                 effectivePrerequisites.add(prereq);
             }
         }

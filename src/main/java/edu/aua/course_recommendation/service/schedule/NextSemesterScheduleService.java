@@ -364,10 +364,18 @@ public class NextSemesterScheduleService {
             List<Course> completedCourses = enrollmentService.getCompletedCourses(studentId);
 
             if (!completedCourses.isEmpty()) {
-                List<RecommendationDto> pythonRecommends = pythonService.getRecommendationsWithPassedCourses(
-                        completedCourses.stream().map(Course::getCode).toList(),
-                        themeCourses.stream().map(Course::getCode).toList()
-                );
+
+                List<RecommendationDto> pythonRecommends = new ArrayList<>();
+                try {
+                    pythonRecommends = pythonService.getRecommendationsWithPassedCourses(
+                            completedCourses.stream().map(Course::getCode).toList(),
+                            themeCourses.stream().map(Course::getCode).toList()
+                    );
+                    log.debug("Received {} Python recommendations for student {}", pythonRecommends.size(), studentId);
+                } catch (Exception e) {
+                    log.error("Failed to get Python recommendations: {}", e.getMessage(), e);
+                    // Empty list will trigger the fallback mechanism
+                }
 
                 // Try to find offerings for each recommendation first
                 for (RecommendationDto recommendation : pythonRecommends) {
@@ -478,10 +486,17 @@ public class NextSemesterScheduleService {
 
         if (!completedCourses.isEmpty()) {
 
-            List<RecommendationDto> pythonRecommends = pythonService.getRecommendationsWithPassedCourses(
-                    completedCourses.stream().map(Course::getCode).toList(),
-                    possibleElectives
-            );
+            List<RecommendationDto> pythonRecommends = new ArrayList<>();
+            try {
+                pythonRecommends = pythonService.getRecommendationsWithPassedCourses(
+                        completedCourses.stream().map(Course::getCode).toList(),
+                        possibleElectives
+                );
+                log.debug("Received {} Python recommendations for free electives for student {}", pythonRecommends.size(), studentId);
+            } catch (Exception e) {
+                log.error("Failed to get Python recommendations for free electives: {}", e.getMessage(), e);
+                // Empty list will trigger the fallback mechanism
+            }
 
             // Try to find offerings for each recommendation first
             for (RecommendationDto recommendation : pythonRecommends) {
