@@ -1,6 +1,5 @@
 package edu.aua.course_recommendation.config;
 
-import edu.aua.course_recommendation.entity.Enrollment;
 import edu.aua.course_recommendation.service.course.EnrollmentService;
 import edu.aua.course_recommendation.entity.User;
 import edu.aua.course_recommendation.model.Department;

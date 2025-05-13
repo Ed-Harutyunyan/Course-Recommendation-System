@@ -318,26 +318,39 @@ public class NextSemesterScheduleService {
             return 0;
         }
 
-        // 4. Naive approach: pick the first cluster that has missingTotal>0
-        for (NeededCluster needed : neededClusters) {
-            int needTotal = needed.getMissingTotal();
-            if (needTotal <= 0) {
-                continue; // cluster is effectively complete
-            }
+        neededClusters.forEach(cluster -> System.out.printf("Theme %d: needs %d total courses (Lower: %d, Upper: %d)%n",
+                cluster.getTheme(), cluster.getMissingTotal(), cluster.getMissingLower(), cluster.getMissingUpper()));
 
-            // We'll gather possible base courses from the theme
+        // 4. Sort clusters by missing total courses (prioritizing clusters with fewer missing courses)
+        List<NeededCluster> sortedClusters = neededClusters.stream()
+                .filter(cluster -> cluster.getMissingTotal() > 0)  // Only consider clusters that need courses
+                .sorted(Comparator.comparingInt(NeededCluster::getMissingTotal))  // Sort by missing total
+                .toList();
+
+        // Process each cluster in order (from fewest to most missing courses)
+        for (NeededCluster needed : sortedClusters) {
             int theme = needed.getTheme();
             int needLower = needed.getMissingLower();
             int needUpper = needed.getMissingUpper();
 
             // a) Gather all base courses for this theme from the courseService
-            List<Course> themeCourses = courseService.getCoursesByTheme(theme);
+            List<String> possibleGeneds = auditService.checkGeneralEducationRequirementsDetailed(studentId).getPossibleCourseCodes();
+            System.out.println("Possible GenEd courses: " + possibleGeneds);
+            List<Course> themeCourses = courseService.getCoursesByTheme(theme)
+                    .stream()
+                    .filter(course -> possibleGeneds.contains(course.getCode()))
+                    // Let's prioritize humanities courses first
+                    .sorted((c1, c2) -> {
+                        boolean c1IsHumanities = c1.getCode().startsWith("CHSS");
+                        boolean c2IsHumanities = c2.getCode().startsWith("CHSS");
 
-            // b) Depending on missingLower/missingUpper, filter the list
-            // First check if we need a lower - if so, filter to lower
-            // If we need an upper, filter to upper
-            // If both checks are false, that means we can pick any course upper or lower
+                        if (c1IsHumanities && !c2IsHumanities) return -1;
+                        if (!c1IsHumanities && c2IsHumanities) return 1;
+                        return 0;
+                    })
+                    .collect(Collectors.toList());
 
+            // b) Filter based on division level needs and academic standing
             AcademicStanding standing = userService.getAcademicStanding(studentId);
             // If a student is a freshman it should only return lower division courses
             if (standing == AcademicStanding.FRESHMAN) {
@@ -356,24 +369,20 @@ public class NextSemesterScheduleService {
                 }
             }
 
-
-            // c) For each base course, try to find an actual offering
-
-            // IF WE HAVE COMPLETED COURSES
-            // GET RECOMMENDATIONS FROM PYTHON
+            // c) Try recommendations from Python if we have completed courses
             List<Course> completedCourses = enrollmentService.getCompletedCourses(studentId);
 
             if (!completedCourses.isEmpty()) {
-
                 List<RecommendationDto> pythonRecommends = new ArrayList<>();
                 try {
                     pythonRecommends = pythonService.getRecommendationsWithPassedCourses(
                             completedCourses.stream().map(Course::getCode).toList(),
                             themeCourses.stream().map(Course::getCode).toList()
                     );
-                    log.debug("Received {} Python recommendations for student {}", pythonRecommends.size(), studentId);
+                    log.debug("Received {} Python recommendations for student {} in theme {}",
+                            pythonRecommends.size(), studentId, theme);
                 } catch (Exception e) {
-                    log.error("Failed to get Python recommendations: {}", e.getMessage(), e);
+                    log.error("Failed to get Python recommendations for theme {}: {}", theme, e.getMessage(), e);
                     // Empty list will trigger the fallback mechanism
                 }
 
@@ -390,8 +399,8 @@ public class NextSemesterScheduleService {
                                 off.getBaseCourse().getCredits(),
                                 off.getTimes()
                         ));
-                        log.info("Added GenEd course from recommendation: {} (Theme {}, Score: {})",
-                                off.getBaseCourse().getCode(), theme, recommendation.score());
+                        log.info("Added GenEd course from recommendation: {} (Theme {}, Score: {}, Missing: {})",
+                                off.getBaseCourse().getCode(), theme, recommendation.score(), needed.getMissingTotal());
                         return off.getBaseCourse().getCredits();
                     }
                 }
@@ -411,8 +420,8 @@ public class NextSemesterScheduleService {
                             off.getBaseCourse().getCredits(),
                             off.getTimes()
                     ));
-                    log.info("Added first-found GenEd course: {} (Theme {})",
-                            off.getBaseCourse().getCode(), theme);
+                    log.info("Added GenEd course: {} (Theme {}, Missing: {})",
+                            off.getBaseCourse().getCode(), theme, needed.getMissingTotal());
                     return off.getBaseCourse().getCredits();
                 }
             }
