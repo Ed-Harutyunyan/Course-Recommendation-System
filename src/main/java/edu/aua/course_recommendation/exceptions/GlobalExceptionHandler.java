@@ -82,5 +82,10 @@ public class GlobalExceptionHandler {
                              .body("Error communicating with Python recommendation service: " + ex.getMessage());
     }
 
+    @ExceptionHandler(ReviewNotFoundException.class)
+    public ResponseEntity<String> handleReviewNotFoundException(ReviewNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+    }
+
     // TODO: Add other exceptions here as well.
 }

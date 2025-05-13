@@ -1,6 +1,10 @@
 package edu.aua.course_recommendation.service.schedule;
 
-import edu.aua.course_recommendation.dto.*;
+import edu.aua.course_recommendation.dto.request.MessageAndPossibleCourseDto;
+import edu.aua.course_recommendation.dto.request.PassedAndPossibleCoursesDto;
+import edu.aua.course_recommendation.dto.response.CourseDto;
+import edu.aua.course_recommendation.dto.response.CourseResponseDto;
+import edu.aua.course_recommendation.dto.response.RecommendationDto;
 import edu.aua.course_recommendation.exceptions.RecommendationException;
 import edu.aua.course_recommendation.mappers.CourseMapper;
 import edu.aua.course_recommendation.service.course.CourseService;
@@ -117,10 +121,10 @@ public class PythonService {
         return response.getBody();
     }
 
-    public List<RecommendationDto> getRecommendationsWithPassedCourses(List<String> passed_ids, List<String> possible_ids) {
+    public List<RecommendationDto> getRecommendationsWithPassedCourses(List<String> passedCourseCodes, List<String> possibleCourseCodes) {
         PassedAndPossibleCoursesDto courseCodes = PassedAndPossibleCoursesDto.builder()
-                                                                       .passed_course_codes(passed_ids)
-                                                                       .possible_course_codes(possible_ids)
+                                                                       .passed_course_codes(passedCourseCodes)
+                                                                       .possible_course_codes(possibleCourseCodes)
                                                                        .build();
 
         HttpHeaders headers = new HttpHeaders();

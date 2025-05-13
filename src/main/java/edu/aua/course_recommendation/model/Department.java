@@ -1,8 +1,8 @@
 package edu.aua.course_recommendation.model;
 
 public enum Department {
-    BUSINESS,
-    ECONOMICS,
+    BAB,
+    ECON,
     EC,
     PG,
     CS,

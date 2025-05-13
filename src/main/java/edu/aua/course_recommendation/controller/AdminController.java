@@ -1,13 +1,8 @@
 package edu.aua.course_recommendation.controller;
 
-import edu.aua.course_recommendation.dto.CourseDto;
-import edu.aua.course_recommendation.entity.Course;
-import edu.aua.course_recommendation.model.Role;
 import edu.aua.course_recommendation.service.auth.UserService;
-import edu.aua.course_recommendation.service.course.CourseService;
 import edu.aua.course_recommendation.service.auth.JwtService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;

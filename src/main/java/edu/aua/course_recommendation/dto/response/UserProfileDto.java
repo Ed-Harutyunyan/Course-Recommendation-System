@@ -1,4 +1,4 @@
-package edu.aua.course_recommendation.dto;
+package edu.aua.course_recommendation.dto.response;
 
 import lombok.Data;
 import java.util.List;
@@ -14,5 +14,5 @@ public class UserProfileDto {
     private String profilePictureUrl;
 
     // only populated if the viewer is the same as the profile
-    private List<EnrollmentDto> enrollments;
+    private List<EnrollmentResponseDto> enrollments;
 }

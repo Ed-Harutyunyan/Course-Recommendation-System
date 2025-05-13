@@ -1,6 +1,6 @@
 package edu.aua.course_recommendation.service.course;
 
-import edu.aua.course_recommendation.dto.CourseDto;
+import edu.aua.course_recommendation.dto.response.CourseDto;
 import edu.aua.course_recommendation.entity.Course;
 import edu.aua.course_recommendation.exceptions.CourseAlreadyExistsException;
 import edu.aua.course_recommendation.exceptions.CourseNotFoundException;
@@ -72,7 +72,7 @@ public class CourseService {
                 .code(courseDto.courseCode())
                 .title(courseDto.courseTitle())
                 .description(courseDto.courseDescription())
-                .credits((int) Double.parseDouble(courseDto.credits())) // TODO: Credits can be non-integer somehow?
+                .credits((int) Double.parseDouble(courseDto.credits()))
                 .themes(courseDto.themes())
                 .build();
 
@@ -159,4 +159,9 @@ public class CourseService {
         return !isLowerDivision(courseCode);
     }
 
+    public String getCourseCodeById(UUID courseId) {
+        return courseRepository.findById(courseId)
+                .map(Course::getCode)
+                .orElseThrow(() -> new CourseNotFoundException("Course not found with ID: " + courseId));
+    }
 }

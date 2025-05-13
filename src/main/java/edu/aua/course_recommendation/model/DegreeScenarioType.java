@@ -7,9 +7,10 @@ public enum DegreeScenarioType {
     CS_GENERAL,
 
     // Business scenarios
+    BUS_ACCOUNTING,
+    BUS_ECONOMICS,
     BUS_MARKETING,
-    BUS_FINANCE,
-    BUS_GENERAL,
+    BUS_GENERAL
 
     // Etc.
 }

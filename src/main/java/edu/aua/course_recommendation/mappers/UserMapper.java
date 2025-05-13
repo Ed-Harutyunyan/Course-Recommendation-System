@@ -1,19 +1,27 @@
 package edu.aua.course_recommendation.mappers;
 
-import edu.aua.course_recommendation.dto.EnrollmentDto;
-import edu.aua.course_recommendation.dto.UserProfileDto;
+import edu.aua.course_recommendation.dto.response.UserProfileDto;
+import edu.aua.course_recommendation.entity.Enrollment;
 import edu.aua.course_recommendation.entity.User;
+import edu.aua.course_recommendation.repository.EnrollmentRepository;
 import edu.aua.course_recommendation.service.auth.UserService;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
 
 @Component
 public class UserMapper {
     private final UserService userService;
     private final CourseMapper courseMapper;
+    private final EnrollmentRepository enrollmentRepository;
+    private final EnrollmentMapper enrollmentMapper;
 
-    public UserMapper(UserService userService, CourseMapper courseMapper) {
+    public UserMapper(UserService userService, CourseMapper courseMapper,
+                      EnrollmentRepository enrollmentRepository, EnrollmentMapper enrollmentMapper) {
         this.userService = userService;
         this.courseMapper = courseMapper;
+        this.enrollmentRepository = enrollmentRepository;
+        this.enrollmentMapper = enrollmentMapper;
     }
 
     public UserProfileDto toUserProfileDto(User user) {
@@ -27,21 +35,15 @@ public class UserMapper {
         dto.setEmail(user.getEmail());
         dto.setProfilePictureUrl(user.getProfilePictureUrl());
 
-        // Who’s calling?
+        // Who's calling?
         User me = userService.getCurrentUser();
         boolean isAdmin = me != null && me.isAdmin();
         boolean isSelf = me != null && me.getId().equals(user.getId());
 
         if (isSelf || isAdmin) {
-            var list = user.getEnrollments().stream().map(e -> {
-                var ed = new EnrollmentDto();
-                ed.setCourse(courseMapper.toCourseResponseDto(e.getCourse()));
-                ed.setGrade(e.getGrade());
-                ed.setYear(e.getYear());
-                ed.setSemester(e.getSemester());
-                return ed;
-            }).toList();
-            dto.setEnrollments(list);
+            // Explicitly fetch enrollments instead of using user.getEnrollments()
+            List<Enrollment> enrollments = enrollmentRepository.findByUser_Id(user.getId());
+            dto.setEnrollments(enrollmentMapper.toResponseDtoList(enrollments));
         }
         return dto;
     }
