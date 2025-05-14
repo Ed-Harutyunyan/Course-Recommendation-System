@@ -38,4 +38,8 @@ public class PythonController {
         return pythonService.sendCourses();
     }
 
+    @DeleteMapping("/delete/courses")
+    public ResponseEntity<String> deleteCourses() {
+        return pythonService.deleteCourses();
+    }
 }
