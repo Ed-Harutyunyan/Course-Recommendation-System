@@ -186,6 +186,17 @@ public abstract class BaseDegreeAuditService {
         return genedClusteringService.findNeededClusters(enrollmentService.getCompletedCourses(studentId));
     }
 
+    public List<NeededCluster> getGenedStatus(UUID studentId) {
+        List<Course> completedCourses = enrollmentService.getCompletedCourses(studentId);
+        Set<String> genedPossibleCourseCodes = getGenEdEligibleCourseCodes();
+
+        List<Course> completedGenedCourses = completedCourses.stream()
+                .filter(course -> genedPossibleCourseCodes.contains(course.getCode()))
+                .toList();
+
+        return genedClusteringService.getGenedClusters(completedGenedCourses);
+    }
+
     public List<GenedClusteringService.ClusterSolution> getClusters(UUID studentId) {
         return genedClusteringService.findPossibleClusterCombinations(enrollmentService.getCompletedCourses(studentId), 5);
     }

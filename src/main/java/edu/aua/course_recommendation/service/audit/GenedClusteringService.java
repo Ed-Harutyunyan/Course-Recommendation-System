@@ -75,6 +75,42 @@ public class GenedClusteringService {
         return needed;
     }
 
+    public List<NeededCluster> getGenedClusters(List<Course> courses) {
+        List<NeededCluster> clusters = new ArrayList<>();
+
+        // Process all 9 themes
+        for (int theme = 1; theme <= 9; theme++) {
+            // Filter courses that belong to this theme
+            int finalTheme = theme;
+            List<Course> themeSpecificCourses = courses.stream()
+                    .filter(c -> c.getThemes().contains(finalTheme))
+                    .toList();
+
+            // Count how many lower vs upper division courses
+            int lowerCount = (int) themeSpecificCourses.stream()
+                    .map(Course::getCode)
+                    .filter(courseService::isLowerDivision)
+                    .count();
+
+            int upperCount = (int) themeSpecificCourses.stream()
+                    .map(Course::getCode)
+                    .filter(courseService::isUpperDivision)
+                    .count();
+
+            int totalCount = lowerCount + upperCount;
+
+            // Calculate what's missing for a complete cluster (3 courses, ≥1 lower, ≥1 upper)
+            int missingLower = lowerCount < 1 ? 1 - lowerCount : 0;
+            int missingUpper = upperCount < 1 ? 1 - upperCount : 0;
+            int missingTotal = Math.max(0, 3 - totalCount);
+
+            // Create cluster info object
+            clusters.add(new NeededCluster(theme, missingLower, missingUpper, missingTotal));
+        }
+
+        return clusters;
+    }
+
     public List<String> buildMissingGenEdCodes(
             Set<NeededCluster> neededClusters,
             Set<String> genEdEligibleCodes,

@@ -59,6 +59,18 @@ public class DegreeAuditController {
         }
     }
 
+    @GetMapping("/gened/status/{studentId}")
+    public ResponseEntity<?> getGenedStatus(@PathVariable UUID studentId) {
+        try {
+            BaseDegreeAuditService service = degreeAuditServiceRouter.getServiceForStudent(studentId);
+            return ResponseEntity.ok(service.getGenedStatus(studentId));
+        } catch (IllegalStateException e) {
+            User student = userService.findById(studentId);
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "No audit service for department: " + student.getDepartment()));
+        }
+    }
+
     @GetMapping("/gened/clusters/{studentId}")
     public ResponseEntity<?> getGenedClusters(@PathVariable UUID studentId) {
         try {
