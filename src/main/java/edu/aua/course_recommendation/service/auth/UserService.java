@@ -1,11 +1,13 @@
 package edu.aua.course_recommendation.service.auth;
 
 import edu.aua.course_recommendation.dto.request.UserRequestDto;
+import edu.aua.course_recommendation.entity.Schedule;
 import edu.aua.course_recommendation.entity.User;
 import edu.aua.course_recommendation.exceptions.UserNotFoundException;
 import edu.aua.course_recommendation.model.AcademicStanding;
 import edu.aua.course_recommendation.model.Department;
 import edu.aua.course_recommendation.model.Role;
+import edu.aua.course_recommendation.repository.ScheduleRepository;
 import edu.aua.course_recommendation.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.springframework.http.HttpStatus.GONE;
@@ -25,6 +28,7 @@ import static org.springframework.http.HttpStatus.GONE;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final ScheduleRepository scheduleRepository;
 
     @Transactional(readOnly = true)
     public User getUserByEmail(final String email) {
@@ -161,7 +165,13 @@ public class UserService {
         User userToDelete = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + userId));
 
-        // Clean up any user related data that might cause constraint violations
+        // TODO: This is done because the database is not setup correctly
+        // Eventually this should be fixed to use proper cascade delete.
+        List<Schedule> schedules = scheduleRepository.findByStudentId(userId).orElseThrow(
+                () -> new UserNotFoundException("Student with id" + userId + " not found")
+        );
+
+        scheduleRepository.deleteAll(schedules);
 
         // Perform the deletion
         userRepository.deleteById(userId);

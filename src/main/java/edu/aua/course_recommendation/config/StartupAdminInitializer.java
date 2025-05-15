@@ -23,7 +23,7 @@ public class StartupAdminInitializer {
                                     EnrollmentService enrollmentService) {
         return args -> {
             createUserIfNotFound(userRepository, "admin", "admin@example.com", "admin", Department.CS, Role.ROLE_ADMIN, true, "Admin");
-            createUserIfNotFound(userRepository, "tariel", "tariel_hakobyan@edu.aua.am", "tariel", Department.CS, Role.ROLE_STUDENT, false, "User");
+            createUserIfNotFound(userRepository, "tariel", "tariel_hakobyan@edu.aua.am", "tariel", Department.CS, Role.ROLE_STUDENT, true, "User");
             createUserIfNotFound(userRepository, "business", "business@edu.aua.am", "business", Department.BAB, Role.ROLE_STUDENT, true, "Business User");
             createUserIfNotFound(userRepository, "cs", "cs@edu.aua.am", "cs", Department.CS, Role.ROLE_STUDENT, true, "CS User");
 
