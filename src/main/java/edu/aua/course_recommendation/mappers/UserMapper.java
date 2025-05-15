@@ -1,6 +1,7 @@
 package edu.aua.course_recommendation.mappers;
 
 import edu.aua.course_recommendation.dto.response.UserProfileDto;
+import edu.aua.course_recommendation.dto.response.UserResponseDto;
 import edu.aua.course_recommendation.entity.Enrollment;
 import edu.aua.course_recommendation.entity.User;
 import edu.aua.course_recommendation.repository.EnrollmentRepository;
@@ -12,14 +13,12 @@ import java.util.List;
 @Component
 public class UserMapper {
     private final UserService userService;
-    private final CourseMapper courseMapper;
     private final EnrollmentRepository enrollmentRepository;
     private final EnrollmentMapper enrollmentMapper;
 
     public UserMapper(UserService userService, CourseMapper courseMapper,
                       EnrollmentRepository enrollmentRepository, EnrollmentMapper enrollmentMapper) {
         this.userService = userService;
-        this.courseMapper = courseMapper;
         this.enrollmentRepository = enrollmentRepository;
         this.enrollmentMapper = enrollmentMapper;
     }
@@ -46,5 +45,20 @@ public class UserMapper {
             dto.setEnrollments(enrollmentMapper.toResponseDtoList(enrollments));
         }
         return dto;
+    }
+
+    public UserResponseDto toUserResponseDto(User user) {
+        return new UserResponseDto(
+                user.getId().toString(),
+                user.getUsername(),
+                user.getRole().name(),
+                user.getDepartment().name(),
+                user.getAcademicStanding().name(),
+                user.getEmail(),
+                user.getProfilePictureUrl(),
+                user.getCreatedAt().toString(),
+                user.getUpdatedAt().toString(),
+                user.isEmailVerified()
+        );
     }
 }
