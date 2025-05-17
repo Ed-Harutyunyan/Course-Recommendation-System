@@ -40,25 +40,44 @@ public class InstructorService {
             return null;
         }
 
-        Instructor instructor = instructorRepository.findByName(profileDto.name())
-                .orElseGet(() -> Instructor.builder().name(profileDto.name()).build());
+        try {
+            // Create a new instructor or find existing one
+            Instructor instructor = instructorRepository.findByName(profileDto.name())
+                    .orElseGet(() -> Instructor.builder().name(profileDto.name()).build());
 
-        // Apply values with constraints
-        instructor.setImageUrl(truncateIfNeeded(profileDto.image_url(), 500));
-        instructor.setPosition(truncateIfNeeded(profileDto.position(), 500));
-        instructor.setMobile(truncateIfNeeded(profileDto.mobile(), 50));
-        instructor.setEmail(truncateIfNeeded(profileDto.email(), 255));
-        instructor.setBio(truncateIfNeeded(profileDto.bio(), 65535));
-        instructor.setOfficeLocation(truncateIfNeeded(profileDto.office_location(), 255));
+            // Debug log the length of the position field
+            String position = profileDto.position();
+            if (position != null) {
+                System.out.println("Position length before truncation: " + position.length());
+            }
 
-        return instructorRepository.save(instructor);
+            // Apply values with more aggressive truncation
+            instructor.setImageUrl(safelyTruncate(profileDto.image_url(), 490));
+            instructor.setPosition(safelyTruncate(profileDto.position(), 490));
+            instructor.setMobile(safelyTruncate(profileDto.mobile(), 45));
+            instructor.setEmail(safelyTruncate(profileDto.email(), 245));
+            instructor.setBio(safelyTruncate(profileDto.bio(), 65000));
+            instructor.setOfficeLocation(safelyTruncate(profileDto.office_location(), 245));
+
+            return instructorRepository.save(instructor);
+        } catch (Exception e) {
+            System.err.println("Error with instructor: " + profileDto.name() + " - " + e.getMessage());
+            return null;
+        }
     }
 
-    private String truncateIfNeeded(String value, int maxLength) {
+    private String safelyTruncate(String value, int maxLength) {
         if (value == null) {
             return null;
         }
-        return value.length() > maxLength ? value.substring(0, maxLength) : value;
+
+        // Normalize and remove any problematic characters
+        String cleaned = value.trim()
+                .replace('\u00A0', ' ') // Replace non-breaking spaces
+                .replaceAll("[\\p{Cc}\\p{Cf}]", ""); // Remove control and format characters
+
+        // More aggressive truncation to be safe
+        return cleaned.length() > maxLength ? cleaned.substring(0, maxLength) : cleaned;
     }
 
 }
