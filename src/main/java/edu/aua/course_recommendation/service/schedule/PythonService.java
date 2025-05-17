@@ -87,16 +87,23 @@ public class PythonService {
         return response.getBody();
     }
 
-    public ResponseEntity<String> deleteCourses() {
+    public ResponseEntity<String> deletePoints() {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
 
         String URL = pythonServiceEndpoint + "/api/delete/points";
         HttpEntity<String> request = new HttpEntity<>(headers);
 
-        ResponseEntity<String> response = restTemplate.exchange(URL, HttpMethod.DELETE, request, String.class);
-
-        return response;
+        try {
+            ResponseEntity<String> response = restTemplate.exchange(URL, HttpMethod.DELETE, request, String.class);
+            if (response.getStatusCode() != HttpStatus.OK || response.getBody() == null) {
+                throw new RecommendationException("Failed to delete courses from Python with status code: "
+                        + response.getStatusCode());
+            }
+            return response;
+        } catch (Exception e) {
+            throw new RecommendationException("An error occurred while attempting to delete courses: " + e.getMessage(), e);
+        }
     }
 
     /**

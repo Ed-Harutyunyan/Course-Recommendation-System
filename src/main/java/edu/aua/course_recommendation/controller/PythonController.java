@@ -39,7 +39,7 @@ public class PythonController {
     }
 
     @DeleteMapping("/delete/courses")
-    public ResponseEntity<String> deleteCourses() {
-        return pythonService.deleteCourses();
+    public ResponseEntity<String> deletePointsQdrant() {
+        return pythonService.deletePoints();
     }
 }
