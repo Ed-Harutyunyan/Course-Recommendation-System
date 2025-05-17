@@ -1,14 +1,22 @@
 package edu.aua.course_recommendation.controller;
 
+import edu.aua.course_recommendation.dto.request.InstructorProfileRequestDto;
+import edu.aua.course_recommendation.dto.response.CourseOfferingResponseDto;
+import edu.aua.course_recommendation.dto.response.InstructorResponseDto;
+import edu.aua.course_recommendation.dto.response.InstructorWithCoursesDto;
+import edu.aua.course_recommendation.entity.CourseOffering;
 import edu.aua.course_recommendation.entity.Instructor;
+import edu.aua.course_recommendation.mappers.CourseMapper;
+import edu.aua.course_recommendation.mappers.InstructorMapper;
+import edu.aua.course_recommendation.service.course.CourseOfferingService;
 import edu.aua.course_recommendation.service.course.InstructorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/instructor")
@@ -16,6 +24,9 @@ import java.util.List;
 public class InstructorController {
 
     private final InstructorService instructorService;
+    private final InstructorMapper instructorMapper;
+    private final CourseOfferingService courseOfferingService;
+    private final CourseMapper courseOfferingMapper;
 
     @GetMapping("/dashboard")
     public ResponseEntity<String> getProfessorDashboard() {
@@ -23,8 +34,47 @@ public class InstructorController {
     }
 
     @GetMapping("/all")
-    public ResponseEntity<List<Instructor>> getAllInstructors() {
-        return ResponseEntity.ok(instructorService.getAllInstructors());
+    public ResponseEntity<List<InstructorResponseDto>> getAllInstructors() {
+        List<Instructor> instructors = instructorService.getAllInstructors();
+        return ResponseEntity.ok(instructorMapper.toResponseDtoList(instructors));
+    }
+
+    @PostMapping("/add-instructors-data")
+    public ResponseEntity<List<InstructorResponseDto>> addInstructorsData(@RequestBody List<InstructorProfileRequestDto> profileDtos) {
+        List<Instructor> updatedInstructors = profileDtos.stream()
+                .map(instructorService::updateInstructorProfile)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(instructorMapper.toResponseDtoList(updatedInstructors));
+    }
+
+    @PostMapping("/add-instructor-data")
+    public ResponseEntity<InstructorResponseDto> addInstructor(@RequestBody InstructorProfileRequestDto profileDto) {
+        Instructor updatedInstructor = instructorService.updateInstructorProfile(profileDto);
+        return ResponseEntity.ok(instructorMapper.toResponseDto(updatedInstructor));
+    }
+
+    @GetMapping("/{instructorId}/offerings")
+    public ResponseEntity<InstructorWithCoursesDto> getInstructorWithCoursesByYearAndSemester(
+            @PathVariable UUID instructorId,
+            @RequestParam String year,
+            @RequestParam String semester) {
+
+        // Get the instructor
+        Instructor instructor = instructorService.getInstructorById(instructorId);
+
+        // Get course offerings for this instructor in the specified year and semester
+        List<CourseOffering> courseOfferings = courseOfferingService.getAllCourseOfferingsByYearAndSemesterAndInstructor(
+                year, semester, instructorId);
+
+        // Map course offerings to DTOs
+        List<CourseOfferingResponseDto> courseOfferingDtos = courseOfferings.stream()
+                .map(courseOfferingMapper::toCourseOfferingResponseDto)
+                .collect(Collectors.toList());
+
+        // Create and return the InstructorWithCoursesDto
+        InstructorWithCoursesDto response = instructorMapper.toInstructorWithCoursesDto(instructor, courseOfferingDtos);
+
+        return ResponseEntity.ok(response);
     }
 
 }

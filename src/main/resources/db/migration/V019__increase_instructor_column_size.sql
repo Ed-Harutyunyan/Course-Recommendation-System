@@ -1,0 +1,7 @@
+ALTER TABLE instructors
+    MODIFY COLUMN position VARCHAR(500),
+    MODIFY COLUMN bio TEXT,
+    MODIFY COLUMN image_url VARCHAR(500),
+    MODIFY COLUMN office_location VARCHAR(255),
+    MODIFY COLUMN email VARCHAR(255),
+    MODIFY COLUMN mobile VARCHAR(50);

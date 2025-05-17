@@ -1,9 +1,11 @@
 package edu.aua.course_recommendation.service.course;
 
+import edu.aua.course_recommendation.dto.request.InstructorProfileRequestDto;
 import edu.aua.course_recommendation.entity.Instructor;
 import edu.aua.course_recommendation.repository.InstructorRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -30,4 +32,52 @@ public class InstructorService {
     public Instructor getInstructorByName(String name) {
         return instructorRepository.findByName(name).orElse(null);
     }
+
+    @Transactional
+    public Instructor updateInstructorProfile(InstructorProfileRequestDto profileDto) {
+        // Skip if name is null or blank
+        if (profileDto.name() == null || profileDto.name().isBlank()) {
+            return null;
+        }
+
+        try {
+            // Create a new instructor or find existing one
+            Instructor instructor = instructorRepository.findByName(profileDto.name())
+                    .orElseGet(() -> Instructor.builder().name(profileDto.name()).build());
+
+            // Debug log the length of the position field
+            String position = profileDto.position();
+            if (position != null) {
+                System.out.println("Position length before truncation: " + position.length());
+            }
+
+            // Apply values with more aggressive truncation
+            instructor.setImageUrl(safelyTruncate(profileDto.image_url(), 490));
+            instructor.setPosition(safelyTruncate(profileDto.position(), 490));
+            instructor.setMobile(safelyTruncate(profileDto.mobile(), 45));
+            instructor.setEmail(safelyTruncate(profileDto.email(), 245));
+            instructor.setBio(safelyTruncate(profileDto.bio(), 65000));
+            instructor.setOfficeLocation(safelyTruncate(profileDto.office_location(), 245));
+
+            return instructorRepository.save(instructor);
+        } catch (Exception e) {
+            System.err.println("Error with instructor: " + profileDto.name() + " - " + e.getMessage());
+            return null;
+        }
+    }
+
+    private String safelyTruncate(String value, int maxLength) {
+        if (value == null) {
+            return null;
+        }
+
+        // Normalize and remove any problematic characters
+        String cleaned = value.trim()
+                .replace('\u00A0', ' ') // Replace non-breaking spaces
+                .replaceAll("[\\p{Cc}\\p{Cf}]", ""); // Remove control and format characters
+
+        // More aggressive truncation to be safe
+        return cleaned.length() > maxLength ? cleaned.substring(0, maxLength) : cleaned;
+    }
+
 }

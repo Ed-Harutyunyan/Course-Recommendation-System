@@ -120,8 +120,15 @@ public abstract class BaseDegreeAuditService {
         List<String> availablePhysedCodes = courseService.getAllCourses().stream()
                 .map(Course::getCode)
                 .filter(code -> code.startsWith("FND110"))
-                .filter(code -> !completedPhysedCodes.contains(code))
+                .sorted((code1, code2) -> {
+                    // Make "FND110" come first
+                    if (code1.equals("FND110")) return -1;
+                    if (code2.equals("FND110")) return 1;
+                    // For other codes, sort alphabetically
+                    return code1.compareTo(code2);
+                })
                 .toList();
+
         return new RequirementResult(
                 Requirement.PHYSICAL_EDUCATION,
                 isSatisfied,
@@ -184,6 +191,17 @@ public abstract class BaseDegreeAuditService {
 
     public Set<NeededCluster> getNeededClusters(UUID studentId) {
         return genedClusteringService.findNeededClusters(enrollmentService.getCompletedCourses(studentId));
+    }
+
+    public List<NeededCluster> getGenedStatus(UUID studentId) {
+        List<Course> completedCourses = enrollmentService.getCompletedCourses(studentId);
+        Set<String> genedPossibleCourseCodes = getGenEdEligibleCourseCodes();
+
+        List<Course> completedGenedCourses = completedCourses.stream()
+                .filter(course -> genedPossibleCourseCodes.contains(course.getCode()))
+                .toList();
+
+        return genedClusteringService.getGenedClusters(completedGenedCourses);
     }
 
     public List<GenedClusteringService.ClusterSolution> getClusters(UUID studentId) {
