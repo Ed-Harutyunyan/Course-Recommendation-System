@@ -35,17 +35,30 @@ public class InstructorService {
 
     @Transactional
     public Instructor updateInstructorProfile(InstructorProfileRequestDto profileDto) {
+        // Skip if name is null or blank
+        if (profileDto.name() == null || profileDto.name().isBlank()) {
+            return null;
+        }
+
         Instructor instructor = instructorRepository.findByName(profileDto.name())
                 .orElseGet(() -> Instructor.builder().name(profileDto.name()).build());
 
-        instructor.setImageUrl(profileDto.image_url());
-        instructor.setPosition(profileDto.position());
-        instructor.setMobile(profileDto.mobile());
-        instructor.setEmail(profileDto.email());
-        instructor.setBio(profileDto.bio());
-        instructor.setOfficeLocation(profileDto.office_location());
+        // Apply values with constraints
+        instructor.setImageUrl(truncateIfNeeded(profileDto.image_url(), 500));
+        instructor.setPosition(truncateIfNeeded(profileDto.position(), 500));
+        instructor.setMobile(truncateIfNeeded(profileDto.mobile(), 50));
+        instructor.setEmail(truncateIfNeeded(profileDto.email(), 255));
+        instructor.setBio(truncateIfNeeded(profileDto.bio(), 65535));
+        instructor.setOfficeLocation(truncateIfNeeded(profileDto.office_location(), 255));
 
         return instructorRepository.save(instructor);
+    }
+
+    private String truncateIfNeeded(String value, int maxLength) {
+        if (value == null) {
+            return null;
+        }
+        return value.length() > maxLength ? value.substring(0, maxLength) : value;
     }
 
 }

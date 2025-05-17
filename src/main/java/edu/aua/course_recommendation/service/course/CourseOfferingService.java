@@ -207,4 +207,12 @@ public class CourseOfferingService {
         }
         return offerings;
     }
+
+    public List<CourseOffering> getAllCourseOfferingsByYearAndSemesterAndInstructor(String year, String semester, UUID instructorId) {
+        List<CourseOffering> offerings = courseOfferingRepository.findByYearAndSemesterAndInstructor_Id(year, semester, instructorId);
+        if (offerings.isEmpty()) {
+            log.warn("No course offerings found for year: {}, semester: {}, and instructor: {}", year, semester, instructorId);
+        }
+        return offerings;
+    }
 }
