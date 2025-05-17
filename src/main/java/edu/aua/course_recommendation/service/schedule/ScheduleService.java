@@ -146,7 +146,61 @@ public class ScheduleService {
                 .filter(off -> !hasTimeConflict(off, slots))
                 .filter(off -> prerequisitesMet(off, studentId))
                 .filter(off -> validAcademicStanding(off, studentId))
-                .findFirst();
+                .min(Comparator.comparing(this::getEarliestTimeInMinutes));
+    }
+
+    private int getEarliestTimeInMinutes(CourseOffering offering) {
+        if (offering.getTimes() == null || offering.getTimes().isEmpty() || "TBD".equalsIgnoreCase(offering.getTimes())) {
+            return Integer.MAX_VALUE; // Place TBD times at the end
+        }
+
+        String[] slots = offering.getTimes().split(", ");
+        int earliestTime = Integer.MAX_VALUE;
+
+        for (String slot : slots) {
+            String[] parts = slot.trim().split(" ");
+            if (parts.length < 2) continue;
+
+            // Calculate day value (MON=0, TUE=1, etc.)
+            int dayValue;
+            switch (parts[0].toUpperCase()) {
+                case "MON":
+                    dayValue = 0;
+                    break;
+                case "TUE":
+                    dayValue = 1;
+                    break;
+                case "WED":
+                    dayValue = 2;
+                    break;
+                case "THU":
+                    dayValue = 3;
+                    break;
+                case "FRI":
+                    dayValue = 4;
+                    break;
+                case "SAT":
+                    dayValue = 5;
+                    break;
+                case "SUN":
+                    dayValue = 6;
+                    break;
+                default:
+                    dayValue = 7;
+                    break;
+            }
+
+            // Parse the start time
+            String[] timeRange = parts[1].split("-");
+            if (timeRange.length < 2) continue;
+
+            int startTimeMinutes = parseTimeToMinutes(timeRange[0]);
+            int slotValue = dayValue * 24 * 60 + startTimeMinutes; // Day value + minutes
+
+            earliestTime = Math.min(earliestTime, slotValue);
+        }
+
+        return earliestTime;
     }
 
     public List<NeededCourseOfferingDto> findValidOfferings(UUID studentId) {
@@ -173,34 +227,34 @@ public class ScheduleService {
                 .toList();
     }
 
-public List<NeededCourseOfferingDto> findValidOfferingsForPeriodWithMessage(UUID studentId, String year, String semester, String message) {
-    // Get all valid offerings for the student
-    List<NeededCourseOfferingDto> allValidDtos = findValidOfferingsForPeriod(studentId, year, semester);
+    public List<NeededCourseOfferingDto> findValidOfferingsForPeriodWithMessage(UUID studentId, String year, String semester, String message) {
+        // Get all valid offerings for the student
+        List<NeededCourseOfferingDto> allValidDtos = findValidOfferingsForPeriod(studentId, year, semester);
 
-    // Ask python for recommendations
-    List<RecommendationDto> recommendationDtos = pythonService.sendMessageRecommendations(
-            MessageAndPossibleCourseDto.builder()
-                    .possibleCourseCodes(allValidDtos.stream()
-                            .map(dto -> dto.getCourseOffering().getBaseCourse().getCode())
-                            .toList())
-                    .message(message)
-                    .build()
-    );
+        // Ask python for recommendations
+        List<RecommendationDto> recommendationDtos = pythonService.sendMessageRecommendations(
+                MessageAndPossibleCourseDto.builder()
+                        .possibleCourseCodes(allValidDtos.stream()
+                                .map(dto -> dto.getCourseOffering().getBaseCourse().getCode())
+                                .toList())
+                        .message(message)
+                        .build()
+        );
 
-    // Create a map of course codes to their recommendation scores for efficient lookup
-    Map<String, Double> courseScoreMap = recommendationDtos.stream()
-            .collect(HashMap::new,
-                    (map, dto) -> map.put(dto.courseCode(), Double.parseDouble(dto.score())),
-                    HashMap::putAll);
+        // Create a map of course codes to their recommendation scores for efficient lookup
+        Map<String, Double> courseScoreMap = recommendationDtos.stream()
+                .collect(HashMap::new,
+                        (map, dto) -> map.put(dto.courseCode(), Double.parseDouble(dto.score())),
+                        HashMap::putAll);
 
-    // Filter for specific period and recommendations, then sort by score (highest first)
-    return allValidDtos.stream()
-            .filter(dto -> courseScoreMap.containsKey(dto.getCourseOffering().getBaseCourse().getCode()))
-            .sorted((dto1, dto2) -> Double.compare(
-                    courseScoreMap.get(dto2.getCourseOffering().getBaseCourse().getCode()),
-                    courseScoreMap.get(dto1.getCourseOffering().getBaseCourse().getCode())))
-            .toList();
-}
+        // Filter for specific period and recommendations, then sort by score (highest first)
+        return allValidDtos.stream()
+                .filter(dto -> courseScoreMap.containsKey(dto.getCourseOffering().getBaseCourse().getCode()))
+                .sorted((dto1, dto2) -> Double.compare(
+                        courseScoreMap.get(dto2.getCourseOffering().getBaseCourse().getCode()),
+                        courseScoreMap.get(dto1.getCourseOffering().getBaseCourse().getCode())))
+                .toList();
+    }
 
 
     public List<NeededCourseOfferingDto> getNeededCourseOfferings(UUID studentId) {
@@ -306,8 +360,7 @@ public List<NeededCourseOfferingDto> findValidOfferingsForPeriodWithMessage(UUID
                 effectivePrerequisites.add("CS121");
             } else if (prereq.contains("EQOOP")) {
                 effectivePrerequisites.add("CS110");
-            }
-            else {
+            } else {
                 effectivePrerequisites.add(prereq);
             }
         }
@@ -334,6 +387,7 @@ public List<NeededCourseOfferingDto> findValidOfferingsForPeriodWithMessage(UUID
     }
 
     private boolean doTimesConflict(String times1, String times2) {
+
         // Handle TBD case
         if ("TBD".equalsIgnoreCase(times1) || "TBD".equalsIgnoreCase(times2)) {
             return false;

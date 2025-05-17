@@ -136,22 +136,20 @@ public class NextSemesterScheduleService {
         RequirementResult phed = auditService.checkPhysicalEducationRequirementsDetailed(studentId);
 
         if (!phed.isSatisfied()) {
-            // Try to find an offering for the first missing PE code
-            String firstMissingPE = phed.getPossibleCourseCodes().stream()
-                    .findFirst()
-                    .orElse(null);
-
-            if (firstMissingPE != null) {
-                Optional<CourseOffering> peOffering = scheduleService.findOffering(available, firstMissingPE, currentCredits, slots, studentId);
-                peOffering.ifPresent(courseOffering -> {
+            // Print the list of possible PE course codes before choosing
+            System.out.println("Possible PE course codes: " + phed.getPossibleCourseCodes());
+            for (String peCode : phed.getPossibleCourseCodes()) {
+                Optional<CourseOffering> peOffering = scheduleService.findOffering(available, peCode, currentCredits, slots, studentId);
+                if (peOffering.isPresent()) {
                     slots.add(new ScheduleSlot(
-                            courseOffering.getId(),
-                            courseOffering.getBaseCourse().getCode(),
+                            peOffering.get().getId(),
+                            peOffering.get().getBaseCourse().getCode(),
                             0,
-                            courseOffering.getTimes()
+                            peOffering.get().getTimes()
                     ));
-                    log.info("Added PhysEd course: {}", courseOffering.getBaseCourse().getCode());
-                });
+                    log.info("Added PhysEd course: {}", peOffering.get().getBaseCourse().getCode());
+                    break;
+                }
             }
         }
 
@@ -160,7 +158,7 @@ public class NextSemesterScheduleService {
         if (!peerMentoring.isSatisfied()) {
             // Try to find an offering for the first missing Peer Mentoring code
             String firstMissingPeer = peerMentoring.getPossibleCourseCodes().stream()
-                    .findFirst()
+                    .findAny()
                     .orElse(null);
 
             if (firstMissingPeer != null) {
@@ -368,6 +366,8 @@ public class NextSemesterScheduleService {
                             .collect(Collectors.toList());
                 }
             }
+
+            log.info("Theme {} courses: {}", theme, themeCourses);
 
             // c) Try recommendations from Python if we have completed courses
             List<Course> completedCourses = enrollmentService.getCompletedCourses(studentId);
