@@ -19,10 +19,18 @@ public class Instructor {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(nullable = false) // TODO: should be unique
+    @Column(nullable = false, unique = true)
     private String name;
 
-    // Optionally, add more instructor-specific fields such as email, department, etc.
+    private String imageUrl;
+    private String position;
+    private String mobile;
+    private String email;
+
+    @Column(columnDefinition = "TEXT")
+    private String bio;
+
+    private String officeLocation;
 
     @OneToMany(mappedBy = "instructor", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CourseOffering> courseOfferings;
