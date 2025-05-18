@@ -80,4 +80,32 @@ public class InstructorService {
         return cleaned.length() > maxLength ? cleaned.substring(0, maxLength) : cleaned;
     }
 
+    public Instructor createInstructor(InstructorProfileRequestDto profileDto) {
+        if (profileDto.name() == null || profileDto.name().isBlank()) {
+            return null;
+        }
+
+        // Check if instructor with same name already exists
+        if (instructorRepository.findByName(profileDto.name()).isPresent()) {
+            throw new IllegalArgumentException("Instructor with name " + profileDto.name() + " already exists");
+        }
+
+        Instructor instructor = Instructor.builder()
+                .name(profileDto.name())
+                .imageUrl(safelyTruncate(profileDto.image_url(), 490))
+                .position(safelyTruncate(profileDto.position(), 490))
+                .mobile(safelyTruncate(profileDto.mobile(), 45))
+                .email(safelyTruncate(profileDto.email(), 245))
+                .bio(safelyTruncate(profileDto.bio(), 65000))
+                .officeLocation(safelyTruncate(profileDto.office_location(), 245))
+                .build();
+
+        return instructorRepository.save(instructor);
+    }
+
+    public void deleteInstructor(UUID instructorId) {
+        Instructor instructor = instructorRepository.findById(instructorId)
+                .orElseThrow(() -> new IllegalArgumentException("Instructor not found with ID: " + instructorId));
+        instructorRepository.delete(instructor);
+    }
 }

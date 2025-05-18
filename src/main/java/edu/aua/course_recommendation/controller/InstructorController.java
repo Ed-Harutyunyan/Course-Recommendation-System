@@ -41,6 +41,19 @@ public class InstructorController {
         return ResponseEntity.ok(instructorMapper.toResponseDtoList(instructors));
     }
 
+    @PostMapping("/create")
+    public ResponseEntity<InstructorResponseDto> createInstructor(@RequestBody InstructorProfileRequestDto profileDto) {
+        Instructor instructor = instructorService.createInstructor(profileDto);
+        return ResponseEntity.ok(instructorMapper.toResponseDto(instructor));
+    }
+
+    @DeleteMapping("/delete/{instructorId}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public ResponseEntity<Void> deleteInstructor(@PathVariable UUID instructorId) {
+        instructorService.deleteInstructor(instructorId);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/add-instructors-data")
     @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<List<InstructorResponseDto>> addInstructorsData(@RequestBody List<InstructorProfileRequestDto> profileDtos) {
