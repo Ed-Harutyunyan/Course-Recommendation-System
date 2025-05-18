@@ -205,7 +205,14 @@ public abstract class BaseDegreeAuditService {
     }
 
     public List<GenedClusteringService.ClusterSolution> getClusters(UUID studentId) {
-        return genedClusteringService.findPossibleClusterCombinations(enrollmentService.getCompletedCourses(studentId), 5);
+        List<Course> completedCourses = enrollmentService.getCompletedCourses(studentId);
+        Set<String> genedPossibleCourseCodes = getGenEdEligibleCourseCodes();
+
+        List<Course> completedGenedCourses = completedCourses.stream()
+                .filter(course -> genedPossibleCourseCodes.contains(course.getCode()))
+                .toList();
+
+        return genedClusteringService.findPossibleClusterCombinations(completedGenedCourses, 1);
     }
 
     public RequirementResult checkFirstAidAndCivilDefense(UUID studentId) {
@@ -398,7 +405,7 @@ public abstract class BaseDegreeAuditService {
         // 4. Gather all codes used in that solution
         Set<String> usedCodes = new HashSet<>();
         for (GenedClusteringService.ClusterChoice choice : solution.getClusterChoices()) {
-            for (Course c : choice.getCourses()) {
+            for (GenedClusteringService.ClusterChoice.CourseInfo c : choice.getCourses()) {
                 usedCodes.add(c.getCode());
             }
         }
