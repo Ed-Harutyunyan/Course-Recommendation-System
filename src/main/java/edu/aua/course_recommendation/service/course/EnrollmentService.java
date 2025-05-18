@@ -123,19 +123,6 @@ public class EnrollmentService {
 
     // Validates the authenticated user against the provided studentId and fetches the course.
     private StudentAndCourse validateAndFetch(UUID studentId, String courseCode) {
-        // Disabled for testing
-        // This isn't needed anyway since students wont be able to enroll themselves
-        // Its an admin functionality
-//        User authenticatedUser = userService.getCurrentUser();
-//        if (authenticatedUser == null) {
-//            throw new AuthenticationException("No authenticated user found");
-//        }
-//        if (!authenticatedUser.getId().equals(studentId)) {
-//            throw new EnrollmentException("You can only enroll yourself");
-//        }
-//        if (authenticatedUser.getRole() != Role.ROLE_STUDENT) {
-//            throw new EnrollmentException("Only students can enroll in courses");
-//        }
 
         User user = userRepository.findById(studentId).orElseThrow(
                 () -> new UserNotFoundException("Student not found")

@@ -13,6 +13,7 @@ import edu.aua.course_recommendation.util.AcademicCalendarUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -61,6 +62,7 @@ public class CourseController {
     }
 
     @PostMapping("/create")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<String> createCourse(@RequestBody CourseDto courseDto) {
         Course createdCourse = courseService.createCourse(courseDto);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -68,6 +70,7 @@ public class CourseController {
     }
 
     @PostMapping("/create/all")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<String> createCourses(@RequestBody List<CourseDto> courseDtos) {
         List<Course> createdCourses = courseService.createCourses(courseDtos);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -75,12 +78,14 @@ public class CourseController {
     }
 
     @DeleteMapping("/delete")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<String> deleteCourse(@RequestParam String code) {
         courseService.deleteCourse(code);
         return ResponseEntity.ok("Course deleted successfully");
     }
 
     @DeleteMapping("/delete/all")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<String> deleteAllCourses() {
         courseService.deleteAllCourses();
         return ResponseEntity.ok("All Base Course deleted successfully");
@@ -150,6 +155,7 @@ public class CourseController {
     }
 
     @PostMapping("/offering/create")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<String> createCourseOffering(@RequestBody CourseOfferingDto offeringDto) {
         CourseOffering offering = courseOfferingService.createCourseOffering(offeringDto);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -157,6 +163,7 @@ public class CourseController {
     }
 
     @PostMapping("/offering/create/all")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<String> createCourseOfferings(@RequestBody List<CourseOfferingDto> courseOfferingDtos) {
         List<CourseOffering> createdOfferings = courseOfferingService.createCourseOfferings(courseOfferingDtos);
         return ResponseEntity.status(HttpStatus.CREATED)
@@ -164,12 +171,14 @@ public class CourseController {
     }
 
     @DeleteMapping("/offering/delete/all")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<String> deleteAllCourseOfferings() {
         courseOfferingService.deleteAllCourseOfferings();
         return ResponseEntity.ok("All course offerings deleted successfully");
     }
 
     @DeleteMapping("/offering/delete")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<String> deleteCourseOffering(@RequestParam UUID id) {
         courseOfferingService.deleteCourseOfferingById(id);
         return ResponseEntity.ok("Course offering deleted successfully");

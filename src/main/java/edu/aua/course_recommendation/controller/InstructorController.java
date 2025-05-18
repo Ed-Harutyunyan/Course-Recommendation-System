@@ -12,6 +12,7 @@ import edu.aua.course_recommendation.service.course.CourseOfferingService;
 import edu.aua.course_recommendation.service.course.InstructorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,6 +30,7 @@ public class InstructorController {
     private final CourseMapper courseOfferingMapper;
 
     @GetMapping("/dashboard")
+    @PreAuthorize("hasRole('ROLE_INSTRUCTOR')")
     public ResponseEntity<String> getProfessorDashboard() {
         return ResponseEntity.ok("Welcome, professor dashboard!");
     }
@@ -40,6 +42,7 @@ public class InstructorController {
     }
 
     @PostMapping("/add-instructors-data")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<List<InstructorResponseDto>> addInstructorsData(@RequestBody List<InstructorProfileRequestDto> profileDtos) {
         List<Instructor> updatedInstructors = profileDtos.stream()
                 .map(instructorService::updateInstructorProfile)
@@ -48,6 +51,7 @@ public class InstructorController {
     }
 
     @PostMapping("/add-instructor-data")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<InstructorResponseDto> addInstructor(@RequestBody InstructorProfileRequestDto profileDto) {
         Instructor updatedInstructor = instructorService.updateInstructorProfile(profileDto);
         return ResponseEntity.ok(instructorMapper.toResponseDto(updatedInstructor));

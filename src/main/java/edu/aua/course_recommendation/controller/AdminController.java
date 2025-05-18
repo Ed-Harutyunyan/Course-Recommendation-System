@@ -22,8 +22,14 @@ public class AdminController {
 //        return ResponseEntity.ok(token);
 //    }
 
+    @GetMapping
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public ResponseEntity<String> helloWorld() {
+        return ResponseEntity.ok("Hello World!");
+    }
+
     @PostMapping("/user/deactivate")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<Void> deactivateUser(@RequestParam String email) {
         userService.deactivateUser(email);
         return ResponseEntity.noContent().build();
