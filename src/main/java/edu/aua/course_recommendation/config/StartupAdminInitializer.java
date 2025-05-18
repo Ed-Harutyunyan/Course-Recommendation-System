@@ -35,10 +35,11 @@ public class StartupAdminInitializer {
             enrollStudentIn("tariel", List.of("PEER001", "FND152", "FND153", "FND110", "FND101", "CS100", "CS111", "CS110", "CHSS110",
                     "FND110BB", "FND102", "CS120", "CS101", "CS104", "CHSS111",
                     "PSIA201", "FND103", "CS121", "CS102", "CS130",
-                    "FND104", "CS211", "CS103", "CS107", "FND110", "FND110",
+                    "FND104", "CS211", "CS103", "CS107", "FND110BBM", "FND110YO",
                     "FND221", "CS112", "CS108", "CHSS251", "CS222",
                     "CHSS282", "CS215", "CS236", "CS331",
-                    "CHSS128", "CSE285", "CSE210", "CSE141", "CSE190"), userRepository, enrollmentService);
+                    "CHSS128", "CSE285", "CSE210", "CSE141", "CSE190", "CS213", "CS140",
+                    "FND222", "CS290", "CS221", "DS116", "CS296"), userRepository, enrollmentService);
 
             System.out.println("CS Student Enrolled in First Semester CS Typical Courses");
         };

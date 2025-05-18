@@ -12,5 +12,6 @@ public class RequirementResult {
     private Requirement requirementName;
     private boolean isSatisfied;
     private List<String> possibleCourseCodes;
+    private List<String> completedCourseCodes;
     private int howManyLeft;
 }

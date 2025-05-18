@@ -78,7 +78,7 @@ public class CSDegreeAuditService extends BaseDegreeAuditService{
             "CS260", "CS231", "CS261", "CS262",
             "CS310", "DS231", "DS233", "DS330",
             "CS132", "CS220", "CS222", "CS131",
-            "CS232", "CS236", "CS245", "CS252"
+            "CS232", "CS236", "CS245", "CS252", "CS331"
     );
 
     @Override
@@ -90,11 +90,16 @@ public class CSDegreeAuditService extends BaseDegreeAuditService{
                 .filter(req -> !completed.contains(req))
                 .toList();
 
+        List<String> completedCore = CS_CORE.stream()
+                .filter(completed::contains)
+                .toList();
+
         boolean isSatisfied = missing.isEmpty();
         return new RequirementResult(
                 Requirement.CORE,
                 isSatisfied,
                 List.copyOf(missing),
+                List.copyOf(completedCore),
                 missing.size()
         );
     }
@@ -146,10 +151,15 @@ public class CSDegreeAuditService extends BaseDegreeAuditService{
                 .filter(req -> !completed.contains(req))
                 .toList();
 
+        List<String> completedCodes = MATH_MODELING.stream()
+                .filter(completed::contains)
+                .toList();
+
         return new RequirementResult(
                 Requirement.TRACK,
                 completedCount >= 5,
-                List.copyOf(missingCodes),
+                completedCount >= 5 ? List.of() : List.copyOf(missingCodes),
+                completedCodes,
                 (int) (TRACK_REQUIREMENT_COUNT - completedCount)
         );
     }
@@ -169,10 +179,15 @@ public class CSDegreeAuditService extends BaseDegreeAuditService{
                 .filter(req -> !completed.contains(req))
                 .toList();
 
+        List<String> completedCodes = APPLIED_CS.stream()
+                .filter(completed::contains)
+                .toList();
+
         return new RequirementResult(
                 Requirement.TRACK,
                 completedCount >= 5,
-                List.copyOf(missingCodes),
+                completedCount >= 5 ? List.of() : List.copyOf(missingCodes),
+                completedCodes,
                 (int) (TRACK_REQUIREMENT_COUNT - completedCount)
         );
     }
@@ -189,12 +204,31 @@ public class CSDegreeAuditService extends BaseDegreeAuditService{
                 .filter(req -> !completed.contains(req))
                 .toList();
 
+        List<String> completedCodes = GENERAL_CS_TRACK.stream()
+                .filter(completed::contains)
+                .toList();
+
         return new RequirementResult(
                 Requirement.TRACK,
                 completedCount >= 5,
-                List.copyOf(missingCodes),
+                completedCount >= 5 ? List.of() : List.copyOf(missingCodes),
+                completedCodes,
                 (int) (TRACK_REQUIREMENT_COUNT - completedCount)
         );
+    }
+
+    /**
+     * Checks if any track requirement is satisfied for the given student.
+     *
+     * @param studentId The UUID of the student to check
+     * @return true if any track requirement is satisfied, false otherwise
+     */
+    private boolean isAnyTrackRequirementSatisfied(UUID studentId) {
+        RequirementResult mathModeling = checkMathModelingTrackRequirement(studentId);
+        RequirementResult appliedCS = checkAppliedTrackRequirement(studentId);
+        RequirementResult general = checkGeneralTrackRequirement(studentId);
+
+        return mathModeling.isSatisfied() || appliedCS.isSatisfied() || general.isSatisfied();
     }
 
     @Override

@@ -89,7 +89,20 @@ public class BusinessDegreeAuditService extends BaseDegreeAuditService {
     // ——————————————————————————————————————————————————————
     @Override
     public RequirementResult checkProgramCore(UUID studentId) {
-        List<String> done = enrollmentService.getCompletedCourseCodes(studentId);
+        List<String> allCompleted = enrollmentService.getCompletedCourseCodes(studentId);
+
+        // All core codes (fundamentals, requirements, one-of groups)
+        List<String> allCore = Stream.of(
+                CORE_FUNDAMENTALS,
+                CORE_REQUIREMENTS,
+                new ArrayList<>(CORE_ONE_OF_1),
+                new ArrayList<>(CORE_ONE_OF_2)
+        ).flatMap(Collection::stream).distinct().toList();
+
+        // Only completed core codes
+        List<String> done = allCompleted.stream()
+                .filter(allCore::contains)
+                .toList();
 
         List<String> missFund = CORE_FUNDAMENTALS.stream()
                 .filter(c -> !done.contains(c))
@@ -115,6 +128,7 @@ public class BusinessDegreeAuditService extends BaseDegreeAuditService {
                 Requirement.CORE,
                 satisfied,
                 allMissing,
+                done,
                 allMissing.size()
         );
     }
@@ -158,22 +172,28 @@ public class BusinessDegreeAuditService extends BaseDegreeAuditService {
     }
 
     private RequirementResult checkAccountingTrack(UUID studentId) {
-        List<String> done = enrollmentService.getCompletedCourseCodes(studentId);
+        List<String> allCompleted = enrollmentService.getCompletedCourseCodes(studentId);
+
+        // Only completed Accounting track courses (required + electives)
+        List<String> completedTrack = Stream.concat(ACCOUNTING_REQUIRED.stream(), ACCOUNTING_ELECTIVES.stream())
+                .filter(allCompleted::contains)
+                .distinct()
+                .toList();
 
         // required
         List<String> missReq = ACCOUNTING_REQUIRED.stream()
-                .filter(c -> !done.contains(c))
+                .filter(c -> !completedTrack.contains(c))
                 .toList();
 
         // electives taken
         long takenElect = ACCOUNTING_ELECTIVES.stream()
-                .filter(done::contains)
+                .filter(completedTrack::contains)
                 .count();
         int neededElect = ACCOUNTING_ELECTIVE_PICKS - (int)takenElect;
 
         // which electives are still possible
         List<String> missElect = ACCOUNTING_ELECTIVES.stream()
-                .filter(c -> !done.contains(c))
+                .filter(c -> !completedTrack.contains(c))
                 .toList();
 
         boolean satisfied = missReq.isEmpty() && neededElect <= 0;
@@ -185,6 +205,7 @@ public class BusinessDegreeAuditService extends BaseDegreeAuditService {
                 Requirement.TRACK,
                 satisfied,
                 missing,
+                completedTrack,
                 missReq.size() + Math.max(0, neededElect)
         );
     }
@@ -210,10 +231,16 @@ public class BusinessDegreeAuditService extends BaseDegreeAuditService {
                 .distinct()
                 .toList();
 
+        List<String> completedTrack = Stream.concat(ECONOMICS_REQUIRED.stream(), ECONOMICS_ELECTIVES.stream())
+                .filter(done::contains)
+                .distinct()
+                .toList();
+
         return new RequirementResult(
                 Requirement.TRACK,
                 satisfied,
                 missing,
+                completedTrack,
                 missReq.size() + Math.max(0, neededElect)
         );
     }
@@ -239,10 +266,16 @@ public class BusinessDegreeAuditService extends BaseDegreeAuditService {
                 .distinct()
                 .toList();
 
+        List<String> completedTrack = Stream.concat(MARKETING_REQUIRED.stream(), MARKETING_ELECTIVES.stream())
+                .filter(done::contains)
+                .distinct()
+                .toList();
+
         return new RequirementResult(
                 Requirement.TRACK,
                 satisfied,
                 missing,
+                completedTrack,
                 missReq.size() + Math.max(0, neededElect)
         );
     }
@@ -268,11 +301,16 @@ public class BusinessDegreeAuditService extends BaseDegreeAuditService {
                 .filter(c -> !done.contains(c))
                 .toList();
 
+        List<String> completedTrack = pool.stream()
+                .filter(done::contains)
+                .toList();
+
         boolean satisfied = needed <= 0;
         return new RequirementResult(
                 Requirement.TRACK,
                 satisfied,
                 missing,
+                completedTrack,
                 needed
         );
     }
