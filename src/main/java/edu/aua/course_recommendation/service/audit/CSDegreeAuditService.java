@@ -132,7 +132,7 @@ public class CSDegreeAuditService extends BaseDegreeAuditService{
         generalScenario.canGraduate();
         scenarios.add(generalScenario);
 
-        return scenarios;
+        return clearPossibleCodesIfAnyTrackSatisfied(scenarios);
     }
 
 

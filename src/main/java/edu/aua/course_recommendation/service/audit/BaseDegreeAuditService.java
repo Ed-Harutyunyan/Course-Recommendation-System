@@ -73,6 +73,22 @@ public abstract class BaseDegreeAuditService {
         return new DegreeAuditMultiScenarioResult(commonReqs, scenarios);
     }
 
+    protected List<DegreeAuditScenario> clearPossibleCodesIfAnyTrackSatisfied(List<DegreeAuditScenario> scenarios) {
+        boolean anyTrackSatisfied = scenarios.stream()
+                .anyMatch(scenario -> scenario.getScenarioRequirements().stream()
+                        .anyMatch(RequirementResult::isSatisfied));
+
+        if (anyTrackSatisfied) {
+            scenarios.forEach(scenario ->
+                    scenario.getScenarioRequirements().forEach(requirement ->
+                            requirement.setPossibleCourseCodes(List.of())
+                    )
+            );
+        }
+
+        return scenarios;
+    }
+
     public RequirementResult checkPeerMentoringRequirement(UUID studentId) {
         List<String> completedCodes = enrollmentService.getCompletedCourseCodes(studentId);
 

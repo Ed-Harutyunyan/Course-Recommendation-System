@@ -10,10 +10,7 @@ import edu.aua.course_recommendation.exceptions.ScheduleNotFoundException;
 import edu.aua.course_recommendation.exceptions.ScheduleValidationException;
 import edu.aua.course_recommendation.exceptions.UserNotFoundException;
 import edu.aua.course_recommendation.exceptions.ValidationError;
-import edu.aua.course_recommendation.model.AcademicStanding;
-import edu.aua.course_recommendation.model.DegreeScenarioType;
-import edu.aua.course_recommendation.model.Requirement;
-import edu.aua.course_recommendation.model.RequirementResult;
+import edu.aua.course_recommendation.model.*;
 import edu.aua.course_recommendation.repository.CourseOfferingRepository;
 import edu.aua.course_recommendation.repository.ScheduleRepository;
 import edu.aua.course_recommendation.service.audit.BaseDegreeAuditService;
@@ -286,12 +283,21 @@ public class ScheduleService {
         addOfferingsForRequirement(result, genEd, courseOfferingService);
 
         // 6. Track Requirements
-        DegreeScenarioType chosenTrack = baseDegreeAuditService.pickChosenTrack(studentId);
-        List<String> trackCodes = baseDegreeAuditService.getTrackCourseCodes(chosenTrack);
-        for (String code : trackCodes) {
-            List<CourseOffering> offerings = courseOfferingService.getCourseOfferingsByCourseCodes(List.of(code));
-            for (CourseOffering offering : offerings) {
-                result.add(new NeededCourseOfferingDto(Requirement.TRACK, offering));
+        List<DegreeAuditScenario> scenarios = baseDegreeAuditService.checkProgramScenarios(studentId);
+        boolean anyTrackCompleted = scenarios.stream()
+                .anyMatch(scenario -> {
+                    scenario.canGraduate();
+                    return scenario.isSatisfied();
+                });
+
+        if (!anyTrackCompleted) {
+            DegreeScenarioType chosenTrack = baseDegreeAuditService.pickChosenTrack(studentId);
+            List<String> trackCodes = baseDegreeAuditService.getTrackCourseCodes(chosenTrack);
+            for (String code : trackCodes) {
+                List<CourseOffering> offerings = courseOfferingService.getCourseOfferingsByCourseCodes(List.of(code));
+                for (CourseOffering offering : offerings) {
+                    result.add(new NeededCourseOfferingDto(Requirement.TRACK, offering));
+                }
             }
         }
 
