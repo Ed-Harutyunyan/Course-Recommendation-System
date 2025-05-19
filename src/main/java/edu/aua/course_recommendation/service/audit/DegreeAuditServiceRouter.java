@@ -17,7 +17,6 @@ public class DegreeAuditServiceRouter {
     public DegreeAuditServiceRouter(List<BaseDegreeAuditService> auditServices, UserService userService) {
         this.userService = userService;
 
-        // Map each audit service to appropriate departments
         this.serviceMap = Map.of(
                 Department.BAB, findServiceByType(auditServices, BusinessDegreeAuditService.class),
                 Department.CS, findServiceByType(auditServices, CSDegreeAuditService.class),

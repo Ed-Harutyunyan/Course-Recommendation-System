@@ -63,22 +63,18 @@ public class CourseReviewService {
 
     @Transactional
     public void deleteReview(UUID reviewId) {
-        // Get the current authenticated user
         User currentUser = userService.getCurrentUser();
         if (currentUser == null) {
             throw new AuthenticationException("Authentication required");
         }
 
-        // Find the review
         CourseReview review = reviewRepository.findById(reviewId)
                 .orElseThrow(() -> new ReviewNotFoundException("Review not found"));
 
-        // Check if the current user is the owner of the review
         if (!review.getUserId().equals(currentUser.getId())) {
             throw new AuthenticationException("You can only delete your own reviews");
         }
 
-        // Delete the review
         reviewRepository.deleteById(reviewId);
     }
 

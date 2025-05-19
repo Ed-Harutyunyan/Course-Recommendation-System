@@ -35,6 +35,6 @@ public class Schedule {
             name = "schedule_slots",
             joinColumns = @JoinColumn(name = "schedule_id")
     )
-    @OnDelete(action = OnDeleteAction.CASCADE)  // This makes Hibernate generate ON DELETE CASCADE
+    @OnDelete(action = OnDeleteAction.CASCADE)
     private List<ScheduleSlot> slots;
 }

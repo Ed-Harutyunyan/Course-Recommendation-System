@@ -57,7 +57,6 @@ public class UserService {
             return null;
         }
 
-        // By default, principal is a Jwt when using the Spring Security OAuth2 Resource Server
         Object principal = authentication.getPrincipal();
         if (principal instanceof Jwt jwt) {
             String username = jwt.getClaimAsString("sub");
@@ -124,56 +123,48 @@ public class UserService {
 
     @Transactional
     public User createUser(UserRequestDto userDto) {
-        // Validate required fields
+
         if (userDto.username() == null || userDto.username().trim().isEmpty() ||
                 userDto.password() == null || userDto.password().trim().isEmpty() ||
                 userDto.email() == null || userDto.email().trim().isEmpty()) {
             throw new IllegalArgumentException("Username, password and email are required");
         }
 
-        // Check if username already exists
         if (userRepository.findByUsername(userDto.username()).isPresent()) {
             throw new IllegalArgumentException("Username already exists");
         }
 
-        // Check if email already exists
         if (userRepository.findByEmail(userDto.email()).isPresent()) {
             throw new IllegalArgumentException("Email already exists");
         }
 
-        // Create new user
         User user = new User();
         user.setUsername(userDto.username());
         user.setPassword(new BCryptPasswordEncoder().encode(userDto.password()));
         user.setEmail(userDto.email());
 
-        // Set optional fields with defaults if not provided
         user.setRole(userDto.role() != null ? Role.valueOf(userDto.role()) : Role.ROLE_STUDENT);
         user.setDepartment(userDto.department() != null ? Department.valueOf(userDto.department()) : Department.CS);
         user.setAcademicStanding(userDto.academicStanding() != null ?
                 AcademicStanding.valueOf(userDto.academicStanding()) : AcademicStanding.FRESHMAN);
         user.setProfilePictureUrl(userDto.profilePictureUrl());
-        user.setEmailVerified(false); // Default to false until verified
+        user.setEmailVerified(false);
 
-        // Save and return the new user
         return userRepository.save(user);
     }
 
     @Transactional
     public void deleteUser(UUID userId) {
-        // Validate user exists
+
         User userToDelete = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException("User not found with ID: " + userId));
 
-        // TODO: This is done because the database is not setup correctly
-        // Eventually this should be fixed to use proper cascade delete.
         List<Schedule> schedules = scheduleRepository.findByStudentId(userId).orElseThrow(
                 () -> new UserNotFoundException("Student with id" + userId + " not found")
         );
 
         scheduleRepository.deleteAll(schedules);
 
-        // Perform the deletion
         userRepository.deleteById(userId);
     }
 }

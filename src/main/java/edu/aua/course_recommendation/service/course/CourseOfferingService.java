@@ -64,7 +64,7 @@ public class CourseOfferingService {
             if (existingOffering.isPresent()) {
                 log.info("Skipping existing offering: code={}, year={}, semester={}, instructor={}, section={}",
                         dto.courseCode(), dto.year(), dto.semester(), dto.instructor(), dto.section());
-                continue; // Skip if already exists
+                continue;
             }
 
             CourseOffering courseOffering = createCourseOfferingWithBaseCourseAndInstructor(dto);
@@ -136,7 +136,6 @@ public class CourseOfferingService {
         CourseOffering offering = courseOfferingRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Course offering not found with id: " + id));
 
-        // 1. Remove from the parent's collections
         Course baseCourse = offering.getBaseCourse();
         if (baseCourse != null) {
             baseCourse.getOfferings().remove(offering);
@@ -152,23 +151,19 @@ public class CourseOfferingService {
 
     @Transactional
     public void deleteAllCourseOfferings() {
-        // 1. Fetch all existing offerings
+
         List<CourseOffering> allOfferings = courseOfferingRepository.findAll();
 
-        // 2. Remove each offering from its parent Course and Instructor
         for (CourseOffering offering : allOfferings) {
-            // Remove from the Course's list
             if (offering.getBaseCourse() != null) {
                 offering.getBaseCourse().getOfferings().remove(offering);
             }
 
-            // Remove from the Instructor's list
             if (offering.getInstructor() != null) {
                 offering.getInstructor().getCourseOfferings().remove(offering);
             }
         }
 
-        // 3. Delete them all at once
         courseOfferingRepository.deleteAll(allOfferings);
     }
 
@@ -182,15 +177,6 @@ public class CourseOfferingService {
         return courseOfferingRepository.findAllByBaseCourse_Code(code);
     }
 
-    /**
-     * Retrieves a list of course offerings for a specific year, semester, and course code.
-     *
-     * @param year     the academic year of the course offerings (e.g., "2023").
-     * @param semester the semester of the course offerings (e.g., "Fall").
-     * @param code     the code of the base course (e.g., "CS101").
-     * @return a list of course offerings matching the specified criteria. If no offerings are found,
-     *         an empty list is returned, and a warning is logged.
-     */
     @Transactional(readOnly = true)
     public List<CourseOffering> getCourseOfferingsByYearSemesterAndCode(String year, String semester, String code) {
         List<CourseOffering> offerings = courseOfferingRepository.findByYearAndSemesterAndBaseCourse_Code(year, semester, code);

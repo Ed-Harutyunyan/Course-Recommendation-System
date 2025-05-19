@@ -13,7 +13,7 @@ public class ValidationException extends ErrorResponseException {
 
     private static ProblemDetail createProblemDetail(HttpStatusCode status, Map<String, String> errors) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(status, "Request validation failed");
-        problemDetail.setProperty("errors", errors); // Attach validation errors
+        problemDetail.setProperty("errors", errors);
         return problemDetail;
     }
 }

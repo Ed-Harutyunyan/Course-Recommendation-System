@@ -20,9 +20,6 @@ public class CourseService {
     
     private final CourseRepository courseRepository;
 
-    // ============================
-    // READ operations
-    // ============================
     @Transactional(readOnly = true)
     public Course getCourseByCode(String code) {
         return courseRepository.findByCode(code)
@@ -58,9 +55,6 @@ public class CourseService {
                 .collect(Collectors.toList());
     }
 
-    // ============================
-    // CREATE operations
-    // ============================
     @Transactional
     public Course createCourse(CourseDto courseDto) {
 
@@ -100,7 +94,7 @@ public class CourseService {
 
             if (courseExists) {
                 log.info("Skipping existing course: code={}", dto.courseCode());
-                continue; // Skip if already exists
+                continue;
             }
 
             Course course = createCourse(dto);
@@ -108,12 +102,9 @@ public class CourseService {
             createdCourses.add(course);
         }
 
-        return courseRepository.saveAll(createdCourses); // Saves all at once
+        return courseRepository.saveAll(createdCourses);
     }
 
-    // ============================
-    // DELETE operations
-    // ============================
     @Transactional
     public void deleteCourse(String code) {
         if (!courseRepository.existsByCode(code)) {
@@ -127,7 +118,6 @@ public class CourseService {
         courseRepository.deleteAll();
     }
 
-    // All courses that code's begin with "FND110"
     @Transactional
     public Set<Course> getAllPhysedCourses() {
         return getAllCourses().stream().filter(course -> course.getCode().startsWith("FND110")).collect(Collectors.toSet());
@@ -138,10 +128,6 @@ public class CourseService {
         return getAllCourses().stream().filter(course -> !course.getThemes().isEmpty()).collect(Collectors.toList());
     }
 
-    /**
-     * If the code starts with '1', then its lower-division.
-     * Otherwise upper-division.
-     */
     public boolean isLowerDivision(String courseCode) {
         String code = courseCode.replaceAll("[^0-9]", "");
         if (code.isEmpty()) return false;
@@ -153,7 +139,6 @@ public class CourseService {
             return false;
         }
     }
-
 
     public boolean isUpperDivision(String courseCode) {
         return !isLowerDivision(courseCode);

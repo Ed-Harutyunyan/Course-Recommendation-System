@@ -19,27 +19,22 @@ public class FileStorageService {
     private String uploadDir;
 
     public String storeProfilePicture(MultipartFile file, UUID userId) throws IOException {
-        // Create directory if it doesn't exist
         Path uploadPath = Paths.get(uploadDir, "profile-pictures");
         if (!Files.exists(uploadPath)) {
             Files.createDirectories(uploadPath);
         }
 
-        // Get file extension
         String originalFilename = file.getOriginalFilename();
         String extension = "";
         if (originalFilename != null && originalFilename.contains(".")) {
             extension = originalFilename.substring(originalFilename.lastIndexOf("."));
         }
 
-        // Create unique filename based on userId
         String filename = userId.toString() + extension;
         Path filePath = uploadPath.resolve(filename);
 
-        // Save the file
         Files.copy(file.getInputStream(), filePath, StandardCopyOption.REPLACE_EXISTING);
 
-        // Return the URL to access the file
         return ServletUriComponentsBuilder.fromCurrentContextPath()
                 .path("/uploads/profile-pictures/")
                 .path(filename)

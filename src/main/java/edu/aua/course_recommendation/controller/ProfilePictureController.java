@@ -30,7 +30,6 @@ public class ProfilePictureController {
                 return ResponseEntity.badRequest().body("Please select a file to upload");
             }
 
-            // Validate file type
             String contentType = file.getContentType();
             if (contentType == null || !contentType.startsWith("image/")) {
                 return ResponseEntity.badRequest().body("Only image files are allowed");
@@ -38,10 +37,8 @@ public class ProfilePictureController {
 
             User currentUser = userService.getCurrentUser();
 
-            // Store the file
             String fileUrl = fileStorageService.storeProfilePicture(file, currentUser.getId());
 
-            // Update user profile with picture URL
             currentUser.setProfilePictureUrl(fileUrl);
             userService.saveUser(currentUser);
 

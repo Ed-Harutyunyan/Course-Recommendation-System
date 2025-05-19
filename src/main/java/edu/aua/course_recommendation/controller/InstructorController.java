@@ -12,6 +12,7 @@ import edu.aua.course_recommendation.service.course.CourseOfferingService;
 import edu.aua.course_recommendation.service.course.InstructorService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -29,6 +30,7 @@ public class InstructorController {
     private final CourseMapper courseOfferingMapper;
 
     @GetMapping("/dashboard")
+    @PreAuthorize("hasRole('ROLE_INSTRUCTOR')")
     public ResponseEntity<String> getProfessorDashboard() {
         return ResponseEntity.ok("Welcome, professor dashboard!");
     }
@@ -39,7 +41,21 @@ public class InstructorController {
         return ResponseEntity.ok(instructorMapper.toResponseDtoList(instructors));
     }
 
+    @PostMapping("/create")
+    public ResponseEntity<InstructorResponseDto> createInstructor(@RequestBody InstructorProfileRequestDto profileDto) {
+        Instructor instructor = instructorService.createInstructor(profileDto);
+        return ResponseEntity.ok(instructorMapper.toResponseDto(instructor));
+    }
+
+    @DeleteMapping("/delete/{instructorId}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
+    public ResponseEntity<Void> deleteInstructor(@PathVariable UUID instructorId) {
+        instructorService.deleteInstructor(instructorId);
+        return ResponseEntity.noContent().build();
+    }
+
     @PostMapping("/add-instructors-data")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<List<InstructorResponseDto>> addInstructorsData(@RequestBody List<InstructorProfileRequestDto> profileDtos) {
         List<Instructor> updatedInstructors = profileDtos.stream()
                 .map(instructorService::updateInstructorProfile)
@@ -48,6 +64,7 @@ public class InstructorController {
     }
 
     @PostMapping("/add-instructor-data")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<InstructorResponseDto> addInstructor(@RequestBody InstructorProfileRequestDto profileDto) {
         Instructor updatedInstructor = instructorService.updateInstructorProfile(profileDto);
         return ResponseEntity.ok(instructorMapper.toResponseDto(updatedInstructor));
@@ -59,19 +76,15 @@ public class InstructorController {
             @RequestParam String year,
             @RequestParam String semester) {
 
-        // Get the instructor
         Instructor instructor = instructorService.getInstructorById(instructorId);
 
-        // Get course offerings for this instructor in the specified year and semester
         List<CourseOffering> courseOfferings = courseOfferingService.getAllCourseOfferingsByYearAndSemesterAndInstructor(
                 year, semester, instructorId);
 
-        // Map course offerings to DTOs
         List<CourseOfferingResponseDto> courseOfferingDtos = courseOfferings.stream()
                 .map(courseOfferingMapper::toCourseOfferingResponseDto)
                 .collect(Collectors.toList());
 
-        // Create and return the InstructorWithCoursesDto
         InstructorWithCoursesDto response = instructorMapper.toInstructorWithCoursesDto(instructor, courseOfferingDtos);
 
         return ResponseEntity.ok(response);

@@ -30,7 +30,7 @@ public class CourseReview {
     private String content;
 
     @Column(nullable = false)
-    private int rating; // 1-5 stars
+    private int rating;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
