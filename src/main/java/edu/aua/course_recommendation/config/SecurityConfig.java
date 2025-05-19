@@ -27,37 +27,28 @@ import java.util.stream.Collectors;
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(final HttpSecurity http) throws Exception {
-        return http
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        http
+                .cors(Customizer.withDefaults())
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/python/**").permitAll()
-                        .requestMatchers("/api/auth/**").permitAll() // Should be open
-                        .requestMatchers("/api/course/**").permitAll() // Open for testing
-                        .requestMatchers("/api/instructor/**").permitAll() // Open for testing
-                        .requestMatchers("/api/enrollment/**").permitAll() // Open for testing
-                        .requestMatchers("/api/degree-audit/**").permitAll() // Open for testing
-                        .requestMatchers("/api/schedule/**").permitAll() // Open for testing
-                        .requestMatchers("/api/user/**").permitAll()   // Open for testing
+                        .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/uploads/**").permitAll()
-                        .requestMatchers(("/api/user/profile-picture/**")).permitAll()
-                        .requestMatchers("/api/course-reviews/**").permitAll() // Open for testing
                         .requestMatchers("/error").permitAll()
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
-                .sessionManagement(
-                        session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .oauth2ResourceServer(server -> server
-                        .jwt(Customizer.withDefaults())
-                        .authenticationEntryPoint(
-                                new BearerTokenAuthenticationEntryPoint())
-                        .accessDeniedHandler(
-                                new BearerTokenAccessDeniedHandler()
-                        )
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
-                .build();
+                .oauth2ResourceServer(server ->
+                        server
+                                .jwt(Customizer.withDefaults())
+                                .authenticationEntryPoint(new BearerTokenAuthenticationEntryPoint())
+                                .accessDeniedHandler(new BearerTokenAccessDeniedHandler())
+                );
+        return http.build();
     }
+
 
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {

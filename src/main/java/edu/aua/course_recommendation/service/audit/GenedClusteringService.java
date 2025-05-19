@@ -3,6 +3,7 @@ package edu.aua.course_recommendation.service.audit;
 import edu.aua.course_recommendation.entity.Course;
 import edu.aua.course_recommendation.model.NeededCluster;
 import edu.aua.course_recommendation.service.course.CourseService;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -406,12 +407,26 @@ public class GenedClusteringService {
     public static class ClusterChoice {
         private String sector;       // "AH", "SS", "QS"
         private int theme;          // e.g. 1, 2, 3
-        private List<Course> courses;
+        private List<CourseInfo> courses;
 
         public ClusterChoice(String sector, int theme, List<Course> courses) {
             this.sector = sector;
             this.theme = theme;
-            this.courses = courses;
+            this.courses = courses.stream()
+                    .map(course -> new CourseInfo(
+                            course.getCode(),
+                            course.getTitle(),
+                            course.getThemes()
+                    ))
+                    .collect(Collectors.toList());
+        }
+
+        @Getter
+        @AllArgsConstructor
+        public static class CourseInfo {
+            private String code;
+            private String name;
+            private List<Integer> themes; // e.g. [1, 2, 3]
         }
     }
 

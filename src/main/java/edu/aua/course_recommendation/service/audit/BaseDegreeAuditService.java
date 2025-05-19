@@ -77,14 +77,20 @@ public abstract class BaseDegreeAuditService {
         List<String> completedCodes = enrollmentService.getCompletedCourseCodes(studentId);
 
         // Check if the student has completed the Peer Mentoring course
-        boolean isSatisfied = completedCodes.contains("PEER001"); // TODO: Remove hardcoded code
+        boolean isSatisfied = completedCodes.contains(PEER_MENTORING_CODE);
+
+        // Only include completed peer mentoring courses
+        List<String> completedPeerMentoring = completedCodes.stream()
+                .filter(code -> code.equals(PEER_MENTORING_CODE))
+                .toList();
 
         // If not satisfied, return the missing code
-        List<String> missingCodes = isSatisfied ? List.of() : List.of("PEER001");
+        List<String> missingCodes = isSatisfied ? List.of() : List.of(PEER_MENTORING_CODE);
         return new RequirementResult(
                 Requirement.PEER_MENTORING,
                 isSatisfied,
                 missingCodes,
+                completedPeerMentoring,
                 missingCodes.size()
         );
     }
@@ -97,11 +103,17 @@ public abstract class BaseDegreeAuditService {
                 .filter(req -> !completedCodes.contains(req))
                 .toList();
 
+        // Only include completed foundation courses
+        List<String> completedFoundation = FOUNDATION_REQUIREMENTS.stream()
+                .filter(completedCodes::contains)
+                .toList();
+
         boolean isSatisfied = missing.isEmpty();
         return new RequirementResult(
                 Requirement.FOUNDATION,
                 isSatisfied,
                 List.copyOf(missing),
+                completedFoundation,
                 missing.size()
         );
     }
@@ -132,7 +144,8 @@ public abstract class BaseDegreeAuditService {
         return new RequirementResult(
                 Requirement.PHYSICAL_EDUCATION,
                 isSatisfied,
-                availablePhysedCodes,
+                isSatisfied ? List.of() : availablePhysedCodes,
+                completedPhysedCodes.stream().toList(),
                 REQUIRED_PHYS_ED_COUNT - completedCount
         );
     }
@@ -185,6 +198,7 @@ public abstract class BaseDegreeAuditService {
                 Requirement.GENERAL_EDUCATION,
                 clusterSatisfied,
                 missingCodes,
+                genEdCompleted.stream().map(Course::getCode).collect(Collectors.toList()),
                 REQUIRED_GENED_COUNT - genEdCompleted.size()
         );
     }
@@ -205,7 +219,14 @@ public abstract class BaseDegreeAuditService {
     }
 
     public List<GenedClusteringService.ClusterSolution> getClusters(UUID studentId) {
-        return genedClusteringService.findPossibleClusterCombinations(enrollmentService.getCompletedCourses(studentId), 5);
+        List<Course> completedCourses = enrollmentService.getCompletedCourses(studentId);
+        Set<String> genedPossibleCourseCodes = getGenEdEligibleCourseCodes();
+
+        List<Course> completedGenedCourses = completedCourses.stream()
+                .filter(course -> genedPossibleCourseCodes.contains(course.getCode()))
+                .toList();
+
+        return genedClusteringService.findPossibleClusterCombinations(completedGenedCourses, 1);
     }
 
     public RequirementResult checkFirstAidAndCivilDefense(UUID studentId) {
@@ -229,6 +250,7 @@ public abstract class BaseDegreeAuditService {
                 Requirement.FIRST_AID_AND_CIVIL_DEFENSE,
                 isSatisfied,
                 missing,
+                List.of(FIRST_AID_CODE, CIVIL_DEFENSE_CODE),
                 missing.size()
         );
     }
@@ -306,6 +328,7 @@ public abstract class BaseDegreeAuditService {
                 Requirement.FREE_ELECTIVE,
                 isSatisfied,
                 missingCodes,
+                completedFreeElectives.stream().toList(),
                 needed
         );
     }
@@ -321,6 +344,7 @@ public abstract class BaseDegreeAuditService {
                 Requirement.CAPSTONE,
                 capstoneDone,
                 capstoneDone ? List.of() : List.of(capstoneCode),
+                capstoneDone ? List.of(capstoneCode) : List.of(),
                 capstoneDone ? 0 : 1
         );
     }
@@ -398,7 +422,7 @@ public abstract class BaseDegreeAuditService {
         // 4. Gather all codes used in that solution
         Set<String> usedCodes = new HashSet<>();
         for (GenedClusteringService.ClusterChoice choice : solution.getClusterChoices()) {
-            for (Course c : choice.getCourses()) {
+            for (GenedClusteringService.ClusterChoice.CourseInfo c : choice.getCourses()) {
                 usedCodes.add(c.getCode());
             }
         }
