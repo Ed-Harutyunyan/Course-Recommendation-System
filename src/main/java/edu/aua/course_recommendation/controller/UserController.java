@@ -10,6 +10,7 @@ import edu.aua.course_recommendation.repository.UserRepository;
 import edu.aua.course_recommendation.service.auth.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -42,6 +43,7 @@ public class UserController {
     }
 
     @PostMapping("/create")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<UserResponseDto> createUser(@RequestBody UserRequestDto userDto) {
         User user = userService.createUser(userDto);
         UserResponseDto userResponseDto = userMapper.toUserResponseDto(user);
@@ -49,6 +51,7 @@ public class UserController {
     }
 
     @DeleteMapping("/delete/{userId}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<Void> deleteUser(@PathVariable String userId) {
         userService.deleteUser(java.util.UUID.fromString(userId));
         return ResponseEntity.noContent().build();

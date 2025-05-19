@@ -6,7 +6,6 @@ public record EnrollmentResponseDto(
         String year,
         String semester
 ) {
-    // Nested record for course information
     public record CourseInfo(
             String courseCode,
             String courseTitle,

@@ -34,13 +34,12 @@ public class UserMapper {
         dto.setEmail(user.getEmail());
         dto.setProfilePictureUrl(user.getProfilePictureUrl());
 
-        // Who's calling?
+        // Sensitive info
         User me = userService.getCurrentUser();
         boolean isAdmin = me != null && me.isAdmin();
         boolean isSelf = me != null && me.getId().equals(user.getId());
 
         if (isSelf || isAdmin) {
-            // Explicitly fetch enrollments instead of using user.getEnrollments()
             List<Enrollment> enrollments = enrollmentRepository.findByUser_Id(user.getId());
             dto.setEnrollments(enrollmentMapper.toResponseDtoList(enrollments));
         }

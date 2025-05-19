@@ -8,6 +8,7 @@ import edu.aua.course_recommendation.mappers.EnrollmentMapper;
 import edu.aua.course_recommendation.service.course.EnrollmentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,6 +23,7 @@ public class EnrollmentController {
     private final EnrollmentMapper enrollmentMapper;
 
     @PostMapping("/{studentId}/enroll")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<String> enrollSingle(
             @PathVariable final UUID studentId,
             @RequestBody final EnrollmentRequestDto request) {
@@ -31,6 +33,7 @@ public class EnrollmentController {
     }
 
     @PostMapping("/{studentId}/enroll-batch")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<String> enrollMultiple(
             @PathVariable final UUID studentId,
             @RequestBody final List<EnrollmentRequestDto> requests) {
@@ -39,6 +42,7 @@ public class EnrollmentController {
     }
 
     @DeleteMapping("/{studentId}/drop/{courseCode}")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<String> drop(
             @PathVariable final UUID studentId,
             @PathVariable final String courseCode) {
@@ -47,12 +51,14 @@ public class EnrollmentController {
     }
 
     @DeleteMapping("/{studentId}/drop/all")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<String> dropAll(@PathVariable final UUID studentId) {
         enrollmentService.dropAll(studentId);
         return ResponseEntity.ok("All enrollments dropped successfully for student id: " + studentId);
     }
 
     @DeleteMapping("/drop/all")
+    @PreAuthorize("hasRole('ROLE_ADMIN')")
     public ResponseEntity<String> dropAll() {
         enrollmentService.dropAllEnrollments();
         return ResponseEntity.ok("All enrollments for all students dropped successfully");

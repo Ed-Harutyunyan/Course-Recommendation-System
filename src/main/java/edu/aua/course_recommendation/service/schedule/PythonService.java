@@ -106,12 +106,6 @@ public class PythonService {
         }
     }
 
-    /**
-     * Use: Testing connection with Python ONLY
-     *
-     * @param data List of CourseDto
-     * @return Response by the Python Server
-     */
     public String sendTest(List<CourseDto> data) {
         HttpHeaders headers = new HttpHeaders();
 

@@ -37,7 +37,6 @@ public class AcademicCalendarUtil {
         Month currentMonth = today.getMonth();
         int dayOfMonth = today.getDayOfMonth();
 
-        // Determine current semester first
         Semester currentSemester;
         int academicYearStart;
 
@@ -55,7 +54,6 @@ public class AcademicCalendarUtil {
             academicYearStart = currentYear; // Academic year starts this fall
         }
 
-        // Now determine next semester based on current semester
         Semester nextSemester;
         int nextAcademicYearStart = academicYearStart;
 
@@ -83,7 +81,6 @@ public class AcademicCalendarUtil {
             nextAcademicYearStart = currentYear;
         }
 
-        // Format academic year as "YYYYZZ" where YYYY is start year and ZZ is last two digits of end year
         String year = String.format("%d%02d", nextAcademicYearStart, (nextAcademicYearStart + 1) % 100);
 
         return new String[]{year, nextSemester.getValue()};

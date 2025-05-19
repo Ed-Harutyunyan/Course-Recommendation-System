@@ -14,16 +14,16 @@ import java.util.UUID;
 public class ScheduleSlot {
 
     @Column(name = "offering_id", nullable = false)
-    private UUID offeringId;    // the specific CourseOffering ID
+    private UUID offeringId;
 
     @Column(name = "course_code", nullable = false)
-    private String courseCode;   // e.g. "CS101", "MATH201"
+    private String courseCode;
 
     @Column(nullable = false)
-    private int credits;        // e.g. 3 or 0
+    private int credits;
 
     @Column(nullable = false)
-    private String times;       // e.g. "TUE 10:00-11:15, THU 10:00-11:15"
+    private String times;
 }
 
 

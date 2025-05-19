@@ -92,15 +92,13 @@ public class AuthController {
     @PostMapping("/password-setup/confirm")
     public ResponseEntity<Void> confirmPasswordSetup(
             @RequestParam UUID uid,
-            @RequestParam String t,  // the OTP token
+            @RequestParam String t,
             @RequestParam String newPassword) {
 
-        // Validate the OTP using your existing OTP service
         if (!otpService.isOtpValid(uid, t)) {
             throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired token");
         }
 
-        // Retrieve the user and update the password
         User user = userRepository.findById(uid)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
 
@@ -108,7 +106,6 @@ public class AuthController {
         user.setEmailVerified(true);
         userRepository.save(user);
 
-        // Delete the OTP token
         otpService.deleteOtp(uid);
 
         return ResponseEntity.noContent().build();
