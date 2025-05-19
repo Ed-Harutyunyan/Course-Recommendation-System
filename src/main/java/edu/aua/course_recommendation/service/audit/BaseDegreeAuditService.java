@@ -43,7 +43,7 @@ public abstract class BaseDegreeAuditService {
 
     public DegreeAuditMultiScenarioResult auditStudentDegreeMultiScenario(UUID studentId) {
 
-        //userService.validateStudent(studentId);
+        userService.validateStudent(studentId);
 
         // 1. Build common requirements
         RequirementResult foundation = checkFoundationRequirementsDetailed(studentId);
@@ -92,15 +92,12 @@ public abstract class BaseDegreeAuditService {
     public RequirementResult checkPeerMentoringRequirement(UUID studentId) {
         List<String> completedCodes = enrollmentService.getCompletedCourseCodes(studentId);
 
-        // Check if the student has completed the Peer Mentoring course
         boolean isSatisfied = completedCodes.contains(PEER_MENTORING_CODE);
 
-        // Only include completed peer mentoring courses
         List<String> completedPeerMentoring = completedCodes.stream()
                 .filter(code -> code.equals(PEER_MENTORING_CODE))
                 .toList();
 
-        // If not satisfied, return the missing code
         List<String> missingCodes = isSatisfied ? List.of() : List.of(PEER_MENTORING_CODE);
         return new RequirementResult(
                 Requirement.PEER_MENTORING,
@@ -114,12 +111,10 @@ public abstract class BaseDegreeAuditService {
     public RequirementResult checkFoundationRequirementsDetailed(UUID studentId) {
         List<String> completedCodes = enrollmentService.getCompletedCourseCodes(studentId);
 
-        // Which of the foundation courses are missing?
         List<String> missing = FOUNDATION_REQUIREMENTS.stream()
                 .filter(req -> !completedCodes.contains(req))
                 .toList();
 
-        // Only include completed foundation courses
         List<String> completedFoundation = FOUNDATION_REQUIREMENTS.stream()
                 .filter(completedCodes::contains)
                 .toList();
@@ -136,7 +131,6 @@ public abstract class BaseDegreeAuditService {
 
     public RequirementResult checkPhysicalEducationRequirementsDetailed(UUID studentId) {
 
-        // How many courses beginning with "FND110" are completed?
         Set<String> completedPhysedCodes = enrollmentService.getCompletedCourses(studentId).stream()
                 .map(Course::getCode)
                 .filter(code -> code.startsWith("FND110"))
@@ -149,10 +143,8 @@ public abstract class BaseDegreeAuditService {
                 .map(Course::getCode)
                 .filter(code -> code.startsWith("FND110"))
                 .sorted((code1, code2) -> {
-                    // Make "FND110" come first
                     if (code1.equals("FND110")) return -1;
                     if (code2.equals("FND110")) return 1;
-                    // For other codes, sort alphabetically
                     return code1.compareTo(code2);
                 })
                 .toList();
@@ -166,31 +158,14 @@ public abstract class BaseDegreeAuditService {
         );
     }
 
-    /**
-     * Check for general education requirements
-     * Returns if the student completed BREATH REQUIREMENTS (9 Courses)
-     * THIS IS MORE LIKE BREATH REQUIREMENTS
-     * Actual "General Education" takes foundation courses into account as well
-     * Might need to rename
-     * <p>
-     * For each degree a course is considered gen-ed if it's not core or track elective
-     */
     public RequirementResult checkGeneralEducationRequirementsDetailed(UUID studentId) {
-        // 1. Fetch *all* courses the student has completed
 
-        // 2. Get eligible gened courses for that major
         Set<String> genEdEligibleCodes = getGenEdEligibleCourseCodes();
 
-        // Get completed Geneds
         List<Course> genEdCompleted = getStudentGenEdCompleted(studentId);
 
-        // 5. Check if clusters are completed
-        //    This takes into the 9 course requirement as the method won't return true if there are no 9 courses
-        //    e.g., call isGenEdRequirementMet(genEdCompleted) for your backtracking approach
         boolean clusterSatisfied = genedClusteringService.isGenEdRequirementMet(genEdCompleted);
 
-        // 6. If not satisfied, define "missingCodes"
-        //    which is all GenEd codes minus the ones they've completed
         List<String> missingCodes = new ArrayList<>();
         if (!clusterSatisfied) {
             Set<NeededCluster> neededClusters = genedClusteringService.findNeededClusters(genEdCompleted);
@@ -208,8 +183,6 @@ public abstract class BaseDegreeAuditService {
                     .collect(Collectors.toList());
         }
 
-        // 7. Return a RequirementResult
-        // Returns potential gen-eds the student might need to take the complete the clusters
         return new RequirementResult(
                 Requirement.GENERAL_EDUCATION,
                 clusterSatisfied,
@@ -246,22 +219,18 @@ public abstract class BaseDegreeAuditService {
     }
 
     public RequirementResult checkFirstAidAndCivilDefense(UUID studentId) {
-        // 1. Student’s completed codes
+
         List<String> completedCodes = enrollmentService.getCompletedCourseCodes(studentId);
 
-        // 2. Check if the codes "FND152" and "FND153" are in there
         boolean firstAidDone = completedCodes.contains(FIRST_AID_CODE);
         boolean civilDefenseDone = completedCodes.contains(CIVIL_DEFENSE_CODE);
 
-        // 3. If both are done => isSatisfied = true
         boolean isSatisfied = (firstAidDone && civilDefenseDone);
 
-        // 4. For the missing codes, we store them in a set
         List<String> missing = new ArrayList<>();
         if (!firstAidDone) missing.add(FIRST_AID_CODE);
         if (!civilDefenseDone) missing.add(CIVIL_DEFENSE_CODE);
 
-        // 5. Possibly you store how many are missing in the 'count' field
         return new RequirementResult(
                 Requirement.FIRST_AID_AND_CIVIL_DEFENSE,
                 isSatisfied,
@@ -286,40 +255,30 @@ public abstract class BaseDegreeAuditService {
      *      therefore we say that ALL free electives are still due
      *
      */
-    // TODO: Return ALL Free electives if no valid gened cluster
     public RequirementResult checkFreeElectiveRequirements(UUID studentId) {
 
         List<String> completedCodes = enrollmentService.getCompletedCourseCodes(studentId);
 
-        // 1. Which track is “chosen” or “completed”?
-        //    We'll figure out which track the student has finished or is closest to finishing
         DegreeScenarioType chosenTrack = pickChosenTrack(studentId);
 
-        // 2. Gather the set of codes that are "excluded" from free electives:
-        //    foundation, firstAid, civDefense, PE, core, chosenTrack courses
         Set<String> excluded = buildExcludedCodes(chosenTrack, studentId);
 
-        // 3. All courses from the entire system
         Set<String> allCodes = courseService.getAllCourses().stream()
                 .map(Course::getCode)
                 .collect(Collectors.toSet());
 
-        // 4. freeElectiveEligible = allCodes - excluded
         Set<String> freeElectiveEligible = new HashSet<>(allCodes);
         freeElectiveEligible.removeAll(excluded);
 
-        // 5. Student's completed free electives = intersection of completedCodes with freeElectiveEligible
         Set<String> completedFreeElectives = completedCodes.stream()
                 .filter(freeElectiveEligible::contains)
                 .collect(Collectors.toSet());
 
-        // 6. Compare with the required free elective count for the major
         int requiredFreeElectives = getRequiredFreeElectiveCount();
         int done = completedFreeElectives.size();
         int needed = requiredFreeElectives - done;
         boolean isSatisfied = (needed <= 0);
 
-        // 7. If not satisfied, gather "missing" = freeElectiveEligible - completedFreeElectives
         List<String> missingCodes = new ArrayList<>();
 
         if (!isSatisfied) {
@@ -350,7 +309,6 @@ public abstract class BaseDegreeAuditService {
     }
 
     public RequirementResult checkCapstoneRequirement(UUID studentId) {
-        // 1. Check if the student already completed the capstone
         List<String> completedCodes = enrollmentService.getCompletedCourseCodes(studentId);
         String capstoneCode = getCapstoneCode();
 
@@ -367,49 +325,37 @@ public abstract class BaseDegreeAuditService {
 
     private Set<String> getGenEdEligibleCourseCodes() {
 
-        // Get all Track or Core courses for that Major
         List<String> coreAndTrackCourseCodes = getCoreAndTrackCourseCodes();
 
-        // Get all available base courses
         Set<String> allCourseCodes = courseService.getAllCourses().stream().map(Course::getCode).collect(Collectors.toSet());
 
-        // Remove courses that are a CORE or Track
         coreAndTrackCourseCodes.forEach(allCourseCodes::remove);
 
-        // Remove Foundation
-        // Remove First Aid & Civil Defense as these cannot be counted towards Gened.
         FOUNDATION_REQUIREMENTS.forEach(allCourseCodes::remove);
         allCourseCodes.remove(FIRST_AID_CODE);
         allCourseCodes.remove(CIVIL_DEFENSE_CODE);
 
-        // Remove Physed Courses
         allCourseCodes.removeIf(code -> code.startsWith("FND110"));
 
         return allCourseCodes;
     }
 
-    // Helper method to figure out which courses CANNOT be counted towards free elective.
     private Set<String> buildExcludedCodes(DegreeScenarioType chosenTrack, UUID studentId) {
-        // Exclude Foundation Courses
         Set<String> excluded = new HashSet<>(FOUNDATION_REQUIREMENTS);
         excluded.add(FIRST_AID_CODE);
         excluded.add(CIVIL_DEFENSE_CODE);
         excluded.add(PEER_MENTORING_CODE);
 
-        // Exclude physed courses
         Set<String> physEdCodes = courseService.getAllPhysedCourses().stream()
                 .map(Course::getCode)
                 .collect(Collectors.toSet());
 
         excluded.addAll(physEdCodes);
 
-        // Exclude Core Courses
         excluded.addAll(getCoreCourseCodes());
 
-        // Exclude "chosen" track courses
         excluded.addAll(getTrackCourseCodes(chosenTrack));
 
-        // Exclude Gened courses that were used to complete breadth requirement.
         Set<String> usedForGenEd = findGenEdCoursesUsedForCluster(studentId);
         excluded.addAll(usedForGenEd);
 
@@ -423,19 +369,13 @@ public abstract class BaseDegreeAuditService {
                 genedClusteringService.findPossibleClusterCombinations(genEdCompleted, 1);
 
         if (solutions.isEmpty()) {
-            // no valid cluster arrangement => the student has not completed gened requirement yet
-            // whatever course there is exclude from free elective as these need to be used for gened
-            // and gened needs to be completed first.
             return genEdCompleted.stream()
                     .map(Course::getCode)
                     .collect(Collectors.toSet());
         }
 
-        // 3. If we do have a valid solution, only exclude the courses actually used in that cluster solution
-        // No difference which courses used to form the clusters, which taken for free elective
         GenedClusteringService.ClusterSolution solution = solutions.getFirst();
 
-        // 4. Gather all codes used in that solution
         Set<String> usedCodes = new HashSet<>();
         for (GenedClusteringService.ClusterChoice choice : solution.getClusterChoices()) {
             for (GenedClusteringService.ClusterChoice.CourseInfo c : choice.getCourses()) {
@@ -446,13 +386,11 @@ public abstract class BaseDegreeAuditService {
     }
 
     public List<Course> getStudentGenEdCompleted(UUID studentId) {
-        // 1. Get all completed courses
+
         List<Course> allStudentCourses = enrollmentService.getCompletedCourses(studentId);
 
-        // 2. Get eligible gened courses for that major
         Set<String> genEdEligibleCodes = getGenEdEligibleCourseCodes();
 
-        // 3. Filter to only GenEd eligible courses
         return allStudentCourses.stream()
                 .filter(course -> genEdEligibleCodes.contains(course.getCode()))
                 .collect(Collectors.toList());
@@ -468,7 +406,5 @@ public abstract class BaseDegreeAuditService {
         boolean freeElecDone = checkFreeElectiveRequirements(studentId).isSatisfied();
         return (foundationDone && coreDone && trackDone && genEdDone && freeElecDone);
     }
-
-
 
 }

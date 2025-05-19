@@ -48,7 +48,6 @@ public class ScheduleService {
     }
 
     public Schedule saveSchedule(Schedule schedule) {
-        // Validate the schedule before saving
         validateSchedule(schedule);
 
         return scheduleRepository.save(schedule);
@@ -76,7 +75,6 @@ public class ScheduleService {
             );
         }
 
-        // Calculate total credits
         int totalCredits = schedule.getSlots().stream()
                 .mapToInt(ScheduleSlot::getCredits)
                 .sum();
@@ -89,7 +87,6 @@ public class ScheduleService {
             );
         }
 
-        // Check each slot
         for (ScheduleSlot slot : schedule.getSlots()) {
             Optional<CourseOffering> offeringOpt = courseOfferingRepository.findCourseOfferingsById(slot.getOfferingId());
             if (offeringOpt.isEmpty()) {
@@ -148,7 +145,7 @@ public class ScheduleService {
 
     private int getEarliestTimeInMinutes(CourseOffering offering) {
         if (offering.getTimes() == null || offering.getTimes().isEmpty() || "TBD".equalsIgnoreCase(offering.getTimes())) {
-            return Integer.MAX_VALUE; // Place TBD times at the end
+            return Integer.MAX_VALUE;
         }
 
         String[] slots = offering.getTimes().split(", ");
@@ -158,7 +155,6 @@ public class ScheduleService {
             String[] parts = slot.trim().split(" ");
             if (parts.length < 2) continue;
 
-            // Calculate day value (MON=0, TUE=1, etc.)
             int dayValue;
             switch (parts[0].toUpperCase()) {
                 case "MON":
@@ -187,12 +183,11 @@ public class ScheduleService {
                     break;
             }
 
-            // Parse the start time
             String[] timeRange = parts[1].split("-");
             if (timeRange.length < 2) continue;
 
             int startTimeMinutes = parseTimeToMinutes(timeRange[0]);
-            int slotValue = dayValue * 24 * 60 + startTimeMinutes; // Day value + minutes
+            int slotValue = dayValue * 24 * 60 + startTimeMinutes;
 
             earliestTime = Math.min(earliestTime, slotValue);
         }
@@ -201,10 +196,8 @@ public class ScheduleService {
     }
 
     public List<NeededCourseOfferingDto> findValidOfferings(UUID studentId) {
-        // Get the needed course offering DTOs
         List<NeededCourseOfferingDto> neededDtos = getNeededCourseOfferings(studentId);
 
-        // Filter only those that the student can take based on prerequisites and academic standing
         return neededDtos.stream()
                 .filter(dto -> validAcademicStanding(dto.getCourseOffering(), studentId))
                 .filter(dto -> prerequisitesMet(dto.getCourseOffering(), studentId))
@@ -212,10 +205,8 @@ public class ScheduleService {
     }
 
     public List<NeededCourseOfferingDto> findValidOfferingsForPeriod(UUID studentId, String year, String semester) {
-        // Get all valid offerings for the student
         List<NeededCourseOfferingDto> allValidDtos = findValidOfferings(studentId);
 
-        // Filter for specific period only
         return allValidDtos.stream()
                 .filter(dto -> {
                     CourseOffering offering = dto.getCourseOffering();
@@ -225,10 +216,8 @@ public class ScheduleService {
     }
 
     public List<NeededCourseOfferingDto> findValidOfferingsForPeriodWithMessage(UUID studentId, String year, String semester, String message) {
-        // Get all valid offerings for the student
         List<NeededCourseOfferingDto> allValidDtos = findValidOfferingsForPeriod(studentId, year, semester);
 
-        // Ask python for recommendations
         List<RecommendationDto> recommendationDtos = pythonService.sendMessageRecommendations(
                 MessageAndPossibleCourseDto.builder()
                         .possibleCourseCodes(allValidDtos.stream()
@@ -238,13 +227,11 @@ public class ScheduleService {
                         .build()
         );
 
-        // Create a map of course codes to their recommendation scores for efficient lookup
         Map<String, Double> courseScoreMap = recommendationDtos.stream()
                 .collect(HashMap::new,
                         (map, dto) -> map.put(dto.courseCode(), Double.parseDouble(dto.score())),
                         HashMap::putAll);
 
-        // Filter for specific period and recommendations, then sort by score (highest first)
         return allValidDtos.stream()
                 .filter(dto -> courseScoreMap.containsKey(dto.getCourseOffering().getBaseCourse().getCode()))
                 .sorted((dto1, dto2) -> Double.compare(
@@ -258,31 +245,24 @@ public class ScheduleService {
         List<NeededCourseOfferingDto> result = new ArrayList<>();
         BaseDegreeAuditService baseDegreeAuditService = degreeAuditServiceRouter.getServiceForStudent(studentId);
 
-        // 0. Peer Mentoring
         RequirementResult peerMentoring = baseDegreeAuditService.checkPeerMentoringRequirement(studentId);
         addOfferingsForRequirement(result, peerMentoring, courseOfferingService);
 
-        // 1. First Aid & Civil Defense
         RequirementResult firstAid = baseDegreeAuditService.checkFirstAidAndCivilDefense(studentId);
         addOfferingsForRequirement(result, firstAid, courseOfferingService);
 
-        // 2. Physical Education
         RequirementResult physEd = baseDegreeAuditService.checkPhysicalEducationRequirementsDetailed(studentId);
         addOfferingsForRequirement(result, physEd, courseOfferingService);
 
-        // 3. Foundation Requirements
         RequirementResult foundation = baseDegreeAuditService.checkFoundationRequirementsDetailed(studentId);
         addOfferingsForRequirement(result, foundation, courseOfferingService);
 
-        // 4. Core Courses
         RequirementResult core = baseDegreeAuditService.checkProgramCore(studentId);
         addOfferingsForRequirement(result, core, courseOfferingService);
 
-        // 5. General Education
         RequirementResult genEd = baseDegreeAuditService.checkGeneralEducationRequirementsDetailed(studentId);
         addOfferingsForRequirement(result, genEd, courseOfferingService);
 
-        // 6. Track Requirements
         List<DegreeAuditScenario> scenarios = baseDegreeAuditService.checkProgramScenarios(studentId);
         boolean anyTrackCompleted = scenarios.stream()
                 .anyMatch(scenario -> {
@@ -301,11 +281,9 @@ public class ScheduleService {
             }
         }
 
-        // 7. Free Electives
         RequirementResult freeElective = baseDegreeAuditService.checkFreeElectiveRequirements(studentId);
         addOfferingsForRequirement(result, freeElective, courseOfferingService);
 
-        // 8. Capstone
         RequirementResult capstone = baseDegreeAuditService.checkCapstoneRequirement(studentId);
         addOfferingsForRequirement(result, capstone, courseOfferingService);
 
@@ -315,7 +293,6 @@ public class ScheduleService {
     private void addOfferingsForRequirement(List<NeededCourseOfferingDto> result, RequirementResult reqResult, CourseOfferingService courseOfferingService) {
         List<CourseOffering> offerings = courseOfferingService.getCourseOfferingsByCourseCodes(reqResult.getPossibleCourseCodes());
         for (CourseOffering offering : offerings) {
-            // Check if this offering already exists in the result list
             boolean offeringExists = result.stream()
                     .anyMatch(dto -> dto.getCourseOffering().getId().equals(offering.getId()));
 
@@ -325,33 +302,26 @@ public class ScheduleService {
         }
     }
 
-    // Checks if the student can take UPPER course.
-    // Only Sophomores and above can take upper courses
     private boolean validAcademicStanding(CourseOffering off, UUID studentId) {
         AcademicStanding standing = userService.getAcademicStanding(studentId);
 
         if (courseService.isUpperDivision(off.getBaseCourse().getCode())) {
-            // Upper division courses require the student to be at least sophomore
             return standing == AcademicStanding.SOPHOMORE
                     || standing == AcademicStanding.JUNIOR
                     || standing == AcademicStanding.SENIOR;
         } else {
-            // For lower division courses, assume all students (including freshmen) are eligible
             return true;
         }
     }
 
 
     public boolean prerequisitesMet(CourseOffering offering, UUID studentId) {
-        // Get prerequisites from the base course
         Set<String> prerequisites = offering.getBaseCourse().getPrerequisites();
 
-        // If no prerequisites, always return true
         if (prerequisites == null || prerequisites.isEmpty()) {
             return true;
         }
 
-        // Get the student's completed course codes
         Set<String> completedCourses = new HashSet<>(enrollmentService.getCompletedCourseCodes(studentId));
         Set<String> effectivePrerequisites = new HashSet<>();
 
@@ -371,7 +341,6 @@ public class ScheduleService {
             }
         }
 
-        // Check if all effective prerequisites are in the completed courses
         return completedCourses.containsAll(effectivePrerequisites);
     }
 
@@ -379,6 +348,7 @@ public class ScheduleService {
     // Naive approach
     // Does String Parsing
     // Works with Jenzabar's Time Format
+    // TODO: Eventually update to use a better time format
     private boolean hasTimeConflict(CourseOffering newOffering, List<ScheduleSlot> existingSlots) {
         if (newOffering.getTimes() == null || newOffering.getTimes().isEmpty()) {
             return false;
@@ -394,21 +364,17 @@ public class ScheduleService {
 
     private boolean doTimesConflict(String times1, String times2) {
 
-        // Handle TBD case
         if ("TBD".equalsIgnoreCase(times1) || "TBD".equalsIgnoreCase(times2)) {
             return false;
         }
 
-        // Handle null or empty cases
         if (times1 == null || times2 == null || times1.isEmpty() || times2.isEmpty()) {
             return false;
         }
 
-        // Split multiple time slots
         String[] slots1 = times1.split(", ");
         String[] slots2 = times2.split(", ");
 
-        // Check each combination of time slots
         for (String slot1 : slots1) {
             for (String slot2 : slots2) {
                 if (doSingleSlotsConflict(slot1, slot2)) {
@@ -427,12 +393,10 @@ public class ScheduleService {
             return false;
         }
 
-        // Check if days overlap
         if (!parts1[0].equals(parts2[0])) {
             return false;
         }
 
-        // Parse times
         String[] timeRange1 = parts1[1].split("-");
         String[] timeRange2 = parts2[1].split("-");
 
@@ -449,7 +413,6 @@ public class ScheduleService {
     }
 
     private int parseTimeToMinutes(String time) {
-        // Remove am/pm and convert to 24-hour format
         time = time.toLowerCase();
         boolean isPM = time.endsWith("pm");
         time = time.replace("am", "").replace("pm", "");

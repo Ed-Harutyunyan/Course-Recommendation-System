@@ -30,10 +30,10 @@ public class Enrollment {
     @Column(name = "grade")
     private String grade;
 
-    @Column(name = "year") // e.g., "202425"
+    @Column(name = "year")
     private String year;
 
-    @Column(name = "semester") // e.g., "1" for Fall, "2" for Spring, "3" for Summer
+    @Column(name = "semester")
     private String semester;
 
 }

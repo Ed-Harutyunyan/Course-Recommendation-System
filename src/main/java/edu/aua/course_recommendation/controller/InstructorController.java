@@ -76,19 +76,15 @@ public class InstructorController {
             @RequestParam String year,
             @RequestParam String semester) {
 
-        // Get the instructor
         Instructor instructor = instructorService.getInstructorById(instructorId);
 
-        // Get course offerings for this instructor in the specified year and semester
         List<CourseOffering> courseOfferings = courseOfferingService.getAllCourseOfferingsByYearAndSemesterAndInstructor(
                 year, semester, instructorId);
 
-        // Map course offerings to DTOs
         List<CourseOfferingResponseDto> courseOfferingDtos = courseOfferings.stream()
                 .map(courseOfferingMapper::toCourseOfferingResponseDto)
                 .collect(Collectors.toList());
 
-        // Create and return the InstructorWithCoursesDto
         InstructorWithCoursesDto response = instructorMapper.toInstructorWithCoursesDto(instructor, courseOfferingDtos);
 
         return ResponseEntity.ok(response);

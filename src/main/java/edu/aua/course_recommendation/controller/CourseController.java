@@ -134,14 +134,6 @@ public class CourseController {
         return ResponseEntity.ok(responseDtos);
     }
 
-    /**
-     * Retrieves course offerings for a specific academic year, semester, and course code.
-     *
-     * @param year     The academic year (e.g., "2023").
-     * @param semester The semester (e.g., "Fall" or "Spring").
-     * @param code     The course code (e.g., "CS101").
-     * @return A list of course offerings matching the specified criteria.
-     */
     @GetMapping("/offering/{year}/{semester}/course")
     public ResponseEntity<List<CourseOfferingResponseDto>> getCourseOfferingsByYearSemesterAndCode(
             @PathVariable String year,

@@ -15,9 +15,6 @@ import java.util.stream.Stream;
 @Service
 public class BusinessDegreeAuditService extends BaseDegreeAuditService {
 
-    // ——————————————————————————————————————————————————————
-    // Core → fundamentals, 12 fixed, 2 “one-of” groups, capstone
-    // ——————————————————————————————————————————————————————
     private static final List<String> CORE_FUNDAMENTALS = List.of("BUS109", "BUS110", "BUS177");
     private static final List<String> CORE_REQUIREMENTS = List.of(
             "BUS101","BUS105","BUS145","BUS146",
@@ -91,7 +88,6 @@ public class BusinessDegreeAuditService extends BaseDegreeAuditService {
     public RequirementResult checkProgramCore(UUID studentId) {
         List<String> allCompleted = enrollmentService.getCompletedCourseCodes(studentId);
 
-        // All core codes (fundamentals, requirements, one-of groups)
         List<String> allCore = Stream.of(
                 CORE_FUNDAMENTALS,
                 CORE_REQUIREMENTS,
@@ -99,7 +95,6 @@ public class BusinessDegreeAuditService extends BaseDegreeAuditService {
                 new ArrayList<>(CORE_ONE_OF_2)
         ).flatMap(Collection::stream).distinct().toList();
 
-        // Only completed core codes
         List<String> done = allCompleted.stream()
                 .filter(allCore::contains)
                 .toList();
@@ -174,24 +169,20 @@ public class BusinessDegreeAuditService extends BaseDegreeAuditService {
     private RequirementResult checkAccountingTrack(UUID studentId) {
         List<String> allCompleted = enrollmentService.getCompletedCourseCodes(studentId);
 
-        // Only completed Accounting track courses (required + electives)
         List<String> completedTrack = Stream.concat(ACCOUNTING_REQUIRED.stream(), ACCOUNTING_ELECTIVES.stream())
                 .filter(allCompleted::contains)
                 .distinct()
                 .toList();
 
-        // required
         List<String> missReq = ACCOUNTING_REQUIRED.stream()
                 .filter(c -> !completedTrack.contains(c))
                 .toList();
 
-        // electives taken
         long takenElect = ACCOUNTING_ELECTIVES.stream()
                 .filter(completedTrack::contains)
                 .count();
         int neededElect = ACCOUNTING_ELECTIVE_PICKS - (int)takenElect;
 
-        // which electives are still possible
         List<String> missElect = ACCOUNTING_ELECTIVES.stream()
                 .filter(c -> !completedTrack.contains(c))
                 .toList();
@@ -283,7 +274,6 @@ public class BusinessDegreeAuditService extends BaseDegreeAuditService {
     private RequirementResult checkGeneralBusinessTrack(UUID studentId) {
         List<String> done = enrollmentService.getCompletedCourseCodes(studentId);
 
-        // Pool = all required/electives from every track + business electives
         List<String> pool = Stream.of(
                         ACCOUNTING_REQUIRED, ACCOUNTING_ELECTIVES,
                         ECONOMICS_REQUIRED, ECONOMICS_ELECTIVES,
@@ -314,10 +304,6 @@ public class BusinessDegreeAuditService extends BaseDegreeAuditService {
                 needed
         );
     }
-
-    // ——————————————————————————————————————————————————————
-    // 3) Other abstract methods
-    // ——————————————————————————————————————————————————————
 
     @Override
     protected List<String> getCoreAndTrackCourseCodes() {
@@ -385,7 +371,6 @@ public class BusinessDegreeAuditService extends BaseDegreeAuditService {
     public DegreeScenarioType pickChosenTrack(UUID studentId) {
         List<String> done = enrollmentService.getCompletedCourseCodes(studentId);
 
-        // Count completed courses for specific tracks (Required + Electives)
         long a = Stream
                 .concat(ACCOUNTING_REQUIRED.stream(), ACCOUNTING_ELECTIVES.stream())
                 .filter(done::contains)
@@ -402,8 +387,6 @@ public class BusinessDegreeAuditService extends BaseDegreeAuditService {
                 .distinct()
                 .count();
 
-        // Count completed courses applicable to the General Business track pool
-        // Pool = all required/electives from every track + business electives
         List<String> generalPool = Stream.of(
                         ACCOUNTING_REQUIRED, ACCOUNTING_ELECTIVES,
                         ECONOMICS_REQUIRED, ECONOMICS_ELECTIVES,
@@ -416,7 +399,6 @@ public class BusinessDegreeAuditService extends BaseDegreeAuditService {
         long g = generalPool.stream().filter(done::contains).count();
 
 
-        // Pick the track with the highest count, prioritizing A > E > M > G in ties
         if (a >= e && a >= m && a >= g) {
             return DegreeScenarioType.BUS_ACCOUNTING;
         } else if (e >= a && e >= m && e >= g) {
@@ -424,8 +406,6 @@ public class BusinessDegreeAuditService extends BaseDegreeAuditService {
         } else if (m >= a && m >= e && m >= g) {
             return DegreeScenarioType.BUS_MARKETING;
         } else {
-            // If none of the specific tracks had the highest count (considering priority),
-            // then General Business must have the highest count or is chosen due to ties.
             return DegreeScenarioType.BUS_GENERAL;
         }
     }

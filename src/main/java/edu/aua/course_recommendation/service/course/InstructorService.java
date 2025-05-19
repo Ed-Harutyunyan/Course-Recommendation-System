@@ -35,23 +35,21 @@ public class InstructorService {
 
     @Transactional
     public Instructor updateInstructorProfile(InstructorProfileRequestDto profileDto) {
-        // Skip if name is null or blank
+
         if (profileDto.name() == null || profileDto.name().isBlank()) {
             return null;
         }
 
         try {
-            // Create a new instructor or find existing one
             Instructor instructor = instructorRepository.findByName(profileDto.name())
                     .orElseGet(() -> Instructor.builder().name(profileDto.name()).build());
 
-            // Debug log the length of the position field
             String position = profileDto.position();
             if (position != null) {
                 System.out.println("Position length before truncation: " + position.length());
             }
 
-            // Apply values with more aggressive truncation
+            // TODO: Update this to just normal validation
             instructor.setImageUrl(safelyTruncate(profileDto.image_url(), 490));
             instructor.setPosition(safelyTruncate(profileDto.position(), 490));
             instructor.setMobile(safelyTruncate(profileDto.mobile(), 45));
@@ -71,12 +69,10 @@ public class InstructorService {
             return null;
         }
 
-        // Normalize and remove any problematic characters
         String cleaned = value.trim()
-                .replace('\u00A0', ' ') // Replace non-breaking spaces
-                .replaceAll("[\\p{Cc}\\p{Cf}]", ""); // Remove control and format characters
+                .replace('\u00A0', ' ')
+                .replaceAll("[\\p{Cc}\\p{Cf}]", "");
 
-        // More aggressive truncation to be safe
         return cleaned.length() > maxLength ? cleaned.substring(0, maxLength) : cleaned;
     }
 
@@ -85,7 +81,6 @@ public class InstructorService {
             return null;
         }
 
-        // Check if instructor with same name already exists
         if (instructorRepository.findByName(profileDto.name()).isPresent()) {
             throw new IllegalArgumentException("Instructor with name " + profileDto.name() + " already exists");
         }

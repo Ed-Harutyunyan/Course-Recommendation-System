@@ -65,24 +65,19 @@ public class StartupAdminInitializer {
 
     private void enrollStudentIn(String username, List<String> courseCodes, UserRepository userRepository,
                                  EnrollmentService enrollmentService) {
-        // Find the student by username
         User student = userRepository.findByUsername(username)
                 .orElseThrow(() -> new IllegalArgumentException("Student not found: " + username));
 
-        // Verify the user is a student
         if (student.getRole() != Role.ROLE_STUDENT) {
             throw new IllegalArgumentException("User is not a student: " + username);
         }
 
-        // Get enrollment count through the service
         int enrollmentCount = enrollmentService.getEnrollments(student.getId()).size();
         System.out.println("Student is currently enrolled in: " + enrollmentCount + " courses");
 
-        // Clear existing enrollments
         enrollmentService.dropAll(student.getId());
         System.out.printf("Cleared existing enrollments for student '%s'%n", username);
 
-        // Convert course codes to EnrollmentRequestDto objects
         List<edu.aua.course_recommendation.dto.request.EnrollmentRequestDto> requests = courseCodes.stream()
                 .map(code -> new edu.aua.course_recommendation.dto.request.EnrollmentRequestDto(
                         code, "A", "202425", "1"
@@ -90,7 +85,6 @@ public class StartupAdminInitializer {
                 .toList();
 
         try {
-            // Use the bulk enrollment method from the service
             enrollmentService.enrollList(student.getId(), requests);
             System.out.printf("✅ Enrolled student '%s' in %d courses%n", username, courseCodes.size());
         } catch (Exception e) {

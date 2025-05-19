@@ -41,12 +41,10 @@ public class EnrollmentService {
             throw new EnrollmentException("You are already enrolled in this course");
         }
 
-        // Make the composite key
         EnrollmentId enrollmentId = new EnrollmentId();
         enrollmentId.setUserId(studentId);
         enrollmentId.setCourseId(course.getId());
 
-        // Create the enrollment
         Enrollment enrollment = new Enrollment();
         enrollment.setId(enrollmentId);
         enrollment.setGrade(grade);
@@ -71,7 +69,6 @@ public class EnrollmentService {
             throw new EnrollmentException("You are not enrolled in this course");
         }
 
-        // Get the enrollment to remove from collection first
         Enrollment enrollment = enrollmentRepository.findByUserAndCourse(student, course);
         if (enrollment != null) {
             student.getEnrollments().remove(enrollment);
@@ -81,8 +78,6 @@ public class EnrollmentService {
         calculateAcademicStanding(studentId);
     }
 
-    // This returns all the course *codes* that the student didn't get a
-    // W or F grade in
     @Transactional(readOnly = true)
     public List<String> getCompletedCourseCodes(UUID studentId) {
         List<String> actual = enrollmentRepository.findByUser_Id(studentId).stream()
@@ -115,13 +110,12 @@ public class EnrollmentService {
     // And id like to change grade to be just optional and later add a GPA calculator to the system
     private boolean isPassingGrade(String grade) {
         if (grade == null) {
-            return true; // No grade provided means the course is passed
+            return true;
         }
 
         return !"F".equalsIgnoreCase(grade) && !"W".equalsIgnoreCase(grade);
     }
 
-    // Validates the authenticated user against the provided studentId and fetches the course.
     private StudentAndCourse validateAndFetch(UUID studentId, String courseCode) {
 
         User user = userRepository.findById(studentId).orElseThrow(
@@ -158,7 +152,6 @@ public class EnrollmentService {
 
         AcademicStanding standing = AcademicStanding.getStandingFromCredits(totalCredits);
 
-        // Update the user's academic standing using the studentId parameter
         User student = userRepository.findById(studentId).orElseThrow();
         student.setAcademicStanding(standing);
         userRepository.save(student);
@@ -172,12 +165,10 @@ public class EnrollmentService {
             Course course = courseRepository.findByCode(request.courseCode())
                     .orElseThrow(() -> new CourseNotFoundException("Course with code " + request.courseCode() + " not found"));
 
-            // Check if already enrolled
             if (enrollmentRepository.existsByUserAndCourse(student, course)) {
-                continue; // Skip or throw exception if needed
+                continue;
             }
 
-            // Create the enrollment
             EnrollmentId enrollmentId = new EnrollmentId();
             enrollmentId.setUserId(studentId);
             enrollmentId.setCourseId(course.getId());
@@ -193,7 +184,6 @@ public class EnrollmentService {
             student.getEnrollments().add(enrollment);
         }
 
-        // Save the student which will cascade to enrollments
         userRepository.save(student);
         calculateAcademicStanding(studentId);
     }
@@ -203,7 +193,6 @@ public class EnrollmentService {
         User student = userRepository.findById(studentId).orElseThrow();
         List<Enrollment> enrollments = enrollmentRepository.findByUser_Id(studentId);
 
-        // Clear the in-memory collection
         student.getEnrollments().clear();
 
         enrollmentRepository.deleteAll(enrollments);
